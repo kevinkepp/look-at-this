@@ -11,8 +11,8 @@ by Kevin Kepp and Philipp Braunhart
 |:---|:---:|:---:|
 |making project plan|X|X|
 |discussing plan with Roberto & Manuel|X|X|
-|setting up github|O|O|
-|setting up weekly live google doc|O|O|
+|setting up github|X|X|
+|setting up weekly live google doc|X|X|
 |look at q-learning (wiki)|O|O|
 |[reading paper saccadic][paper-saccadic]|-|O|
 |[reading paper ent-to-end][paper-end2end]|O|-|
@@ -50,14 +50,10 @@ by Kevin Kepp and Philipp Braunhart
   3. generate ground truth
   4. test it with simple tests
 
-- either position or velocities for motor command unit
-- 1st design simple (without ros, then with ros) (big image - cut out region)
-- 2nd design it close to the real system (limits, motor commands, image)
-
 <a name="4"></a>
 4. apply first small RL & perhaps NN to simulation (seperately or as one)
   1. formulate/take given reward fct.
-  2. try existing architectures
+  2. try existing architectures (e.g. last layer of deep-q [paper][paper-atari])
 
 <a name="5"></a>
 5. design own architectures and reward fct
