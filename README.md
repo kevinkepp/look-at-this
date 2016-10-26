@@ -1,34 +1,6 @@
 # Robotics Project Plan - Look at this
 by Kevin Kepp and Philipp Braunhart
 
-## Monday agenda
-
-- shortly present the problem
-- what is our plan
-
-## Current TODOs
-| TODOs | Kevin | Philipp|
-|:---|:---:|:---:|
-|making project plan|X|X|
-|discussing plan with Roberto & Manuel|X|X|
-|setting up github|X|X|
-|setting up weekly live google doc|X|X|
-|look at q-learning (wiki)|O|O|
-|[reading paper saccadic][paper-saccadic]|-|O|
-|[reading paper ent-to-end][paper-end2end]|O|-|
-|[reading paper learning state rep][paper-learn-srep]|-|O|
-|[reading paper deepmind atari][paper-atari]|O|O|
-|install theano, lasagne, caffe-recipes and test them|O|O|
-|[deeplearning tutorial][tutorial-dl]|O|O|
-|[Reinf. Learn tutorial][tutorial-rf]|O|O|
-|[lasagne tutorial][tutorial-lasagne]|O|O|
-|[getting to know caffe modelZoo][caffe-modelzoo]|O|O|
-|[extract caffe model to lasagne][howto-caffe-model-to-lasagne]|O|O|
-|think about mvp|O|O|
-
-<for easy usage:
-|nicetext|O|O|>
-
 ## Milestones
 
 <a name="1"></a>
@@ -90,7 +62,7 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 
 |weeks|until|milestone|outcome (problems, solutions)|
 |:---|:---|---|---|
-|1|31.10.|[1](#1) & [2](#2) | |
+|[1][w1]|31.10.|[1](#1) & [2](#2) | |
 |2|07.11.| [3](#3) | |
 |3|14.11.| [4](#4) | |
 |4|21.11.| [5](#5) | |
@@ -109,20 +81,4 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 |16|20.02.| | |
 
 <reference area>
- [paper-end2end]: https://arxiv.org/abs/1504.00702
- [paper-learn-srep]: http://www.robotics.tu-berlin.de/fileadmin/fg170/Publikationen_pdf/Jonschkowski-15-AURO.pdf
- [paper-saccadic]: https://arxiv.org/pdf/1610.06492v1.pdf
- [paper-atari]: https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
- [tutorial-rf]: http://karpathy.github.io/2016/05/31/rl/
- [tutorial-lasagne]: http://lasagne.readthedocs.io/en/latest/user/tutorial.html
- [tutorial-dl]: http://deeplearning.net/tutorial/
- [howto-caffe-model-to-lasagne]: https://github.com/Lasagne/Recipes/blob/master/examples/Using%20a%20Caffe%20Pretrained%20Network%20-%20CIFAR10.ipynb
- [caffe-modelzoo]: https://github.com/BVLC/caffe/wiki/Model-Zoo
-
-## cheatsheet area
-
-|TODO signals| description|
-|:---:|---|
-| O | open |
-| X | done |
-| - | not for me|
+ [w1]: https://docs.google.com/document/d/1s0kd8WtWGTmd1UVXTkrfDW2UO5CTqzqcIwnjeDxQePM/edit?usp=sharing
