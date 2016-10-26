@@ -8,7 +8,7 @@ by Kevin Kepp and Philipp Braunhart
 
 ## Current TODOs
 | TODOs | Kevin | Philipp|
-|:-|:-:|:-:|
+|:---|:---:|:---:|
 |making project plan|X|X|
 |discussing plan with Roberto & Manuel|X|X|
 |setting up github|O|O|
@@ -32,23 +32,23 @@ by Kevin Kepp and Philipp Braunhart
 ## Milestones
 
 <a name="1"></a>
-1. Make a solid plan
-1.1. plan together
-1.2. discuss plan with Manuel and Roberto
+1. Make a solid plan 
+  1. plan together
+  2. discuss plan with Manuel and Roberto
 
 <a name="2"></a>
 2. Get Acquainted with the material
-2.1. read some papers (later some more)
-2.2. install python frameworks (caffee,lasagne,...) and test some toyexamples
-2.3. do tutorials for further knowledge
-2.4. gather first ideas to solve the problem
+  1. read some papers (later some more)
+  2. install python frameworks (caffee,lasagne,...) and test some toyexamples
+  3. do tutorials for further knowledge
+  4. gather first ideas to solve the problem
 
 <a name="3"></a>
 3. Write first simple simulator (should be extendable from 3x3 to more)
-3.1. agree on structure of the simulator so both know how to use it (class,methods,...)
-3.2. actually write it
-3.3. generate ground truth
-3.4. test it with simple tests
+  1. agree on structure of the simulator so both know how to use it (class,methods,...)
+  2. actually write it
+  3. generate ground truth
+  4. test it with simple tests
 
 - either position or velocities for motor command unit
 - 1st design simple (without ros, then with ros) (big image - cut out region)
@@ -56,36 +56,35 @@ by Kevin Kepp and Philipp Braunhart
 
 <a name="4"></a>
 4. apply first small RL & perhaps NN to simulation (seperately or as one)
-4.1. formulate/take given reward fct.
-4.2. try existing architectures
+  1. formulate/take given reward fct.
+  2. try existing architectures
 
 <a name="5"></a>
 5. design own architectures and reward fct
-5.1. think of own architectures or ways to improve existing ones (justify why to choose this)
-5.2. think about applying knowledge from the papers ([learning state representations][paper-learn-srep])
+  1. think of own architectures or ways to improve existing ones (justify why to choose this)
+  2. think about applying knowledge from the papers ([learning state representations][paper-learn-srep])
 
 <a name="6"></a>
 6. apply and test own architecture and compare it to others
-6.1. apply our designed models on toy examples to verify
-6.2. apply to bigger problems (bigger image in simulator)
-6.3. compare performance in comparison to other methods
+  1. apply our designed models on toy examples to verify
+  2. apply to bigger problems (bigger image in simulator)
+  3. compare performance in comparison to other methods
 
 <a name="7"></a>
 7. get out of simulation into the real game
-7.1. get to know the apis of the camera and robot control
-7.2. Test apis (get image, move camera/robot)
-7.3. Be able to process camera input automatically in a meaningful way
+  1. get to know the apis of the camera and robot control
+  2. Test apis (get image, move camera/robot)
+  3. Be able to process camera input automatically in a meaningful way
 
 <a name="8"></a>
 8. Robot is not moving, but camera focuses on some given object
-8.1. apply methods (ours and given) on some easy object (e.g. white paper with big red dot) and compare results (think of reasons why one is better)
-8.2. apply on some sophisticated object (e.g. face) and compare results (think of reasons why one is better)
-
+  1. apply methods (ours and given) on some easy object (e.g. white paper with big red dot) and compare results (think of reasons why one is better)
+  2. apply on some sophisticated object (e.g. face) and compare results (think of reasons why one is better)
 
 <a name="9"></a>
 9. Robot moves through lab and focuses view on some given object
-9.1 use better method to implement with movement of robot through the lab (adding more output neurons)
-9.2. test the limits of this
+  1 use better method to implement with movement of robot through the lab (adding more output neurons)
+  2. test the limits of this
 
 optional:
 
@@ -94,7 +93,7 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 ## Timeline
 
 |weeks|until|milestone|outcome (problems, solutions)|
-|:-|:-|-|-|
+|:---|:---|---|---|
 |1|31.10.|[1](#1) & [2](#2) | |
 |2|07.11.| [3](#3) | |
 |3|14.11.| [4](#4) | |
@@ -127,7 +126,7 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 ## cheatsheet area
 
 |TODO signals| description|
-|:-:|-|
+|:---:|---|
 | O | open |
 | X | done |
 | - | not for me|
