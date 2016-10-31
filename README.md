@@ -75,7 +75,7 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 |weeks|until|milestone|outcome (problems, solutions)|
 |:---|:---|---|---|
 |[1][w1]|31.10.|[1](#1) & [2](#2) | |
-|2|07.11.| [3](#3) | |
+|[2][w2]|07.11.| [3](#3) | |
 |3|14.11.| [4](#4) | |
 |4|21.11.| [5](#5) | |
 |5|28.11.| [6](#6) | |
@@ -97,4 +97,5 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 
 <reference area>
  [w1]: https://docs.google.com/document/d/1s0kd8WtWGTmd1UVXTkrfDW2UO5CTqzqcIwnjeDxQePM/edit?usp=sharing
+ [w2]: https://docs.google.com/document/d/1At0JQWX5_SSrzfxFpIgsBHiTF7t6Hokyu2rLuFqJhLI/edit?usp=sharing
  [literature]: https://docs.google.com/document/d/1RUpfMoQ90NK3uj2vxTj5zgKUpwJE3qYCr9V3MQ439X0/edit?usp=sharing
