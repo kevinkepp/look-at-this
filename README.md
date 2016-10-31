@@ -1,5 +1,17 @@
 # Robotics Project Plan - Look at this
 by Kevin Kepp and Philipp Braunhart
+supervising tutors: Manuel Baum and Roberto Martín-Martín
+
+## Description
+
+Your task is to make a robot find and look at target image patches in  its field of view. The robot is supposed to solve this problem by learning a direct mapping from images to the movement of its neck-joints. This mapping should be implemented as a neural network and you can explore supervised and reinforcement learning methods to train it. If you finish quickly, we can possibly extend this project to a camera that is mounted on a robot arm, giving you way more degrees of freedom to control. (Background: computer vision, machine learning, c/c++ or python).
+
+#### Problem Definition
+Input: Images
+Desired location of the image we want to center (we will change this by the activation of another DNN that detects the patch we want to find)
+
+Output:
+Motor commands (2 dimensional)
 
 ## Milestones
 
