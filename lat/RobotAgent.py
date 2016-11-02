@@ -11,8 +11,8 @@ class Actions(Enum):
 
 # abstract class for robot agent
 class RobotAgent(metaclass=ABCMeta):
-
 	# choose action based on current state
+	# return None means abort
 	@abstractmethod
 	def choose_action(self, curr_state):
 		pass
@@ -22,4 +22,3 @@ class RobotAgent(metaclass=ABCMeta):
 	@abstractmethod
 	def incorporate_reward(self, old_state, action, new_state, value):
 		pass
-

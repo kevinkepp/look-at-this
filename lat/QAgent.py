@@ -18,34 +18,33 @@ class QLearningAgent(RobotAgent):
 		return Actions
 
 	def q_values(self, state):
-		hs = hash(state)
-		if hs not in self.exp:
-			self.exp[hs] = {}
+		state_str = str(state)
+		if state_str not in self.exp:
+			self.exp[state_str] = {}
 		for action in self.applicable_actions(state):
-			ha = hash(action)
-			if ha not in self.exp[hs]:
-				self.exp[hs][ha] = self.q_init(state, action)
-		return self.exp[hs]
+			if action not in self.exp[state_str]:
+				self.exp[state_str][action] = self.q_init(state, action)
+		return self.exp[state_str]
 
 	def q_value(self, state, action):
 		return self.q_values(state)[action]
 
 	def max_q_value(self, state):
 		qs = self.q_values(state)
-		return max(qs, key=qs.get)
+		q_max = max(qs, key=qs.get)
+		return q_max, qs[q_max]
 
 	def update_q(self, old_state, action, value):
-		hs = hash(old_state)
-		ha = hash(action)
-		self.exp[hs][ha] = value
+		state_str = str(old_state)
+		self.exp[state_str][action] = value
 
 	def choose_action(self, curr_state):
-		return self.max_q_value(curr_state)
+		return self.max_q_value(curr_state)[0]
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
 		q_old = self.q_value(old_state, action)
 		# get max value of resulting state
-		q_max = self.max_q_value(new_state) if new_state is not None else 0.
+		q_max = self.max_q_value(new_state)[1] if new_state is not None else 0.
 		# update experience
 		q_old += self.alpha * (reward + self.gamma * q_max - q_old)
 		self.update_q(old_state, action, q_old)
