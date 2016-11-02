@@ -37,10 +37,7 @@ class Simulator(Environment):
 
 	# is out of bounds
 	def is_oob(self, state):
-		# locate target
-		pos = np.where(state == self.TARGET)
-		# if target invisible then oob
-		return len(pos[0]) == 0
+		return np.sum(self.state) == 0
 
 	def get_middle(self):
 		mid = int(np.floor(self.grid_size / 2))
@@ -48,7 +45,7 @@ class Simulator(Environment):
 
 	def is_success(self):
 		x, y = self.get_middle()
-		return self.state is not None and np.isclose(self.state[x, y], self.TARGET)
+		return self.state is not None and self.state[x, y] == self.TARGET
 
 	def run(self, log=False):
 		target_pos = self.rnd_pos_except_center()

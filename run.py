@@ -7,11 +7,12 @@ from lat.QAgent import QLearningAgent
 from lat.Simulator import Simulator
 
 ALPHA = 1  # optimal for deterministic env
-GAMMA = 0.9  # high for long history, but with >= 1 action values may diverge
-MAX_STEPS = 25
-GRID_SIZE = 5
+GAMMA = 0.9  # high for long history, but with >= 1 action values might diverge
+GRID_SIZE = 20
+MAX_STEPS = pow(GRID_SIZE, 1.5)
+
 Q_INIT = lambda state, action: random()
-EPOCHS = 200
+EPOCHS = 1000
 
 agent = QLearningAgent(ALPHA, GAMMA, Q_INIT)
 env = Simulator(agent, MAX_STEPS, GRID_SIZE)
