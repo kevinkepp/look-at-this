@@ -1,6 +1,5 @@
 from lat.QAgent import QLearningAgent
 from lat.RobotAgent import Actions
-import sys, tty, termios
 import readchar
 
 
