@@ -1,33 +1,17 @@
 # Robotics Project Plan - Look at this
 by Kevin Kepp and Philipp Braunhart
+supervising tutors: Manuel Baum and Roberto Martín-Martín
 
-## Monday agenda
+## Description
 
-- shortly present the problem
-- what is our plan
+Your task is to make a robot find and look at target image patches in  its field of view. The robot is supposed to solve this problem by learning a direct mapping from images to the movement of its neck-joints. This mapping should be implemented as a neural network and you can explore supervised and reinforcement learning methods to train it. If you finish quickly, we can possibly extend this project to a camera that is mounted on a robot arm, giving you way more degrees of freedom to control. (Background: computer vision, machine learning, c/c++ or python).
 
-## Current TODOs
-| TODOs | Kevin | Philipp|
-|:---|:---:|:---:|
-|making project plan|X|X|
-|discussing plan with Roberto & Manuel|X|X|
-|setting up github|O|O|
-|setting up weekly live google doc|O|O|
-|look at q-learning (wiki)|O|O|
-|[reading paper saccadic][paper-saccadic]|-|O|
-|[reading paper ent-to-end][paper-end2end]|O|-|
-|[reading paper learning state rep][paper-learn-srep]|-|O|
-|[reading paper deepmind atari][paper-atari]|O|O|
-|install theano, lasagne, caffe-recipes and test them|O|O|
-|[deeplearning tutorial][tutorial-dl]|O|O|
-|[Reinf. Learn tutorial][tutorial-rf]|O|O|
-|[lasagne tutorial][tutorial-lasagne]|O|O|
-|[getting to know caffe modelZoo][caffe-modelzoo]|O|O|
-|[extract caffe model to lasagne][howto-caffe-model-to-lasagne]|O|O|
-|think about mvp|O|O|
+#### Problem Definition
+Input: Images
+Desired location of the image we want to center (we will change this by the activation of another DNN that detects the patch we want to find)
 
-<for easy usage:
-|nicetext|O|O|>
+Output:
+Motor commands (2 dimensional)
 
 ## Milestones
 
@@ -50,14 +34,10 @@ by Kevin Kepp and Philipp Braunhart
   3. generate ground truth
   4. test it with simple tests
 
-- either position or velocities for motor command unit
-- 1st design simple (without ros, then with ros) (big image - cut out region)
-- 2nd design it close to the real system (limits, motor commands, image)
-
 <a name="4"></a>
 4. apply first small RL & perhaps NN to simulation (seperately or as one)
   1. formulate/take given reward fct.
-  2. try existing architectures
+  2. try existing architectures (e.g. last layer of deep-q [paper][paper-atari])
 
 <a name="5"></a>
 5. design own architectures and reward fct
@@ -94,8 +74,8 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 
 |weeks|until|milestone|outcome (problems, solutions)|
 |:---|:---|---|---|
-|1|31.10.|[1](#1) & [2](#2) | |
-|2|07.11.| [3](#3) | |
+|[1][w1]|31.10.|[1](#1) & [2](#2) | |
+|[2][w2]|07.11.| [3](#3) | |
 |3|14.11.| [4](#4) | |
 |4|21.11.| [5](#5) | |
 |5|28.11.| [6](#6) | |
@@ -112,21 +92,10 @@ Z. Extend it to make the robot learn how to get the most information out of surr
 |16|13.02.| | |
 |16|20.02.| | |
 
+
+[Our literature][literature]
+
 <reference area>
- [paper-end2end]: https://arxiv.org/abs/1504.00702
- [paper-learn-srep]: http://www.robotics.tu-berlin.de/fileadmin/fg170/Publikationen_pdf/Jonschkowski-15-AURO.pdf
- [paper-saccadic]: https://arxiv.org/pdf/1610.06492v1.pdf
- [paper-atari]: https://storage.googleapis.com/deepmind-data/assets/papers/DeepMindNature14236Paper.pdf
- [tutorial-rf]: http://karpathy.github.io/2016/05/31/rl/
- [tutorial-lasagne]: http://lasagne.readthedocs.io/en/latest/user/tutorial.html
- [tutorial-dl]: http://deeplearning.net/tutorial/
- [howto-caffe-model-to-lasagne]: https://github.com/Lasagne/Recipes/blob/master/examples/Using%20a%20Caffe%20Pretrained%20Network%20-%20CIFAR10.ipynb
- [caffe-modelzoo]: https://github.com/BVLC/caffe/wiki/Model-Zoo
-
-## cheatsheet area
-
-|TODO signals| description|
-|:---:|---|
-| O | open |
-| X | done |
-| - | not for me|
+ [w1]: https://docs.google.com/document/d/1s0kd8WtWGTmd1UVXTkrfDW2UO5CTqzqcIwnjeDxQePM/edit?usp=sharing
+ [w2]: https://docs.google.com/document/d/1At0JQWX5_SSrzfxFpIgsBHiTF7t6Hokyu2rLuFqJhLI/edit?usp=sharing
+ [literature]: https://docs.google.com/document/d/1RUpfMoQ90NK3uj2vxTj5zgKUpwJE3qYCr9V3MQ439X0/edit?usp=sharing
