@@ -1,7 +1,7 @@
 from lat.RobotAgent import RobotAgent, Actions
 
 
-class QLearningAgent(RobotAgent):
+class QAgent(RobotAgent):
 	# experience
 	exp = {}
 

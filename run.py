@@ -3,7 +3,7 @@ from random import random
 import matplotlib.pyplot as plt
 import numpy as np
 
-from lat.QAgent import QLearningAgent
+from lat.QAgent import QAgent
 from lat.Simulator import Simulator
 
 ALPHA = 1  # optimal for deterministic env
@@ -14,7 +14,7 @@ MAX_STEPS = pow(GRID_SIZE, 1.5)
 Q_INIT = lambda state, action: random()
 EPOCHS = 1000
 
-agent = QLearningAgent(ALPHA, GAMMA, Q_INIT)
+agent = QAgent(ALPHA, GAMMA, Q_INIT)
 env = Simulator(agent, MAX_STEPS, GRID_SIZE)
 
 # train
