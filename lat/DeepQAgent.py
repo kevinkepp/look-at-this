@@ -9,6 +9,8 @@ class DeepQAgent(RobotAgent):
 
 	# gamma: discount factor
 	# epsilon: epsilon-greedy strategy
+	# epsilon: discount function for epsilon
+	# actions_count: number of possible actions
 	# model: estimator for q values
 	def __init__(self, gamma, epsilon, epsilon_update, actions_count, model):
 		self._gamma = gamma

@@ -9,7 +9,7 @@ from lat.Simulator import Simulator, Actions
 from lat.KerasMlpModel import KerasMlpModel
 
 GRID_SIZE = 3
-MAX_STEPS = pow(GRID_SIZE, 2)
+MAX_STEPS = pow(GRID_SIZE, 1.5)
 EPOCHS = 1000
 
 ALPHA = 1  # optimal for deterministic env
@@ -18,7 +18,7 @@ Q_INIT = lambda state, action: random.random()
 q_agent = QAgent(Actions, ALPHA, GAMMA, Q_INIT)
 
 MODEL_IN_LAYER_SIZE = GRID_SIZE * GRID_SIZE
-MODEL_HID_LAYER_SIZES = [20]
+MODEL_HID_LAYER_SIZES = [164, 150]
 ACTIONS_COUNT = len(Actions.all())
 MODEL_OUT_LAYER_SIZE = ACTIONS_COUNT
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
@@ -32,15 +32,14 @@ env = Simulator(deep_q_agent, MAX_STEPS, GRID_SIZE)
 # train
 print("Training " + str(EPOCHS) + " epochs")
 res = env.run(EPOCHS)
-succ = [1 if r else 0 for r in res]
 
 # evaluate
-print("Successful epochs out of last 10: " + str(sum(succ[-10:])))
+print("Successful epochs out of last 10: " + str(sum(res[-10:])))
 batch_size = 5
 batch_count = int(EPOCHS / batch_size)
 batches = []
 for i in range(0, batch_count):
-	percent = sum(succ[i:i + batch_count]) / batch_count * 100.
+	percent = sum(res[i:i + batch_count]) / batch_count * 100.
 	batches.append(percent)
 plt.plot(np.arange(batch_count) * batch_size, batches)
 plt.title("Training {0} epochs (avg over {1} epochs, alpha: {2}, gamma: {3})"

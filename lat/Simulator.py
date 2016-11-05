@@ -1,7 +1,6 @@
 from random import random
 import numpy as np
 from scipy.ndimage.interpolation import shift
-from lat import RobotAgent
 from lat.Environment import Environment
 from enum import Enum
 
@@ -33,15 +32,15 @@ class Simulator(Environment):
 		y = int(random() * self._grid_size)
 		return x, y
 
-	def rnd_pos_except_center(self):
+	def _rnd_pos_except_center(self):
 		pos = self._rnd_pos()
 		mid = np.floor(self._grid_size / 2)
 		if pos == (mid, mid):
-			return self.rnd_pos_except_center()
+			return self._rnd_pos_except_center()
 		else:
 			return pos
 
-	def get_init_state(self, target_pos):
+	def _get_init_state(self, target_pos):
 		x, y = target_pos
 		mat = np.full((self._grid_size, self._grid_size), self.NO_TARGET, np.int)
 		mat[x, y] = self.TARGET
@@ -51,17 +50,17 @@ class Simulator(Environment):
 	def _is_oob(self):
 		return np.sum(self._state) == 0
 
-	def get_middle(self):
+	def _get_middle(self):
 		mid = int(np.floor(self._grid_size / 2))
 		return mid, mid
 
 	def _is_success(self):
-		x, y = self.get_middle()
-		return self._state is not None and self._state[x, y] == self.TARGET
+		x, y = self._get_middle()
+		return self._state[x, y] == self.TARGET
 
-	def run_epoch(self):
-		target_pos = self.rnd_pos_except_center()
-		self._state = self.get_init_state(target_pos)
+	def _run_epoch(self):
+		target_pos = self._rnd_pos_except_center()
+		self._state = self._get_init_state(target_pos)
 		steps = 0
 		while steps < self._max_steps:
 			action = self._agent.choose_action(self._state)
@@ -77,16 +76,16 @@ class Simulator(Environment):
 			reward = 10 if success else -1 if not oob else -10
 			self._agent.incorporate_reward(old_state, action, self._state, reward)
 			if success:
-				return True
+				return 1
 			if oob:
-				return False
-		return False
+				return 0
+		return 0
 
 	def run(self, epochs=1):
 		res = []
 		for i in range(epochs):
-			print("Epoch " + str(i))
-			r = self.run_epoch()
+			r = self._run_epoch()
+			print("Epoch " + str(i) + ": " + str(r))
 			res.append(r)
 			self._agent.new_epoch()
 		return res
@@ -94,7 +93,7 @@ class Simulator(Environment):
 	def get_current_state(self):
 		return self._state
 
-	def shift_state(self, action):
+	def _shift_state(self, action):
 		if action == Actions.up:
 			return shift(self._state, [-1, 0], cval=0)
 		elif action == Actions.down:
@@ -105,4 +104,4 @@ class Simulator(Environment):
 			return shift(self._state, [0, 1], cval=0)
 
 	def execute_action(self, action):
-		self._state = np.rint(self.shift_state(action)).astype(int)
+		self._state = np.rint(self._shift_state(action)).astype(int)

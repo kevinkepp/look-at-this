@@ -36,12 +36,13 @@ class QAgent(RobotAgent):
 		self.exp[state_str][action] = value
 
 	def choose_action(self, curr_state):
+		# get index of maximum q value for current state
 		return self.max_q_value(curr_state)[0]
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
 		q_old = self.q_value(old_state, action)
-		# get max value of resulting state
-		q_max = self.max_q_value(new_state)[1] if new_state is not None else 0.
+		# get max q value of new state
+		q_max = self.max_q_value(new_state)[1]
 		# update experience
 		q_old += self._alpha * (reward + self._gamma * q_max - q_old)
 		self.update_q(old_state, action, q_old)
