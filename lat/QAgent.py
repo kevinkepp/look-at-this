@@ -1,4 +1,4 @@
-from lat.RobotAgent import RobotAgent, Actions
+from lat.RobotAgent import RobotAgent
 
 
 class QAgent(RobotAgent):
@@ -8,22 +8,19 @@ class QAgent(RobotAgent):
 	# alpha: learning rate
 	# gamma: discount factor
 	# q_init: initializer function for q values
-	def __init__(self, alpha, gamma, q_init):
-		self.alpha = alpha
-		self.gamma = gamma
-		self.q_init = q_init
-
-	def applicable_actions(self, curr_state):
-		# applicable actions are all robot actions (for now)
-		return Actions
+	def __init__(self, actions, alpha, gamma, q_init):
+		self._actions = actions
+		self._alpha = alpha
+		self._gamma = gamma
+		self._q_init = q_init
 
 	def q_values(self, state):
 		state_str = str(state)
 		if state_str not in self.exp:
 			self.exp[state_str] = {}
-		for action in self.applicable_actions(state):
+		for action in self._actions:
 			if action not in self.exp[state_str]:
-				self.exp[state_str][action] = self.q_init(state, action)
+				self.exp[state_str][action] = self._q_init(state, action)
 		return self.exp[state_str]
 
 	def q_value(self, state, action):
@@ -46,5 +43,8 @@ class QAgent(RobotAgent):
 		# get max value of resulting state
 		q_max = self.max_q_value(new_state)[1] if new_state is not None else 0.
 		# update experience
-		q_old += self.alpha * (reward + self.gamma * q_max - q_old)
+		q_old += self._alpha * (reward + self._gamma * q_max - q_old)
 		self.update_q(old_state, action, q_old)
+
+	def new_epoch(self):
+		pass

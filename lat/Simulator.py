@@ -3,6 +3,18 @@ import numpy as np
 from scipy.ndimage.interpolation import shift
 from lat import RobotAgent
 from lat.Environment import Environment
+from enum import Enum
+
+
+class Actions(Enum):
+	up = 0
+	down = 1
+	left = 2
+	right = 3
+
+	@staticmethod
+	def all():
+		return [a for a in Actions]
 
 
 class Simulator(Environment):
@@ -11,19 +23,19 @@ class Simulator(Environment):
 
 	# agent is RobotAgent
 	def __init__(self, agent, max_steps, grid_size):
-		self.agent = agent
-		self.max_steps = max_steps
-		self.grid_size = grid_size
-		self.state = None
+		self._agent = agent
+		self._max_steps = max_steps
+		self._grid_size = grid_size
+		self._state = None
 
-	def rnd_pos(self):
-		x = int(random() * self.grid_size)
-		y = int(random() * self.grid_size)
+	def _rnd_pos(self):
+		x = int(random() * self._grid_size)
+		y = int(random() * self._grid_size)
 		return x, y
 
 	def rnd_pos_except_center(self):
-		pos = self.rnd_pos()
-		mid = np.floor(self.grid_size / 2)
+		pos = self._rnd_pos()
+		mid = np.floor(self._grid_size / 2)
 		if pos == (mid, mid):
 			return self.rnd_pos_except_center()
 		else:
@@ -31,56 +43,65 @@ class Simulator(Environment):
 
 	def get_init_state(self, target_pos):
 		x, y = target_pos
-		mat = np.full((self.grid_size, self.grid_size), self.NO_TARGET, np.int)
+		mat = np.full((self._grid_size, self._grid_size), self.NO_TARGET, np.int)
 		mat[x, y] = self.TARGET
 		return mat
 
 	# is out of bounds
-	def is_oob(self, state):
-		return np.sum(self.state) == 0
+	def _is_oob(self):
+		return np.sum(self._state) == 0
 
 	def get_middle(self):
-		mid = int(np.floor(self.grid_size / 2))
+		mid = int(np.floor(self._grid_size / 2))
 		return mid, mid
 
-	def is_success(self):
+	def _is_success(self):
 		x, y = self.get_middle()
-		return self.state is not None and self.state[x, y] == self.TARGET
+		return self._state is not None and self._state[x, y] == self.TARGET
 
-	def run(self, log=False):
+	def run_epoch(self):
 		target_pos = self.rnd_pos_except_center()
-		self.state = self.get_init_state(target_pos)
+		self._state = self.get_init_state(target_pos)
 		steps = 0
-		while steps < self.max_steps:
-			old_state = self.state
-			action = self.agent.choose_action(self.state)
+		while steps < self._max_steps:
+			old_state = self._state
+			action = self._agent.choose_action(self._state)
 			if action is None:
 				return False
 			# update state
 			self.execute_action(action)
-			success = self.is_success()
-			reward = 1 if success else 0
-			self.agent.incorporate_reward(old_state, action, self.state, reward)
+			success = self._is_success()
+			oob = self._is_oob()
+			# 1 for success, -1 for out of bounds, 0 else (neutral)
+			reward = 1 if success else 0 if not oob else -1
+			self._agent.incorporate_reward(old_state, action, self._state, reward)
 			if success:
 				return True
-			if self.state is None:
+			if oob:
 				return False
 		return False
 
+	def run(self, epochs=1):
+		res = []
+		for i in range(epochs):
+			print("Epoch " + str(i))
+			r = self.run_epoch()
+			res.append(r)
+			self._agent.new_epoch()
+		return res
+
 	def get_current_state(self):
-		return self.state
+		return self._state
 
 	def shift_state(self, action):
-		if action == RobotAgent.Actions.up:
-			return shift(self.state, [-1, 0], cval=0)
-		elif action == RobotAgent.Actions.down:
-			return shift(self.state, [1, 0], cval=0)
-		elif action == RobotAgent.Actions.left:
-			return shift(self.state, [0, -1], cval=0)
+		if action == Actions.up:
+			return shift(self._state, [-1, 0], cval=0)
+		elif action == Actions.down:
+			return shift(self._state, [1, 0], cval=0)
+		elif action == Actions.left:
+			return shift(self._state, [0, -1], cval=0)
 		else:
-			return shift(self.state, [0, 1], cval=0)
+			return shift(self._state, [0, 1], cval=0)
 
 	def execute_action(self, action):
-		new_state = np.rint(self.shift_state(action)).astype(int)
-		# only accept new state if not out of bounds
-		self.state = new_state if not self.is_oob(new_state) else None
+		self._state = np.rint(self.shift_state(action)).astype(int)
