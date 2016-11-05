@@ -64,16 +64,17 @@ class Simulator(Environment):
 		self._state = self.get_init_state(target_pos)
 		steps = 0
 		while steps < self._max_steps:
-			old_state = self._state
 			action = self._agent.choose_action(self._state)
 			if action is None:
 				return False
 			# update state
+			old_state = self._state
 			self.execute_action(action)
+			# check if success or out of bounds (failure)
 			success = self._is_success()
 			oob = self._is_oob()
-			# 1 for success, -1 for out of bounds, 0 else (neutral)
-			reward = 1 if success else 0 if not oob else -1
+			# reward success, failure and neutral state
+			reward = 10 if success else -1 if not oob else -10
 			self._agent.incorporate_reward(old_state, action, self._state, reward)
 			if success:
 				return True
