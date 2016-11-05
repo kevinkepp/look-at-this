@@ -65,7 +65,7 @@ class Simulator(Environment):
 		while steps < self._max_steps:
 			action = self._agent.choose_action(self._state)
 			if action is None:
-				return False
+				return 0
 			# update state
 			old_state = self._state
 			self.execute_action(action)
@@ -73,7 +73,7 @@ class Simulator(Environment):
 			success = self._is_success()
 			oob = self._is_oob()
 			# reward success, failure and neutral state
-			reward = 10 if success else -1 if not oob else -10
+			reward = 100 if success else -1 if not oob else -10
 			self._agent.incorporate_reward(old_state, action, self._state, reward)
 			if success:
 				return 1
@@ -83,9 +83,11 @@ class Simulator(Environment):
 
 	def run(self, epochs=1):
 		res = []
+		print_steps = 10
 		for i in range(epochs):
 			r = self._run_epoch()
-			print("Epoch " + str(i) + ": " + str(r))
+			if i % int(epochs / print_steps) == 0:
+				print("Epoch {0}/{1}".format(i, epochs))
 			res.append(r)
 			self._agent.new_epoch()
 		return res

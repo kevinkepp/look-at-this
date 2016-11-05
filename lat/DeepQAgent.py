@@ -7,16 +7,16 @@ class DeepQAgent(RobotAgent):
 	_qs_old = None
 	_qs_old_state = None
 
+	# actions: possible actions
 	# gamma: discount factor
 	# epsilon: epsilon-greedy strategy
 	# epsilon: discount function for epsilon
-	# actions_count: number of possible actions
 	# model: estimator for q values
-	def __init__(self, gamma, epsilon, epsilon_update, actions_count, model):
+	def __init__(self, actions, gamma, epsilon, epsilon_update, model):
+		self._actions = actions
 		self._gamma = gamma
 		self._epsilon = epsilon
 		self._epsilon_update = epsilon_update
-		self._actions_count = actions_count
 		self._model = model
 
 	def choose_action(self, curr_state):
@@ -25,17 +25,17 @@ class DeepQAgent(RobotAgent):
 		self._qs_old = qs
 		self._qs_old_state = curr_state
 		if random.random() < self._epsilon:
-			action = np.random.randint(0, self._actions_count)
-			print("Chosen action randomly")
+			ai = np.random.randint(0, len(self._actions))
+			# print("Chosen action randomly")
 		else:
-			action = np.argmax(qs)
-			print("Chosen action based on qs: " + str(qs))
-		return action
+			ai = np.argmax(qs)
+			# print("Chosen action based on qs: {0}".format(qs))
+		return self._actions[ai]
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
 		# retrieved stored qs for old state or re-predict them
 		qs_old = self._qs_old if np.array_equal(self._qs_old_state, old_state) else self._model.predict_qs(old_state)
-		target_qs = np.zeros((1, self._actions_count))
+		target_qs = np.zeros((1, len(self._actions)))
 		target_qs[:] = qs_old[:]
 		qs_new = self._model.predict_qs(new_state)
 		q_max_new = np.max(qs_new)
@@ -43,10 +43,11 @@ class DeepQAgent(RobotAgent):
 			update = reward + (self._gamma * q_max_new)
 		else:  # terminal
 			update = reward
-		target_qs[0, action] = update
+		ai = self._actions.index(action)
+		target_qs[0, ai] = update
 		self._model.update_qs(old_state, target_qs)
-		print("Incorporated reward")
+		# print("Incorporated reward")
 
 	def new_epoch(self):
 		self._epsilon = self._epsilon_update(self._epsilon)
-		print("Updated epsilon: " + str(self._epsilon))
+		# print("Updated epsilon: {0}".format(self._epsilon))

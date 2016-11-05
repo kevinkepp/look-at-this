@@ -1,14 +1,14 @@
-from lat.QAgent import QLearningAgent
-from lat.RobotAgent import Actions
+from lat.QAgent import QAgent
+from lat.Simulator import Actions
 import readchar
 
 
-class KeyboardQAgent(QLearningAgent):
+class KeyboardQAgent(QAgent):
 	# alpha: learning rate
 	# gamma: discount factor
 	# q_init: initializer function for q values
-	def __init__(self, alpha, gamma, q_init):
-		super(KeyboardQAgent, self).__init__(alpha, gamma, q_init)
+	def __init__(self, actions, alpha, gamma, q_init):
+		super(KeyboardQAgent, self).__init__(actions, alpha, gamma, q_init)
 
 	@staticmethod
 	def key_to_action(k):
