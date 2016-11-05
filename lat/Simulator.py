@@ -24,7 +24,7 @@ class Simulator(Environment):
 			print("Redefining dimension n to be ",n, "to have a middle pixel")
 		if m%2 == 0:
 			m += 1
-			print("Redefining dimension n to be ",m, "to have a middle pixel")
+			print("Redefining dimension m to be ",m, "to have a middle pixel")
 		return (n,m)
 
 
@@ -42,14 +42,13 @@ class Simulator(Environment):
 
 	def run(self, mode="test", visible=False):
 		self.state = self.get_rand_matrix_state(self.grid_dims)
-		print(self.state)
+		if visible: print(self.state)
 		is_training = self.agent.is_in_training_mode()
 		steps = 0
 		while steps < self.max_steps and not self.at_goal(self.state):
 			steps += 1
 			self.old_state = copy(self.state)
 			action = self.agent.choose_action(self.state)
-			print(action)
 			self.execute_action(action)
 			
 			if is_training:
@@ -88,8 +87,6 @@ class Simulator(Environment):
 	def shift_image(self,direction):
 
 		if Actions.up == direction:
-
-			print(direction)
 
 			(i,j) = self.get_goal_loc(self.state)
 			self.state[i,j] = 0
