@@ -32,3 +32,7 @@ class KeyboardAgent(RobotAgent):
 	# return if the agent currently is in training mode or not
 	def is_in_training_mode(self):
 		return self.trainingmode
+
+	# change the training mode
+	def set_training_mode(self, in_training):
+		self.trainingmode = in_training
