@@ -5,7 +5,6 @@ import numpy as np
 # simplest version, returning 10 if at goal, -10 if goal lost from focus, 0 otherwise
 class RewardAtTheEnd(Reward):
 
-
 	def get_reward(self, old_state, new_state, lost=False):
 		if lost:
 			return -10
@@ -36,7 +35,6 @@ class RewardAtTheEnd(Reward):
 
 # linear version, returning 10 if at goal, -10 if goal lost from focus, 1 if decreasing distane to goal, -1 if distance increases
 class LinearReward(RewardAtTheEnd):
-
 
 	def get_reward(self, old_state, new_state, lost=False):
 		if lost:

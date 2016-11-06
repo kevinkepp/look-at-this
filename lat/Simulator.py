@@ -36,6 +36,11 @@ class SimpleMatrixSimulator(Environment):
 		state = np.zeros(dims)
 		x = np.random.randint(0,dims[0])
 		y = np.random.randint(0,dims[1])
+		# avoid generation in the center
+		if  dims[0] != 1 	and x == dims[0]//2:
+			x += np.random.choice([-1,1],1)[0]
+		if dims[1] != 1 	and y == dims[1]//2:
+			y += np.random.choice([-1,1],1)[0]
 		state[x,y] = 1
 		return state
 
