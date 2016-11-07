@@ -4,7 +4,7 @@ from lat.DeepQAgent import DeepQAgent
 from lat.Evaluator import Evaluator
 from lat.QAgent import QAgent
 from lat.RandomAgent import RandomAgent
-from lat.Simulator import Simulator, Actions
+from lat.OldSimulator import Simulator, Actions
 from lat.KerasMlpModel import KerasMlpModel
 
 

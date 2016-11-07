@@ -1,5 +1,5 @@
 from lat.QAgent import QAgent
-from lat.Simulator import Actions
+from lat.OldSimulator import Actions
 import readchar
 
 
@@ -26,6 +26,7 @@ class KeyboardQAgent(QAgent):
 	# overwrite
 	def choose_action(self, curr_state):
 		print(curr_state)
+		print("Press arrow key")
 		key = readchar.readkey()
 		return self.key_to_action(key)
 
