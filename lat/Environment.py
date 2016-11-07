@@ -2,8 +2,6 @@ from abc import abstractmethod, ABCMeta
 
 
 class Environment(metaclass=ABCMeta):
-
-
 	@abstractmethod
 	def run(self):
 		pass
