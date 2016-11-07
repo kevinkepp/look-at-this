@@ -1,8 +1,19 @@
 from lat.Environment import Environment
-from lat.RobotAgent import Actions
 from copy import copy
 
+from enum import Enum
 import numpy as np
+
+
+class Actions(Enum):
+	up = 0
+	down = 1
+	left = 2
+	right = 3
+
+	@staticmethod
+	def all():
+		return [a for a in Actions]
 
 
 class SimpleMatrixSimulator(Environment):
