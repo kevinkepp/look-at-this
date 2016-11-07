@@ -1,4 +1,5 @@
-from lat.RobotAgent import RobotAgent, Actions
+from lat.RobotAgent import RobotAgent
+from lat.Simulator import Actions
 
 
 class KeyboardAgent(RobotAgent):
@@ -36,3 +37,6 @@ class KeyboardAgent(RobotAgent):
 	# change the training mode
 	def set_training_mode(self, in_training):
 		self.trainingmode = in_training
+
+	def new_epoch(self):
+		pass
