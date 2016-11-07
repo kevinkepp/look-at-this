@@ -1,5 +1,5 @@
-from Environment import Environment
-from RobotAgent import Actions
+from lat.Environment import Environment
+from lat.RobotAgent import Actions
 from copy import copy
 
 import numpy as np
@@ -50,10 +50,9 @@ class SimpleMatrixSimulator(Environment):
 		pass
 
 
-	def run(self, mode="test", visible=False):
+	def run(self, mode="test", visible=False, trainingmode=False):
 		self.state = self.get_rand_matrix_state(self.grid_dims)
 		if visible: print(self.state)
-		is_training = self.agent.is_in_training_mode()
 		steps = 0
 		while not self.lost_goal and steps < self.max_steps and not self.at_goal(self.state):
 			steps += 1
@@ -61,7 +60,7 @@ class SimpleMatrixSimulator(Environment):
 			action = self.agent.choose_action(self.state)
 			self.execute_action(action)
 			
-			if is_training:
+			if trainingmode:
 				#TODO get a reward and send it to the agent, which stores reward, action, state and new state 
 				# to later use it for SGD, experience replay ,... just some way of training 
 				print("reward is ",self.reward.get_reward(self.old_state, self.state, self.lost_goal))

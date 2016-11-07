@@ -1,4 +1,4 @@
-from RobotAgent import RobotAgent, Actions
+from lat.RobotAgent import RobotAgent, Actions
 
 
 class KeyboardAgent(RobotAgent):

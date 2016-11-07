@@ -1,4 +1,4 @@
-from Reward import Reward
+from lat.Reward import Reward
 import numpy as np
 
 
