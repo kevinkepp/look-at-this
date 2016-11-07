@@ -21,10 +21,11 @@ class Simulator(Environment):
 	TARGET = 1
 
 	# agent is RobotAgent
-	def __init__(self, agent, max_steps, grid_size):
+	def __init__(self, agent, reward, grid_size, max_steps=1e5):
 		self._agent = agent
-		self._max_steps = max_steps
+		self._reward = reward
 		self._grid_size = grid_size
+		self._max_steps = max_steps
 		self._state = None
 
 	def _rnd_pos(self):
@@ -73,7 +74,8 @@ class Simulator(Environment):
 			success = self._is_success()
 			oob = self._is_oob()
 			# reward success, failure and neutral state
-			reward = 100 if success else -1 if not oob else -10
+			# reward = 100 if success else -1 if not oob else -10
+			reward = self._reward.get_reward(old_state, self._state)
 			self._agent.incorporate_reward(old_state, action, self._state, reward)
 			if success:
 				return 1
