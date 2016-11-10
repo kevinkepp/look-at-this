@@ -21,7 +21,7 @@ class Simulator(Environment):
 	TARGET = 1
 
 	# agent is RobotAgent
-	def __init__(self, agent, reward, grid_size, max_steps=1e5):
+	def __init__(self, agent, reward, grid_size, unsupported_grid_size_m=0, max_steps=100, bounded=False):
 		self._agent = agent
 		self._reward = reward
 		self._grid_size = grid_size
@@ -59,7 +59,7 @@ class Simulator(Environment):
 		x, y = self._get_middle()
 		return self._state[x, y] == self.TARGET
 
-	def _run_epoch(self):
+	def _run_epoch(self, trainingmode):
 		target_pos = self._rnd_pos_except_center()
 		self._state = self._get_init_state(target_pos)
 		steps = 0
@@ -70,24 +70,24 @@ class Simulator(Environment):
 			# update state
 			old_state = self._state
 			self.execute_action(action)
+			# calculate and incorporate reward if in trainingmode
+			if trainingmode:
+				reward = self._reward.get_reward(old_state, self._state)
+				self._agent.incorporate_reward(old_state, action, self._state, reward)
 			# check if success or out of bounds (failure)
 			success = self._is_success()
 			oob = self._is_oob()
-			# reward success, failure and neutral state
-			# reward = 100 if success else -1 if not oob else -10
-			reward = self._reward.get_reward(old_state, self._state)
-			self._agent.incorporate_reward(old_state, action, self._state, reward)
 			if success:
 				return 1
 			if oob:
 				return 0
 		return 0
 
-	def run(self, epochs=1):
+	def run(self, epochs=1, trainingmode=False):
 		res = []
 		print_steps = 10
 		for i in range(epochs):
-			r = self._run_epoch()
+			r = self._run_epoch(trainingmode)
 			if i % int(epochs / print_steps) == 0:
 				print("Epoch {0}/{1}".format(i, epochs))
 			res.append(r)

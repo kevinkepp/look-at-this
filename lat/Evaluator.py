@@ -16,7 +16,7 @@ class Evaluator(object):
 
 	def _train(self, env, name):
 		print("Training {0} with {1} epochs".format(name, self._epochs))
-		return env.run(self._epochs)
+		return env.run(self._epochs, trainingmode=True)
 
 	def _pre_visualization(self, window_size):
 		title = "Training over {0} epochs (avg over last {1} epochs".format(self._epochs, window_size)
@@ -38,7 +38,9 @@ class Evaluator(object):
 		scores = []
 		# average over last results
 		for i in range(window_size, len(res)):
-			score = sum(res[i - window_size:i]) / window_size * 100.
+			successes = [r[0] for r in res]
+			steps = [r[1] for r in res]
+			score = sum(successes[i - window_size:i]) / window_size * 100.
 			scores.append(score)
 		# visualize
 		plt.plot(np.arange(window_size, len(res)), scores, label=name)
@@ -47,10 +49,13 @@ class Evaluator(object):
 	def _eval_simple(self, res, name):
 		print("Results {0}: {1}".format(name, res))
 
-	def run(self):
+	# TODO visualize = True does not work because of plotting interference with Simulator
+	# TODO fix by only storing results and plot at the end!
+	def run(self, visualize=False):
 		window_size = self._eval_epoch_avg()
-		visualize = self._epochs >= self._eval_epoch_min
-		self._pre_visualization(window_size)
+		visualize = visualize and self._epochs >= self._eval_epoch_min
+		if visualize:
+			self._pre_visualization(window_size)
 		for env, name in zip(self._envs, self._env_names):
 			res = self._train(env, name)
 			# visualize if enough data

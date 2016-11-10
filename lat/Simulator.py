@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from enum import Enum
 import numpy as np
 import os
-import pylab 
+import pylab
 
 class Actions(Enum):
 	up = 0
@@ -22,7 +22,7 @@ class SimpleMatrixSimulator(Environment):
 	"""simulates an image frame environment for a learning agent"""
 	def __init__(self, agent, reward, grid_n, grid_m=1, orientation=0, max_steps=1000, bounded=True):
 		self.agent = agent
-		self.reward = reward 
+		self.reward = reward
 		self.grid_dims = self.get_proper_dims(grid_n,grid_m)
 		self.orientation = orientation
 		self.max_steps = max_steps
@@ -63,27 +63,47 @@ class SimpleMatrixSimulator(Environment):
 		"""initialize the state to be a zero matrix with a gaussian distribution at a random position """
 		pass
 
-
-	def run(self, mode="test", visible=False, trainingmode=False):
+	def run_epoch(self, visible=False, trainingmode=False):
 		self.state = self.get_rand_matrix_state(self.grid_dims)
-		if visible: 
-			self.all_states = self.state[np.newaxis,:,:] # adds initial state to state list (and with that initializ state list)
-		if visible: print(self.state)
+		self.lost_goal = False
+		if visible:
+			# adds initial state to state list (and with that initializ state list)
+			self.all_states = self.state[np.newaxis, :, :]
+		# if visible:
+			# print(self.state)
 		steps = 0
-		while not self.lost_goal and steps < self.max_steps and not self.at_goal(self.state):
+		while steps < self.max_steps:
 			steps += 1
 			self.old_state = copy(self.state)
 			action = self.agent.choose_action(self.state)
 			self.execute_action(action)
-			
+
 			if trainingmode:
-				#TODO get a reward and send it to the agent, which stores reward, action, state and new state 
-				# to later use it for SGD, experience replay ,... just some way of training 
-				print("reward is ",self.reward.get_reward(self.old_state, self.state, self.lost_goal))
+				reward = self.reward.get_reward(self.old_state, self.state, self.lost_goal)
+				# TODO get a reward and send it to the agent, which stores reward, action, state and new state
+				self.agent.incorporate_reward(self.old_state, action, self.state, reward)
+				# to later use it for SGD, experience replay ,... just some way of training
+				# print("reward is ", reward)
 
 			if visible:
-				self.stepwise_visualize()
-				self.all_states = np.concatenate( (self.all_states,self.state[np.newaxis,:,:]) , axis=0 ) # adds initial state to state list (and with that initializ state list)
+				# self.stepwise_visualize()
+				# adds initial state to state list (and with that initializ state list)
+				self.all_states = np.concatenate((self.all_states, self.state[np.newaxis, :, :]), axis=0)
+
+			if self.lost_goal:
+				return 0, steps
+			elif self.at_goal(self.state):
+				return 1, steps
+		return 0, steps
+
+	def run(self, epochs=1, visible=False, trainingmode=False):
+		res = []
+		for i in range(epochs):
+			r = self.run_epoch(visible, trainingmode)
+			if visible:
+				self.visualize_path("agent_path_" + str(i) + ".png")
+			res.append(r)
+		return res
 
 	def visualize_path(self,agent_path_image_name="agent_path.png"):
 		""" visualizes the collected states in a nice graphic """
@@ -148,7 +168,7 @@ class SimpleMatrixSimulator(Environment):
 					self.state[i,j] = 1
 				else:
 					self.lost_goal = True
-			else: 
+			else:
 				self.state[i,j] = 1
 
 		elif Actions.right == direction:
@@ -161,7 +181,7 @@ class SimpleMatrixSimulator(Environment):
 					self.state[i,j] = 1
 				else:
 					self.lost_goal = True
-			else: 
+			else:
 				self.state[i,j] = 1
 
 
@@ -175,7 +195,7 @@ class SimpleMatrixSimulator(Environment):
 					self.state[i,j] = 1
 				else:
 					self.lost_goal = True
-			else: 
+			else:
 				self.state[i,j] = 1
 
 		elif Actions.left == direction:
@@ -188,7 +208,7 @@ class SimpleMatrixSimulator(Environment):
 					self.state[i,j] = 1
 				else:
 					self.lost_goal = True
-			else: 
+			else:
 				self.state[i,j] = 1
 
 
