@@ -53,3 +53,31 @@ class LinearReward(RewardAtTheEnd):
 		(i_n,j_n) = self.get_goal_loc(new_state)
 		(n,m) = new_state.shape
 		return np.abs(i_o - n//2) + np.abs(j_o - m//2) > np.abs(i_n - n//2) + np.abs(j_n - m//2)
+
+
+
+class GaussianDistanceReward(RewardAtTheEnd):
+	""" giving a reward based on the gaussian of the distance to goal in actions """
+	
+	def get_reward(self, old_state, new_state, lost=False):
+		""" return the calculated reward """
+		if lost:
+			return -10
+		else:
+			return self._calc_reward(old_state,new_state)
+
+	def _calc_reward(self,old_state,new_state, std=0.3, factor = 10):
+		""" calculate the actual reward from comparing positions on a normal distribution x = distance to goal in actions """
+		(n,m) = new_state.shape
+		d_o = self._distance_to_goal(old_state)
+		d_n = self._distance_to_goal(new_state)
+		e_o = np.exp( -( d_o / ((n+m)*0.5) )**2 / std**2 ) * factor
+		e_n = np.exp( -( d_n / ((n+m)*0.5) )**2 / std**2 ) * factor
+		return e_n - e_o
+
+	def _distance_to_goal(self,state):
+		""" calculates the distance to the goal position in movements necessary"""
+		(i,j) = self.get_goal_loc(state)
+		(n,m) = state.shape
+		d = np.abs(i - n//2) + np.abs(j - m//2)
+		return d
