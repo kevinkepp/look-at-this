@@ -7,8 +7,8 @@ from lat.DeepQAgent import DeepQAgent
 from lat.Evaluator import Evaluator
 from lat.QAgent import QAgent
 from lat.RandomAgent import RandomAgent
-from lat.OldSimulator import Simulator, Actions
-# from lat.Simulator import SimpleMatrixSimulator as Simulator, Actions
+# from lat.OldSimulator import Simulator, Actions
+from lat.Simulator import SimpleMatrixSimulator as Simulator, Actions
 from lat.KerasMlpModel import KerasMlpModel
 
 EPOCHS = 2000  # 3000
@@ -69,7 +69,7 @@ names.append("DeepQAgent[150, 75]")
 envs = [envs[3]]
 names = [names[3]]
 ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE, GRID_SIZE), gamma=GAMMA)
-ev.run(False)
+ev.run(True)
 
 if False:
 	import matplotlib.pyplot as plt

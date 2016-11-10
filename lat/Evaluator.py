@@ -34,7 +34,7 @@ class Evaluator(object):
 		plt.legend(loc='lower center')
 		plt.show()
 
-	def _eval(self, res, name, window_size):
+	def _eval(self, res, window_size):
 		scores = []
 		# average over last results
 		for i in range(window_size, len(res)):
@@ -42,26 +42,21 @@ class Evaluator(object):
 			steps = [r[1] for r in res]
 			score = sum(successes[i - window_size:i]) / window_size * 100.
 			scores.append(score)
-		# visualize
-		plt.plot(np.arange(window_size, len(res)), scores, label=name)
-		print("Performance {0} last {1} epochs: {2}%".format(name, window_size, scores[-1]))
+		return np.arange(window_size, len(res)), scores
 
-	def _eval_simple(self, res, name):
-		print("Results {0}: {1}".format(name, res))
-
-	# TODO visualize = True does not work because of plotting interference with Simulator
-	# TODO fix by only storing results and plot at the end!
 	def run(self, visualize=False):
 		window_size = self._eval_epoch_avg()
 		visualize = visualize and self._epochs >= self._eval_epoch_min
-		if visualize:
-			self._pre_visualization(window_size)
+		plot_data = []
 		for env, name in zip(self._envs, self._env_names):
 			res = self._train(env, name)
 			# visualize if enough data
 			if visualize:
-				self._eval(res, name, window_size)
-			else:
-				self._eval_simple(res, name)
+				x, scores = self._eval(res, window_size)
+				print("Performance {0} last {1} epochs: {2}%".format(name, window_size, scores[-1]))
+				plot_data.append((x, scores, name))
 		if visualize:
+			self._pre_visualization(window_size)
+			for x, y, name in plot_data:
+				plt.plot(x, y, label=name)
 			self._post_visualization(window_size)
