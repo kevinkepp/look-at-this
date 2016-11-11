@@ -99,6 +99,7 @@ class SimpleMatrixSimulator(Environment):
 	def run(self, epochs=1, visible=False, trainingmode=False):
 		res = []
 		for i in range(epochs):
+			self.agent.new_epoch(i)
 			r = self.run_epoch(visible, trainingmode)
 			if visible:
 				self.visualize_path("agent_path_" + str(i) + ".png")
