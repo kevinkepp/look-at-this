@@ -103,6 +103,9 @@ class SimpleMatrixSimulator(Environment):
 			r = self.run_epoch(visible, trainingmode)
 			if visible:
 				self.visualize_path("agent_path_" + str(i) + ".png")
+			# show progress
+			if i % int(epochs / 10) == 0:
+				print("Epoch {0}/{1}".format(i, epochs))
 			res.append(r)
 		return res
 

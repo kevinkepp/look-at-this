@@ -21,10 +21,12 @@ class Simulator(Environment):
 	TARGET = 1
 
 	# agent is RobotAgent
-	def __init__(self, agent, reward, grid_size, unsupported_grid_size_m=0, max_steps=100, bounded=False):
+	def __init__(self, agent, reward, grid_size_n, grid_size_m, max_steps=100, bounded=False):
 		self.agent = agent
 		self.reward = reward
-		self.grid_size = grid_size
+		if grid_size_n != grid_size_m:
+			raise ValueError("Simulator only supports square grids")
+		self.grid_size = grid_size_n
 		self.max_steps = max_steps
 		self.state = None
 
