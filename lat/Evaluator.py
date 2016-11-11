@@ -1,5 +1,6 @@
-import matplotlib, os
-if not hasattr(os.environ, "DISPLAY"):
+import os
+import matplotlib
+if not "DISPLAY" in os.environ:
 	matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,7 +39,7 @@ class Evaluator(object):
 			params += "_{0}={1}".format(n, v)
 		filename = "tmp/" + timestamp + params + ".png"
 		plt.savefig(filename, bbox_inches='tight')
-		if hasattr(os.environ, "DISPLAY"):
+		if "DISPLAY" in os.environ:
 			plt.show()
 
 	def _eval(self, res, window_size):
