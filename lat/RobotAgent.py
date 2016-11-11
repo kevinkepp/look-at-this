@@ -10,11 +10,11 @@ class RobotAgent(metaclass=ABCMeta):
 		pass
 
 	# receive reward for a action that moved agent from old to new state
-	# new_state is None if terminated
 	@abstractmethod
 	def incorporate_reward(self, old_state, action, new_state, value):
 		pass
 
 	@abstractmethod
-	def new_epoch(self):
+	# signals start of epoch n
+	def new_epoch(self, n):
 		pass

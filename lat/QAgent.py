@@ -47,5 +47,5 @@ class QAgent(RobotAgent):
 		q_old += self._alpha * (reward + self._gamma * q_max - q_old)
 		self.update_q(old_state, action, q_old)
 
-	def new_epoch(self):
+	def new_epoch(self, n):
 		pass
