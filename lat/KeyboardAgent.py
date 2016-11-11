@@ -38,5 +38,5 @@ class KeyboardAgent(RobotAgent):
 	def set_training_mode(self, in_training):
 		self.trainingmode = in_training
 
-	def new_epoch(self):
+	def new_epoch(self, n):
 		pass

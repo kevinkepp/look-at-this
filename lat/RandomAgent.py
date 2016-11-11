@@ -13,5 +13,5 @@ class RandomAgent(RobotAgent):
 	def incorporate_reward(self, old_state, action, new_state, value):
 		pass
 
-	def new_epoch(self):
+	def new_epoch(self, n):
 		pass
