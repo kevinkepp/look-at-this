@@ -61,14 +61,21 @@ class Simulator(Environment):
 		x, y = self._get_middle()
 		return self.state[x, y] == self.TARGET
 
+	def _get_best_possible_steps(self):
+		x, y = np.where(self.state == self.TARGET)
+		mid = int(np.floor(self.grid_size / 2))
+		return abs(mid - x[0]) + abs(mid - y[0])
+
 	def _run_epoch(self, trainingmode):
 		target_pos = self._rnd_pos_except_center()
 		self.state = self._get_init_state(target_pos)
-		steps = 0
-		while steps < self.max_steps:
+		best = self._get_best_possible_steps()
+		steps = []
+		while len(steps) < self.max_steps:
 			action = self.agent.choose_action(self.state)
 			if action is None:
-				return 0
+				return 0, steps, best
+			steps.append(action)
 			# update state
 			old_state = self.state
 			self.execute_action(action)
@@ -82,10 +89,10 @@ class Simulator(Environment):
 				new_state = self.state if not terminal else None
 				self.agent.incorporate_reward(old_state, action, self.state, reward)
 			if success:
-				return 1, steps
+				return 1, steps, best
 			if oob:
-				return 0, steps
-		return 0, steps
+				return 0, steps, best
+		return 0, steps, best
 
 	def run(self, epochs=1, trainingmode=False):
 		res = []

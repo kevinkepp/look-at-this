@@ -6,13 +6,13 @@ from lat.DeepQAgent import DeepQAgent
 from lat.Evaluator import Evaluator
 from lat.QAgent import QAgent
 from lat.RandomAgent import RandomAgent
-# from lat.OldSimulator import Simulator, Actions
-from lat.Simulator import SimpleMatrixSimulator as Simulator, Actions
+from lat.OldSimulator import Simulator, Actions
+# from lat.Simulator import SimpleMatrixSimulator as Simulator, Actions
 from lat.KerasMlpModel import KerasMlpModel
 
 ## Global parameters
-EPOCHS = 500  # runs/games
-GRID_SIZE_N = 7
+EPOCHS = 2000  # runs/games
+GRID_SIZE_N = 13
 GRID_SIZE_M = GRID_SIZE_N
 MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M  # max steps per run/game
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
@@ -77,28 +77,14 @@ agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE_ATARI_SMA
 						 REPLAY_BATCH_SIZE_ATARI, REPLAY_BUFFER_ATARI_SMALL)
 env = Simulator(agent, REWARD_LIN, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
 envs.append(env)
-names.append("DeepQAgent[] g=" + str(GAMMA))
-
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentReplay(ACTIONS, 0.9, EPSILON_START, EPSILON_UPDATE_ATARI_SMALL, model,
-						 REPLAY_BATCH_SIZE_ATARI, REPLAY_BUFFER_ATARI_SMALL)
-env = Simulator(agent, REWARD_LIN, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
-envs.append(env)
-names.append("DeepQAgent[] g=0.9")
+names.append("DeepQAgent[]")
 
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE_ATARI_SMALL, model,
 						 REPLAY_BATCH_SIZE_ATARI, REPLAY_BUFFER_ATARI_SMALL)
 env = Simulator(agent, REWARD_LIN, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
 envs.append(env)
-names.append("DeepQAgent[50] g=" + str(GAMMA))
-
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentReplay(ACTIONS, 0.9, EPSILON_START, EPSILON_UPDATE_ATARI_SMALL, model,
-						 REPLAY_BATCH_SIZE_ATARI, REPLAY_BUFFER_ATARI_SMALL)
-env = Simulator(agent, REWARD_LIN, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
-envs.append(env)
-names.append("DeepQAgent[50] g=0.9")
+names.append("DeepQAgent[50]")
 
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [150, 75], MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE_ATARI_SMALL, model)
@@ -108,11 +94,12 @@ names.append("DeepQAgent[150, 75]")
 
 ## Evaluate results
 # choose which agents to run
-include = [2, 4]
+include = range(len(envs))
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
-ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), gamma=GAMMA)
+ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
+			   max_steps=MAX_STEPS, discount=GAMMA, reward="linear", eps_min=EPSILON_MIN)
 ev.run(True)
 
 # hacky way of visualizing the weights

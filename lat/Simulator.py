@@ -71,11 +71,12 @@ class SimpleMatrixSimulator(Environment):
 			self.all_states = self.state[np.newaxis, :, :]
 		# if visible:
 			# print(self.state)
-		steps = 0
-		while steps < self.max_steps:
-			steps += 1
+		best = self.get_best_possible_steps()
+		steps = []
+		while len(steps) < self.max_steps:
 			self.old_state = copy(self.state)
 			action = self.agent.choose_action(self.state)
+			steps.append(action)
 			self.execute_action(action)
 
 			if trainingmode:
@@ -91,10 +92,10 @@ class SimpleMatrixSimulator(Environment):
 				self.all_states = np.concatenate((self.all_states, self.state[np.newaxis, :, :]), axis=0)
 
 			if self.lost_goal:
-				return 0, steps
+				return 0, steps, best
 			elif self.at_goal(self.state):
-				return 1, steps
-		return 0, steps
+				return 1, steps, best
+		return 0, steps, best
 
 	def run(self, epochs=1, visible=False, trainingmode=False):
 		res = []
@@ -224,3 +225,9 @@ class SimpleMatrixSimulator(Environment):
 	def stepwise_visualize(self):
 		"""just print matrix to stdout -1 old position of goal and 1 current position """
 		print(self.state)
+
+	def get_best_possible_steps(self):
+		x, y = np.where(self.state == 1)
+		mid_x = int(np.floor(self.grid_dims[0] / 2))
+		mid_y = int(np.floor(self.grid_dims[1] / 2))
+		return abs(mid_x - x[0]) + abs(mid_y - y[0])

@@ -18,7 +18,6 @@ class KerasMlpModel(DeepQModel):
 		if has_hidden:
 			# add first hidden layer
 			model.add(Dense(self._l_hid_sizes[0], init='lecun_uniform', input_shape=(self._l_in_size,)))
-			model.add(Dense(self._l_hid_sizes[0], init='lecun_uniform', input_shape=(self._l_in_size,)))
 			model.add(Activation('relu'))
 			# model.add(Dropout(0.2))
 			# add other hidden layers (if given)
