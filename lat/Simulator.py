@@ -1,11 +1,8 @@
 from lat.Environment import Environment
 
 from copy import copy
-import matplotlib.pyplot as plt
 from enum import Enum
 import numpy as np
-import os
-import pylab
 
 class Actions(Enum):
 	up = 0
@@ -23,9 +20,10 @@ class SimpleMatrixSimulator(Environment):
 	world_factor = 3 # the "world" has a size factor x grid_dims
 
 	"""simulates an image frame environment for a learning agent"""
-	def __init__(self, agent, reward, grid_n, grid_m=1, orientation=0, max_steps=1000, bounded=True):
+	def __init__(self, agent, reward, grid_n, grid_m=1, orientation=0, max_steps=1000, visualizer=None, bounded=True):
 		self.agent = agent
 		self.reward = reward
+		self.visual = visualizer
 		self.grid_dims = self._get_odd_dims(grid_n,grid_m)
 		self.orientation = orientation
 		self.max_steps = max_steps
@@ -40,8 +38,6 @@ class SimpleMatrixSimulator(Environment):
 		self.i_world = 0 
 		self.j_world = 0 
 
-
-
 	def _get_odd_dims(self,n,m):
 		"""setting dimensions of image so that it has uneven number of elements on both dims to be able to center at the middle """
 		if n%2 == 0:
@@ -51,7 +47,6 @@ class SimpleMatrixSimulator(Environment):
 			m += 1
 			print("Redefining dimension m to be ",m, "to have a middle pixel")
 		return (n,m)
-
 
 	def _get_rand_matrix_state(self,dims):
 		"""initialize a random state that is a matrix with zeros and one one in it at a random position """
@@ -83,9 +78,8 @@ class SimpleMatrixSimulator(Environment):
 	def run_epoch(self, visible=False, trainingmode=False):
 		self.state = self._get_rand_matrix_state(self.grid_dims)
 		if visible:
-			self._visualize_current_state()
-			# adds initial state to state list (and with that initializes state list)
-			# self.all_states = self.state[np.newaxis, :, :]
+			self.visual.visualize_state(self.state)
+			self.first_state = copy(self.state) # stores first state for later visualization
 		best = self.get_best_possible_steps()
 		steps = []
 		while len(steps) < self.max_steps:
@@ -98,7 +92,7 @@ class SimpleMatrixSimulator(Environment):
 				print("reward is ",reward) 
 				self.agent.incorporate_reward(self.old_state, action, self.state, reward)
 			if visible:
-				self._visualize_current_state()
+				self.visual.visualize_state(self.state)
 				# self.all_states = np.concatenate((self.all_states, self.state[np.newaxis, :, :]), axis=0)
 			if self._is_oob():
 				return 0, steps, best
@@ -112,55 +106,22 @@ class SimpleMatrixSimulator(Environment):
 			self.agent.new_epoch(i)
 			r = self.run_epoch(visible, trainingmode)
 			if visible:
-				print("no path visualization yet")
-				#self.visualize_path("agent_path_" + str(i) + ".png")
+				self.visual.visualize_course_of_action(self.first_state, r[1], image_name = "agent_path_" + str(i) + ".png")
 			# show progress
 			if epochs > 10 and i % int(epochs / 10) == 0:
 				print("Epoch {0}/{1}".format(i, epochs))
 			res.append(r)
 		return res
 
-	def visualize_path(self,agent_path_image_name="agent_path.png"):
-		""" visualizes the collected states in a nice graphic """
-		# agent_path = self.all_states.sum(axis=0)
-		# agent_path_img = plt.imshow(agent_path,cmap="gray")
-		# plt.savefig(agent_path_img)
-		# print('Saved path png of agent to file ', os.path.abspath(__file__),'\\',agent_path_image_name)
-		(cnt,n,m) = self.all_states.shape
-		x = np.zeros(cnt)
-		y = np.zeros(cnt)
-		for i_state in range(cnt):
-			(i,j) = self._get_goal_loc(self.all_states[i_state,:,:])
-			x[i_state] = j
-			y[i_state] = -i
-		# plot path and start position as red o and final position as red x
-		plt.plot(x,y,'b-',x[0],y[0],'ro',x[-1],y[-1],'rx')
-		# set proper axis limits and remove ticks
-		plt.xlim((-0.5,m-0.5))
-		plt.ylim((-n+0.5,0.5))
-		plt.xticks([])
-		plt.yticks([])
-		plt.savefig(agent_path_image_name)
-
 	def _get_middle(self):
 		""" returns middle of the state grid as tuple (mid_i, mid_j)"""
 		(n,m) = self.grid_dims
 		return (n // 2, m // 2)
 
-	def _get_goal_loc(self, state):
-		"""report current location of the target where to focus on in the image / state """
-		# current_i = np.argmax(state) // self.grid_dims[1]
-		# current_j = np.argmax(state) % self.grid_dims[1]
-		# return (current_i, current_j)
-		x, y = np.where(self.state == 1)
-		return (x[0],y[0])
-
-
 	def _at_goal(self, state):
 		""" returns True if at goal position and false otherwise """
 		(mid_n, mid_m) = self._get_middle()
 		return self.state[mid_n,mid_m] == 1
-
 
 	def get_current_state(self):
 		"""return the current state """
@@ -170,11 +131,9 @@ class SimpleMatrixSimulator(Environment):
 	def _is_oob(self):
 		return np.sum(self.state) == 0
 
-
 	def execute_action(self, action):
 		"""execute the action and therefore change the state """
 		self.state = self._shift_image(action)
-
 
 	def _shift_image(self,direction):
 		"""actual state change for the matrix image variant """
@@ -191,11 +150,6 @@ class SimpleMatrixSimulator(Environment):
 	def calc_reward(self, state, old_state):
 		"""receive a reward from the reward object """
 		return self.reward.get_reward(state, old_state)
-
-
-	def _visualize_current_state(self):
-		"""just print matrix to stdout 1 current goal position """
-		print(self.state)
 
 	def get_best_possible_steps(self):
 		x, y = np.where(self.state == 1)
