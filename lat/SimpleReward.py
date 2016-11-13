@@ -31,8 +31,6 @@ class RewardAtTheEnd(Reward):
 		else:
 			return False
 
-
-
 # linear version, returning 10 if at goal, -10 if goal lost from focus, 1 if decreasing distane to goal, -1 if distance increases
 class LinearReward(RewardAtTheEnd):
 
@@ -53,8 +51,6 @@ class LinearReward(RewardAtTheEnd):
 		(i_n,j_n) = self.get_goal_loc(new_state)
 		(n,m) = new_state.shape
 		return np.abs(i_o - n//2) + np.abs(j_o - m//2) > np.abs(i_n - n//2) + np.abs(j_n - m//2)
-
-
 
 class GaussianDistanceReward(RewardAtTheEnd):
 	""" giving a reward based on the gaussian of the distance to goal in actions """
@@ -81,3 +77,17 @@ class GaussianDistanceReward(RewardAtTheEnd):
 		(n,m) = state.shape
 		d = np.abs(i - n//2) + np.abs(j - m//2)
 		return d
+
+class MiddleAsReward(Reward):
+	""" used together with GaussSimulator and returns the difference in the middle between 
+	the current state to the old one """
+
+	scaling_factor = 10 # in order to increase reward value from O(e-01) to O(e+00)
+
+	def get_reward(self, old_state, new_state, lost=False):
+		if lost:
+			return -10
+		else:
+			(n,m) = new_state.shape
+			d = ( new_state[n//2,m//2] - old_state[n//2,m//2] ) * self.scaling_factor
+			return d

@@ -59,7 +59,10 @@ class Evaluator(object):
 		visualize = visualize and self.epochs >= self._eval_epoch_min
 		plot_data = []
 		for env, name in zip(self.envs, self.env_names):
+			t0 = time.time()
 			res = self._train(env, name)
+			te = time.time()
+			print(te-t0," s hat es gedauert")
 			# visualize if enough data
 			if visualize:
 				x, scores = self._eval(res, window_size)

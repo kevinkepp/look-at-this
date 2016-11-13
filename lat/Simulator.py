@@ -48,7 +48,7 @@ class SimpleMatrixSimulator(Environment):
 			print("Redefining dimension m to be ",m, "to have a middle pixel")
 		return (n,m)
 
-	def _get_rand_matrix_state(self,dims):
+	def _get_init_state(self,dims):
 		"""initialize a random state that is a matrix with zeros and one one in it at a random position """
 		(n,m) = dims
 		N = self.world_factor * n
@@ -71,12 +71,9 @@ class SimpleMatrixSimulator(Environment):
 		(n,m) = self.grid_dims
 		return self.world_state[i:i+n,j:j+m]
 
-	def get_rand_heat_state(self):
-		"""initialize the state to be a zero matrix with a gaussian distribution at a random position """
-		pass
 
-	def run_epoch(self, visible=False, trainingmode=False):
-		self.state = self._get_rand_matrix_state(self.grid_dims)
+	def _run_epoch(self, visible=False, trainingmode=False):
+		self.state = self._get_init_state(self.grid_dims)
 		if visible:
 			self.visual.visualize_state(self.state)
 			self.first_state = copy(self.state) # stores first state for later visualization
@@ -86,10 +83,10 @@ class SimpleMatrixSimulator(Environment):
 			self.old_state = copy(self.state)
 			action = self.agent.choose_action(self.state)
 			steps.append(action)
-			self.execute_action(action)
+			self._execute_action(action)
 			if trainingmode:
 				reward = self.reward.get_reward(self.old_state, self.state, self._is_oob())
-				print("reward is ",reward) 
+				#print("reward is ",reward) 
 				self.agent.incorporate_reward(self.old_state, action, self.state, reward)
 			if visible:
 				self.visual.visualize_state(self.state)
@@ -104,7 +101,7 @@ class SimpleMatrixSimulator(Environment):
 		res = []
 		for i in range(epochs):
 			self.agent.new_epoch(i)
-			r = self.run_epoch(visible, trainingmode)
+			r = self._run_epoch(visible, trainingmode)
 			if visible:
 				self.visual.visualize_course_of_action(self.first_state, r[1], image_name = "agent_path_" + str(i) + ".png")
 			# show progress
@@ -131,7 +128,7 @@ class SimpleMatrixSimulator(Environment):
 	def _is_oob(self):
 		return np.sum(self.state) == 0
 
-	def execute_action(self, action):
+	def _execute_action(self, action):
 		"""execute the action and therefore change the state """
 		self.state = self._shift_image(action)
 
@@ -147,12 +144,46 @@ class SimpleMatrixSimulator(Environment):
 			self.j_world -= 1
 		return self._extract_state_from_world(self.i_world, self.j_world)
 
-	def calc_reward(self, state, old_state):
-		"""receive a reward from the reward object """
-		return self.reward.get_reward(state, old_state)
-
 	def get_best_possible_steps(self):
 		x, y = np.where(self.state == 1)
 		mid_x = int(np.floor(self.grid_dims[0] / 2))
 		mid_y = int(np.floor(self.grid_dims[1] / 2))
 		return abs(mid_x - x[0]) + abs(mid_y - y[0])
+
+
+class GaussSimulator(SimpleMatrixSimulator):
+	""" uses heatmap with Gauss in the middle as environment """
+
+	std = 3
+	world_factor = 3 # the "world" has a size factor x grid_dims
+
+	def _get_init_state(self,dims):
+		"""initialize a random state that is a matrix with zeros and one one in it at a random position """
+		(n,m) = dims
+		N = self.world_factor * n
+		M = self.world_factor * m
+		mid_N = N//2
+		mid_M = M//2
+		# create world-state
+		x = np.arange(0, N, 1, float)
+		y = np.arange(0, M, 1, float)[:,np.newaxis]
+		self.world_state = np.round( np.exp(-4*np.log(2) * ((x-mid_N)**2 + (y-mid_M)**2) / self.std**2) , 2)
+		# generate state as window of the world-state
+		# TODO: at the moment middle of gauss is always visible
+		i = np.random.randint(mid_N-n+1,mid_N+1)
+		j = np.random.randint(mid_M-m+1,mid_M+1)
+		# avoid generation in the middle
+		if i+n//2 == mid_N and j+m//2 == mid_M:
+		    i += np.random.choice([-1,1])
+		self.i_world = i
+		self.j_world = j
+		return self.world_state[i:i+n,j:j+m]
+
+	# is out of bounds (if at edge of world_state this is already oob)
+	def _is_oob(self):
+		(N,M) = self.world_state.shape
+		(n,m) = self.grid_dims
+		if self.i_world + n == N or self.j_world + m == M:
+			return True
+		else:
+			return np.sum(self.state) == 0

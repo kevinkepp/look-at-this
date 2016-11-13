@@ -31,6 +31,7 @@ class PlotMatrix(Visualizer):
 		plt.xticks([])
 		plt.yticks([])
 		plt.savefig(image_name)
+		plt.clf()
 
 	def _get_new_xy(self, x, y, ac):
 		""" calculates the new position of the goal after a action """

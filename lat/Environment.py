@@ -11,5 +11,5 @@ class Environment(metaclass=ABCMeta):
 		pass
 
 	@abstractmethod
-	def execute_action(self, action):
+	def _execute_action(self, action):
 		pass

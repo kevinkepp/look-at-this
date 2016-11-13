@@ -5,15 +5,15 @@ from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
 from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
-from lat.SimpleReward import RewardAtTheEnd, LinearReward
-from lat.OldSimulator import Simulator, Actions
-# from lat.Simulator import SimpleMatrixSimulator as Simulator, Actions
+from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
+# from lat.OldSimulator import Simulator, Actions
+from lat.Simulator import GaussSimulator as Simulator, Actions
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 2000  # runs/games
-GRID_SIZE_N = 7
-GRID_SIZE_M = 7
+EPOCHS = 1000  # runs/games
+GRID_SIZE_N = 5
+GRID_SIZE_M = 5
 MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M  # max steps per run/game
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
@@ -24,9 +24,11 @@ REWARD_LIN = LinearReward()
 REWARD_LIN_NAME = "linear"
 REWARD_AT_END = RewardAtTheEnd()  # also called "constant"
 REWARD_AT_END_NAME = "at_end"
+REWARD_GAU = MiddleAsReward()
+REWARD_GAU_NAME = "middle"
 # actual reward we want to use
-REWARD = REWARD_LIN
-REWARD_NAME = REWARD_LIN_NAME
+REWARD = REWARD_GAU
+REWARD_NAME = REWARD_GAU_NAME
 
 ## Agent parameters
 # learning rate for Q-Agents
