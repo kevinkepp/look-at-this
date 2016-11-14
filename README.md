@@ -50,47 +50,10 @@ Motor commands (2 dimensional)
   2. apply to bigger problems (bigger image in simulator)
   3. compare performance in comparison to other methods
 
-<a name="7"></a>
-7. get out of simulation into the real game
-  1. get to know the apis of the camera and robot control
-  2. Test apis (get image, move camera/robot)
-  3. Be able to process camera input automatically in a meaningful way
-
-<a name="8"></a>
-8. Robot is not moving, but camera focuses on some given object
-  1. apply methods (ours and given) on some easy object (e.g. white paper with big red dot) and compare results (think of reasons why one is better)
-  2. apply on some sophisticated object (e.g. face) and compare results (think of reasons why one is better)
-
-<a name="9"></a>
-9. Robot moves through lab and focuses view on some given object
-  1 use better method to implement with movement of robot through the lab (adding more output neurons)
-  2. test the limits of this
-
-optional:
-
-Z. Extend it to make the robot learn how to get the most information out of surrounding of object
-
-## Timeline
-
-|weeks|until|milestone|outcome (problems, solutions)|
-|:---|:---|---|---|
-|[1][w1]|31.10.|[1](#1) & [2](#2) | |
-|[2][w2]|07.11.| [3](#3) | |
-|[3][w3]|14.11.| [4](#4) | |
-|4|21.11.| [5](#5) | |
-|5|28.11.| [6](#6) | |
-|6|05.12.| [7](#7) | |
-|7|12.12.| | |
-|8|19.12.| vacation | |
-|9|26.12.| vacation | |
-|10|02.01.| [8](#8) | |
-|11|09.01.| [9](#9) | |
-|12|16.01.| | |
-|13|23.01.| | |
-|14|30.01.| | |
-|15|06.02.| | |
-|16|13.02.| | |
-|16|20.02.| | |
+## Weekly Progress
+- [w3][Week 3]
+- [w2][Week 2]
+- [w1][Week 1]
 
 
 [Our literature][literature]
