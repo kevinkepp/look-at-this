@@ -1,11 +1,12 @@
-from lat.Simulator import SimpleMatrixSimulator as Simulator
+from lat.Simulator import GaussSimulator as Simulator
 from lat.KeyboardAgent import KeyboardAgent
-from lat.SimpleReward import GaussianDistanceReward
+from lat.SimpleReward import LinearReward as Reward
+from lat.SimpleVisualize import PlotMatrix as Visual
 
 agent = KeyboardAgent()
-agent.set_training_mode(True)
-reward = GaussianDistanceReward()
-sim = Simulator(agent,reward,5,4,max_steps=30,bounded=False)
+reward = Reward()
+visual = Visual()
+sim = Simulator(agent,reward,3,3,max_steps=30,visualizer=visual,bounded=False)
 
-sim.run(visible=True,trainingmode=True)
-sim.visualize_path()
+sim.run(visible=True,trainingmode=True,epochs=3)
+# sim.visualize_path()
