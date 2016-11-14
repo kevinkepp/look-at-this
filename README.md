@@ -14,6 +14,7 @@ Output:
 Motor commands (2 dimensional)
 
 ## Weekly Progress
+- [Week 4][w4]
 - [Week 3][w3]
 - [Week 2][w2]
 - [Week 1][w1]
@@ -24,4 +25,5 @@ Motor commands (2 dimensional)
  [w1]: https://docs.google.com/document/d/1s0kd8WtWGTmd1UVXTkrfDW2UO5CTqzqcIwnjeDxQePM/edit?usp=sharing
  [w2]: https://docs.google.com/document/d/1At0JQWX5_SSrzfxFpIgsBHiTF7t6Hokyu2rLuFqJhLI/edit?usp=sharing
  [w3]: https://docs.google.com/document/d/1Z7phzRq6DBAIkYaEV9gGdABzp00Eg5YjatJUpNwCUzs/edit?usp=sharing
+ [w4]: https://docs.google.com/document/d/1ttOdsNDY-7LqsPZ1Lr9Fd9iGhZA11L058zGpFOgLoJs/edit?usp=sharing
  [literature]: https://docs.google.com/document/d/1RUpfMoQ90NK3uj2vxTj5zgKUpwJE3qYCr9V3MQ439X0/edit?usp=sharing
