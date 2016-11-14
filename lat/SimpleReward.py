@@ -78,7 +78,7 @@ class GaussianDistanceReward(RewardAtTheEnd):
 		d = np.abs(i - n//2) + np.abs(j - m//2)
 		return d
 
-class MiddleAsReward(Reward):
+class MiddleDIffAsReward(Reward):
 	""" used together with GaussSimulator and returns the difference in the middle between 
 	the current state to the old one """
 
@@ -90,4 +90,18 @@ class MiddleAsReward(Reward):
 		else:
 			(n,m) = new_state.shape
 			d = ( new_state[n//2,m//2] - old_state[n//2,m//2] ) * self.scaling_factor
+			return d
+
+class MiddleAsReward(Reward):
+	""" used together with GaussSimulator and returns the difference in the middle between 
+	the current state to the old one """
+
+	scaling_factor = 10 # in order to increase reward value from O(e-01) to O(e+00)
+
+	def get_reward(self, old_state, new_state, lost=False):
+		if lost:
+			return -10
+		else:
+			(n,m) = new_state.shape
+			d = new_state[n//2,m//2] * self.scaling_factor
 			return d
