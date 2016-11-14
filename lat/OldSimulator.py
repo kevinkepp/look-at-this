@@ -87,7 +87,7 @@ class Simulator(Environment):
 				terminal = success or oob
 				reward = self.reward.get_reward(old_state, self.state)
 				new_state = self.state if not terminal else None
-				self.agent.incorporate_reward(old_state, action, self.state, reward)
+				self.agent.incorporate_reward(old_state, action, new_state, reward)
 			if success:
 				return 1, steps, best
 			if oob:
