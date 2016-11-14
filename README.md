@@ -13,48 +13,10 @@ Desired location of the image we want to center (we will change this by the acti
 Output:
 Motor commands (2 dimensional)
 
-## Milestones
-
-<a name="1"></a>
-1. Make a solid plan 
-  1. plan together
-  2. discuss plan with Manuel and Roberto
-
-<a name="2"></a>
-2. Get Acquainted with the material
-  1. read some papers (later some more)
-  2. install python frameworks (caffee,lasagne,...) and test some toyexamples
-  3. do tutorials for further knowledge
-  4. gather first ideas to solve the problem
-
-<a name="3"></a>
-3. Write first simple simulator (should be extendable from 3x3 to more)
-  1. agree on structure of the simulator so both know how to use it (class,methods,...)
-  2. actually write it
-  3. generate ground truth
-  4. test it with simple tests
-
-<a name="4"></a>
-4. apply first small RL & perhaps NN to simulation (seperately or as one)
-  1. formulate/take given reward fct.
-  2. try existing architectures (e.g. last layer of deep-q [paper][paper-atari])
-
-<a name="5"></a>
-5. design own architectures and reward fct
-  1. think of own architectures or ways to improve existing ones (justify why to choose this)
-  2. think about applying knowledge from the papers ([learning state representations][paper-learn-srep])
-
-<a name="6"></a>
-6. apply and test own architecture and compare it to others
-  1. apply our designed models on toy examples to verify
-  2. apply to bigger problems (bigger image in simulator)
-  3. compare performance in comparison to other methods
-
 ## Weekly Progress
-- [w3][Week 3]
-- [w2][Week 2]
-- [w1][Week 1]
-
+- [Week 3][w3]
+- [Week 2][w2]
+- [Week 1][w1]
 
 [Our literature][literature]
 
