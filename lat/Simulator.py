@@ -17,7 +17,7 @@ Actions.all = [Actions.up, Actions.down, Actions.left, Actions.right]
 class SimpleMatrixSimulator(Environment):
 
 	world_factor = 3 # the "world" has a size factor x grid_dims
-	window_gen_factor = 0.75
+	window_gen_factor = 0.85
 	target = 1
 
 	"""simulates an image frame environment for a learning agent"""

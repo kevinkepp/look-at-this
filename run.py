@@ -13,9 +13,9 @@ from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator,
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 2000  # runs/games
-GRID_SIZE_N = 25
-GRID_SIZE_M = 25
+EPOCHS = 1000  # runs/games
+GRID_SIZE_N = 13
+GRID_SIZE_M = 13
 # max steps per run/game
 # MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M
 MAX_STEPS = GRID_SIZE_N * 10
