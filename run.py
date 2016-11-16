@@ -11,7 +11,7 @@ from lat.Simulator import GaussSimulator as Simulator, Actions
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 1000  # runs/games
+EPOCHS = 2000  # runs/games
 GRID_SIZE_N = 5
 GRID_SIZE_M = 5
 MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M  # max steps per run/game
@@ -24,11 +24,11 @@ REWARD_LIN = LinearReward()
 REWARD_LIN_NAME = "linear"
 REWARD_AT_END = RewardAtTheEnd()  # also called "constant"
 REWARD_AT_END_NAME = "at_end"
-REWARD_GAU = MiddleAsReward()
-REWARD_GAU_NAME = "middle"
+REWARD_MID = MiddleAsReward()
+REWARD_MID_NAME = "middle"
 # actual reward we want to use
-REWARD = REWARD_GAU
-REWARD_NAME = REWARD_GAU_NAME
+REWARD = REWARD_MID
+REWARD_NAME = REWARD_MID_NAME
 
 ## Agent parameters
 # learning rate for Q-Agents
@@ -62,7 +62,7 @@ MODEL_IN_LAYER_SIZE = GRID_SIZE_N * GRID_SIZE_M  # input layer size
 MODEL_HID_LAYER_SIZES = []  # hidden layers and sizes, for now defaults to no hidden layer
 MODEL_OUT_LAYER_SIZE = len(ACTIONS)  # output layer size
 # replay batch size (DeepQAgentReplay)
-REPLAY_BATCH_SIZE_ATARI = 32
+REPLAY_BATCH_SIZE_ATARI = 8
 REPLAY_BATCH_SIZE = REPLAY_BATCH_SIZE_ATARI
 # replay buffer (DeepQAgentReplay)
 REPLAY_BUFFER_ATARI = EPOCHS / 50  # (see doi:10.1038/nature14236)
@@ -99,21 +99,17 @@ env = Simulator(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bo
 envs.append(env)
 names.append("DeepQAgent[50]")
 
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [150, 75], MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
-env = Simulator(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
-envs.append(env)
-names.append("DeepQAgent[150, 75]")
-
 ## Evaluate results
 # choose which agents to run
-include = [2]
+include = [0, 1, 2]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
 ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
 			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN)
-ev.run(True)
+# ev.run(True)
+ev.run_until(0.95, True)
+# envs[2].run(visible=True)
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator

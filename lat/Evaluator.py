@@ -30,8 +30,8 @@ class Evaluator(object):
 		plt.grid(True)
 
 	def _post_visualization(self, window_size):
-		plt.xlim((window_size, self.epochs + 1))
-		plt.ylim((0, 1.02))  # make 1. performance visible
+		plt.xlim((window_size - 1, self.epochs + 1))
+		plt.ylim((-0.02, 1.02))  # make 0. and 1. performance visible
 		plt.legend(loc='lower center')
 		timestamp = time.strftime("%Y%m%d_%H%M%S")
 		params = "_epochs=%d" % self.epochs
@@ -62,10 +62,43 @@ class Evaluator(object):
 			t0 = time.time()
 			res = self._train(env, name)
 			te = time.time()
-			print(te-t0," s hat es gedauert")
+			print("Training took {0} sec".format(int(te-t0)))
 			# visualize if enough data
 			if visualize:
 				x, scores = self._eval(res, window_size)
+				print("Performance {0} last {1} epochs: {2}".format(name, window_size, np.round(scores[-1], 3)))
+				plot_data.append((x, scores, name))
+		if visualize:
+			self._pre_visualization(window_size)
+			for x, y, name in plot_data:
+				plt.plot(x, y, label=name)
+			self._post_visualization(window_size)
+
+	def _train_until(self, env, name, min_performance, window_size):
+		results = []
+		scores = []
+		calc_score = lambda success, steps, best: best / len(steps) if success == 1 else 0
+		for i in range(self.epochs):
+			res = env.run_epoch(i, trainingmode=True)
+			results.append(res)
+			if i >= window_size:
+				scores_window = [calc_score(success, steps, best) for success, steps, best in results[-window_size:]]
+				score = sum(scores_window) / window_size
+				if self.epochs > 10 and i % int(self.epochs / 10) == 0:
+					print("Epoch {0}/{1}: {2}".format(i, self.epochs, np.round(score, 3)))
+				scores.append(score)
+				if score >= min_performance:
+					break
+		return np.arange(window_size, window_size + len(scores)), scores
+
+	def run_until(self, min_performance, visualize=True):
+		visualize = visualize and self.epochs >= self._eval_epoch_min
+		plot_data = []
+		for env, name in zip(self.envs, self.env_names):
+			print("Training {0} with max {1} epochs until performance is {2}".format(name, self.epochs, min_performance))
+			window_size = self._eval_epoch_avg()
+			x, scores = self._train_until(env, name, min_performance, window_size)
+			if visualize:
 				print("Performance {0} last {1} epochs: {2}".format(name, window_size, np.round(scores[-1], 3)))
 				plot_data.append((x, scores, name))
 		if visualize:
