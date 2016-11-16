@@ -13,7 +13,7 @@ class PlotMatrix(Visualizer):
 		""" just plots current state in a simple print of matrix"""
 		print(state)
 
-	def visualize_course_of_action(self, world_state, first_i, first_j, grid_n, grid_m, actions, title=None, image_name="agent_path.png"):
+	def visualize_course_of_action(self, world_state, first_i, first_j, grid_n, grid_m, actions, title=None, image_name="agent_path"):
 		""" plots a course of actions beginning from a certain first state """
 		n, m = grid_n, grid_m
 		x = first_j + m//2
@@ -44,10 +44,11 @@ class PlotMatrix(Visualizer):
 		if title is not None:
 			plt.title(title)
 		# save and clear figure
-		plt.savefig(image_name)
+		image_save_path = "temp/"+image_name+".png"
+		plt.savefig(image_save_path)
 		plt.clf()
 
-	def _get_new_xy(x, y, ac):
+	def _get_new_xy(self, x, y, ac):
 		""" calculates the new position of the goal after a action """
 		if ac == Actions.up:
 			y -= 1
