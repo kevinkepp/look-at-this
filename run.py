@@ -7,18 +7,19 @@ from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
 from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
 # from lat.OldSimulator import Simulator, Actions
-from lat.Simulator import GaussSimulator as Simulator, Actions
+from lat.Simulator import ImageSimulator as Simulator, Actions
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 2000  # runs/games
-GRID_SIZE_N = 5
-GRID_SIZE_M = 5
+EPOCHS = 1000  # runs/games
+GRID_SIZE_N = 13
+GRID_SIZE_M = 13
 MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M  # max steps per run/game
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-ACTIONS = Actions.all()
+#ACTIONS = Actions.all()
+ACTIONS = Actions.all
 # different reward functions
 REWARD_LIN = LinearReward()
 REWARD_LIN_NAME = "linear"
@@ -74,34 +75,34 @@ REPLAY_BUFFER = REPLAY_BUFFER_ATARI_SMALL
 envs = []
 names = []
 
+IMG_PATH = "/home/kevin/Documents/Master/Lectures/S5 WS1617/Robotics Project/white_circle.png"
+def create_simulator(agent):
+	return Simulator(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
+
 # Random Agent as baseline
 agent = RandomAgent(ACTIONS)
-env = Simulator(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
-envs.append(env)
+envs.append(create_simulator(agent))
 names.append("Random")
 
 # Q-Agent
 agent = QAgent(ACTIONS, ALPHA, 0.8, Q_INIT)
-env = Simulator(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
-envs.append(env)
+envs.append(create_simulator(agent))
 names.append("QAgent g=0.8")
 
 # Deep Q-Agents
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
-env = Simulator(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
-envs.append(env)
+envs.append(create_simulator(agent))
 names.append("DeepQAgent[]")
 
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
-env = Simulator(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
-envs.append(env)
+envs.append(create_simulator(agent))
 names.append("DeepQAgent[50]")
 
 ## Evaluate results
 # choose which agents to run
-include = [0, 1, 2]
+include = [2]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents

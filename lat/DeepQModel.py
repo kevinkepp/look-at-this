@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
 
-class DeepQModel(metaclass=ABCMeta):
+class DeepQModel():
+	__metaclass__ = ABCMeta
 
 	@abstractmethod
 	def predict_qs(self, state):
