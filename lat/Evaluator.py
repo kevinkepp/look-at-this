@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import matplotlib
 if not "DISPLAY" in os.environ:
@@ -77,7 +78,7 @@ class Evaluator(object):
 	def _train_until(self, env, name, min_performance, window_size):
 		results = []
 		scores = []
-		calc_score = lambda success, steps, best: best / len(steps) if success == 1 else 0
+		calc_score = lambda succ, stps, bst: bst / len(stps) if succ == 1 else 0
 		for i in range(self.epochs):
 			res = env.run_epoch(i, trainingmode=True)
 			results.append(res)

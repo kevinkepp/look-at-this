@@ -13,5 +13,5 @@ class Environment():
 		pass
 
 	@abstractmethod
-	def _execute_action(self, action):
+	def execute_action(self, action):
 		pass

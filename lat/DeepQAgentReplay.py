@@ -1,5 +1,5 @@
+from __future__ import division
 import random
-
 from lat.DeepQAgent import DeepQAgent
 import numpy as np
 

@@ -1,3 +1,4 @@
+from __future__ import division
 from lat.Reward import Reward
 import numpy as np
 

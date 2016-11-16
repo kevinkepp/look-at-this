@@ -1,3 +1,4 @@
+from __future__ import division
 from lat.DeepQModel import DeepQModel
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout

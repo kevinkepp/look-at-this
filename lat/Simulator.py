@@ -1,18 +1,10 @@
+from __future__ import division
 from lat.Environment import Environment
 
 from copy import copy
 # from enum import Enum
 import numpy as np
 
-# class Actions(Enum):
-# 	up = 0
-# 	down = 1
-# 	left = 2
-# 	right = 3
-#
-# 	@staticmethod
-# 	def all():
-# 		return [a for a in Actions]
 
 def enum(**enums):
     return type('Enum', (), enums)
@@ -91,7 +83,7 @@ class SimpleMatrixSimulator(Environment):
 			self.old_state = copy(self.state)
 			action = self.agent.choose_action(self.state)
 			steps.append(action)
-			self._execute_action(action)
+			self.execute_action(action)
 			if trainingmode:
 				reward = self.reward.get_reward(self.old_state, self.state, self._is_oob())
 				#print("reward is ",reward)
@@ -140,7 +132,7 @@ class SimpleMatrixSimulator(Environment):
 	def _is_oob(self):
 		return np.sum(self.state) == 0
 
-	def _execute_action(self, action):
+	def execute_action(self, action):
 		"""execute the action and therefore change the state """
 		self.state = self._shift_image(action)
 
@@ -157,10 +149,13 @@ class SimpleMatrixSimulator(Environment):
 		return self._extract_state_from_world(self.i_world, self.j_world)
 
 	def get_best_possible_steps(self):
-		x, y = np.where(self.state == self.target)
+		xs, ys = np.where(self.state == self.target)
 		mid_x = int(np.floor(self.grid_dims[0] / 2))
 		mid_y = int(np.floor(self.grid_dims[1] / 2))
-		return abs(mid_x - x[0]) + abs(mid_y - y[0])
+		calc_dist = lambda x, y: abs(mid_x - x) + abs(mid_y - y)
+		dists = [calc_dist(x, y) for x, y in zip(xs, ys)]
+		dist_min = np.min(dists)
+		return dist_min
 
 
 class GaussSimulator(SimpleMatrixSimulator):

@@ -1,3 +1,4 @@
+from __future__ import division
 from lat.Visualizer import Visualizer
 from lat.Simulator import Actions
 

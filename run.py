@@ -1,3 +1,4 @@
+from __future__ import division
 import random
 import numpy as np
 from lat.RandomAgent import RandomAgent
@@ -6,7 +7,7 @@ from lat.KerasMlpModel import KerasMlpModel
 from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
 from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
-# from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
+from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
 from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, Actions
 from lat.Evaluator import Evaluator
 
@@ -76,7 +77,7 @@ REPLAY_BUFFER = REPLAY_BUFFER_ATARI_SMALL
 envs = []
 names = []
 
-IMG_PATH = "/home/kevin/Documents/Master/Lectures/S5 WS1617/Robotics Project/white_circle.png"
+IMG_PATH = "tmp/white_circle.png"
 def create_simulator(agent):
 	return SIMULATOR(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
 
@@ -94,7 +95,7 @@ names.append("QAgent g=0.8")
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
 envs.append(create_simulator(agent))
-names.append("DeepQAgent[]")
+names.append("DeepQAgent[] e")
 
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
@@ -103,14 +104,14 @@ names.append("DeepQAgent[50]")
 
 ## Evaluate results
 # choose which agents to run
-include = [2]
+include = [2, 3]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
 ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
-			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN)
+			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH)
 # ev.run(True)
-ev.run_until(0.95, True)
+ev.run_until(1., True)
 # envs[0].run(visible=True)
 
 # hacky way of visualizing the weights
