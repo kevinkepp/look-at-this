@@ -109,7 +109,7 @@ envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
 ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
-			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH)
+			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH.split("/")[-1])
 # ev.run(True)
 ev.run_until(1., True)
 # envs[0].run(visible=True)
