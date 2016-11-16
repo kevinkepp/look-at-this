@@ -83,7 +83,7 @@ class Evaluator(object):
 			results.append(res)
 			if i >= window_size:
 				scores_window = [calc_score(success, steps, best) for success, steps, best in results[-window_size:]]
-				score = sum(scores_window) / window_size
+				score = sum(scores_window) / float(window_size)
 				if self.epochs > 10 and i % int(self.epochs / 10) == 0:
 					print("Epoch {0}/{1}: {2}".format(i, self.epochs, np.round(score, 3)))
 				scores.append(score)
@@ -94,9 +94,9 @@ class Evaluator(object):
 	def run_until(self, min_performance, visualize=True):
 		visualize = visualize and self.epochs >= self._eval_epoch_min
 		plot_data = []
+		window_size = self._eval_epoch_avg()
 		for env, name in zip(self.envs, self.env_names):
 			print("Training {0} with max {1} epochs until performance is {2}".format(name, self.epochs, min_performance))
-			window_size = self._eval_epoch_avg()
 			x, scores = self._train_until(env, name, min_performance, window_size)
 			if visualize:
 				print("Performance {0} last {1} epochs: {2}".format(name, window_size, np.round(scores[-1], 3)))

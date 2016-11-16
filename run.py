@@ -6,18 +6,19 @@ from lat.KerasMlpModel import KerasMlpModel
 from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
 from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
-# from lat.OldSimulator import Simulator, Actions
-from lat.Simulator import ImageSimulator as Simulator, Actions
+# from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
+from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, Actions
 from lat.Evaluator import Evaluator
 
 ## Global parameters
 EPOCHS = 1000  # runs/games
-GRID_SIZE_N = 13
-GRID_SIZE_M = 13
+GRID_SIZE_N = 21
+GRID_SIZE_M = 21
 MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M  # max steps per run/game
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
+SIMULATOR = ImageSimulator
 #ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions
@@ -77,7 +78,7 @@ names = []
 
 IMG_PATH = "/home/kevin/Documents/Master/Lectures/S5 WS1617/Robotics Project/white_circle.png"
 def create_simulator(agent):
-	return Simulator(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
+	return SIMULATOR(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
 
 # Random Agent as baseline
 agent = RandomAgent(ACTIONS)
@@ -110,7 +111,7 @@ ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE
 			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN)
 # ev.run(True)
 ev.run_until(0.95, True)
-# envs[2].run(visible=True)
+# envs[0].run(visible=True)
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator

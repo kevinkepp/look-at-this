@@ -24,6 +24,7 @@ Actions.all = [Actions.up, Actions.down, Actions.left, Actions.right]
 class SimpleMatrixSimulator(Environment):
 
 	world_factor = 3 # the "world" has a size factor x grid_dims
+	window_gen_factor = 0.75
 	target = 1
 
 	"""simulates an image frame environment for a learning agent"""
@@ -64,9 +65,9 @@ class SimpleMatrixSimulator(Environment):
 		mid_M = M//2
 		# create world-state
 		self.world_state = np.zeros((N,M))
-		self.world_state[mid_N,mid_M] = 1
-		i = np.random.randint(mid_N-n+1,mid_N+1)
-		j = np.random.randint(mid_M-m+1,mid_M+1)
+		self.world_state[mid_N, mid_M] = 1
+		i = np.random.randint(mid_N - n * self.window_gen_factor + 1, mid_N - n * (1 - self.window_gen_factor) + 1)
+		j = np.random.randint(mid_M - m * self.window_gen_factor + 1, mid_M - m * (1 - self.window_gen_factor) + 1)
 		# avoid generation in the middle
 		if i+n//2 == mid_N and j+m//2 == mid_M:
 			i += np.random.choice([-1,1])
@@ -212,15 +213,15 @@ class ImageSimulator(SimpleMatrixSimulator):
 	def _load_and_preprocess_img(self, path):
 		img = cv2.imread(path)
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-		blur_factor = 10.
+		blur_factor = 5.
 		blur_kernel = tuple([int(d / blur_factor + 1 if int(d / blur_factor) % 2 == 0 else 0) for d in self.grid_dims])
-		img = cv2.GaussianBlur(img, blur_kernel, 3)
+		img = cv2.GaussianBlur(img, blur_kernel, 10)
 		world_dims = tuple([d * self.world_factor for d in self.grid_dims])
 		img = cv2.resize(img, world_dims)
 		# DEBUG, draw world dims frame around image
 		view = img.copy()
 		cv2.rectangle(view, (0, 0), (world_dims[0] - 1, world_dims[1] - 1), (255, 255, 255), 1)
-		cv2.imwrite("view.png", view)
+		cv2.imwrite("tmp/view.png", view)
 		# normalize image to [0, 1]
 		img = np.array(img, np.float32)
 		img_min = np.min(img)
@@ -233,12 +234,10 @@ class ImageSimulator(SimpleMatrixSimulator):
 	def _get_init_state(self, dims):
 		super(ImageSimulator, self)._get_init_state(dims)
 		self.world_state = self.img
-		(n, m) = dims
-		i = self.i_world
-		j = self.j_world
-		state = self.world_state[i:i + n, j:j + m]
+		state = self._extract_state_from_world(self.i_world, self.j_world)
 		# DEBUG, draw current view
 		# view = cv2.imread("tmp/view.png")
-		# cv2.rectangle(view, (i, j), (i + n, j + m), (255, 255, 255), 1)
-		# cv2.imwrite("tmp/view_curr.png", view)
+		# cv2.rectangle(view, (self.i_world, self.j_world), (self.i_world + dims[0], self.j_world + dims[1]),
+		#			  (255, 255, 255), 1)
+		#cv2.imwrite("tmp/view_curr.png", view)
 		return state
