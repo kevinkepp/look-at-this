@@ -118,7 +118,6 @@ ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE
 			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH.split("/")[-1])
 # ev.run(True)
 ev.run_until(lambda score: score < GRID_SIZE_N * 0.02, True)
-envs[0].run(visible=True)
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator

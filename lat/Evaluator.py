@@ -34,7 +34,8 @@ class Evaluator(object):
 		title = "Training over {0} epochs (steps avg over last {1} epochs)".format(self.epochs, window_size)
 		plt.title(title)
 		plt.xlabel("epochs")
-		plt.ylabel("min steps / steps taken")
+		# plt.ylabel("min steps / steps taken")
+		plt.ylabel("steps taken - min steps")
 		plt.grid(True)
 
 	def _post_visualization(self, window_size):
