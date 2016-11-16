@@ -1,19 +1,15 @@
+from __future__ import division
 from random import random
 import numpy as np
 from scipy.ndimage.interpolation import shift
 from lat.Environment import Environment
-from enum import Enum
 
 
-class Actions(Enum):
-	up = 0
-	down = 1
-	left = 2
-	right = 3
+def enum(**enums):
+    return type('Enum', (), enums)
 
-	@staticmethod
-	def all():
-		return [a for a in Actions]
+Actions = enum(up=0, down=1, left=2, right=3)
+Actions.all = [Actions.up, Actions.down, Actions.left, Actions.right]
 
 
 class Simulator(Environment):

@@ -2,7 +2,9 @@ from abc import ABCMeta, abstractmethod
 
 
 # abstract class for robot agent
-class RobotAgent(metaclass=ABCMeta):
+class RobotAgent():
+	__metaclass__ = ABCMeta
+
 	# choose action based on current state
 	# return None means abort
 	@abstractmethod

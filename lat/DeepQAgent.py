@@ -1,3 +1,4 @@
+from __future__ import division
 import random
 from lat.RobotAgent import RobotAgent
 import numpy as np
@@ -50,4 +51,4 @@ class DeepQAgent(RobotAgent):
 
 	def new_epoch(self, n):
 		self.epsilon = self.epsilon_update(n)
-		# print("Updated epsilon: {0}".format(self._epsilon))
+		# print("Updated epsilon for epoch {0}: {1}".format(n, self.epsilon))
