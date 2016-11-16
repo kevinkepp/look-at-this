@@ -44,7 +44,7 @@ class PlotMatrix(Visualizer):
 		if title is not None:
 			plt.title(title)
 		# save and clear figure
-		image_save_path = "temp/"+image_name+".png"
+		image_save_path = "tmp/"+image_name+".png"
 		plt.savefig(image_save_path)
 		plt.clf()
 
