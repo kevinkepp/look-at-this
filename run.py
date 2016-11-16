@@ -8,14 +8,17 @@ from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
 from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
 from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
+from lat.SimpleVisualize import PlotMatrix
 from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, Actions
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 1000  # runs/games
-GRID_SIZE_N = 21
-GRID_SIZE_M = 21
-MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M  # max steps per run/game
+EPOCHS = 2000  # runs/games
+GRID_SIZE_N = 25
+GRID_SIZE_M = 25
+# max steps per run/game
+# MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M
+MAX_STEPS = GRID_SIZE_N * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
@@ -65,8 +68,9 @@ MODEL_IN_LAYER_SIZE = GRID_SIZE_N * GRID_SIZE_M  # input layer size
 MODEL_HID_LAYER_SIZES = []  # hidden layers and sizes, for now defaults to no hidden layer
 MODEL_OUT_LAYER_SIZE = len(ACTIONS)  # output layer size
 # replay batch size (DeepQAgentReplay)
-REPLAY_BATCH_SIZE_ATARI = 8
-REPLAY_BATCH_SIZE = REPLAY_BATCH_SIZE_ATARI
+REPLAY_BATCH_SIZE_ATARI = 32
+REPLAY_BATCH_SIZE_ATARI_SMALL = 8
+REPLAY_BATCH_SIZE = REPLAY_BATCH_SIZE_ATARI_SMALL
 # replay buffer (DeepQAgentReplay)
 REPLAY_BUFFER_ATARI = EPOCHS / 50  # (see doi:10.1038/nature14236)
 REPLAY_BUFFER_ATARI_SMALL = max(EPOCHS / 10, 100)  # like atari but for smaller EPOCHS
@@ -78,8 +82,10 @@ envs = []
 names = []
 
 IMG_PATH = "tmp/white_circle.png"
+VISUALIZER = PlotMatrix()
 def create_simulator(agent):
-	return SIMULATOR(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, bounded=BOUNDED)
+	return SIMULATOR(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=PlotMatrix(),
+					 bounded=BOUNDED)
 
 # Random Agent as baseline
 agent = RandomAgent(ACTIONS)
@@ -95,7 +101,7 @@ names.append("QAgent g=0.8")
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
 envs.append(create_simulator(agent))
-names.append("DeepQAgent[] e")
+names.append("DeepQAgent[]")
 
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
@@ -104,15 +110,15 @@ names.append("DeepQAgent[50]")
 
 ## Evaluate results
 # choose which agents to run
-include = [2, 3]
+include = [2]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
 ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
 			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH.split("/")[-1])
 # ev.run(True)
-ev.run_until(1., True)
-# envs[0].run(visible=True)
+ev.run_until(lambda score: score < GRID_SIZE_N * 0.02, True)
+envs[0].run(visible=True)
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator

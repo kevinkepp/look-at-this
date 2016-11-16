@@ -24,8 +24,8 @@ class PlotMatrix(Visualizer):
 			(x,y) = self._get_new_xy(x,y,ac)
 			xx = np.append(xx,x)
 			yy = np.append(yy,y)
-		plt.figure
-		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro')
+		# plt.figure()
+		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
 		# plotting starting view window
 		first_win_x = np.array([first_j, first_j, first_j + m, first_j + m, first_j])
 		first_win_y = np.array([first_i, first_i+n, first_i+n, first_i, first_i])
@@ -44,7 +44,7 @@ class PlotMatrix(Visualizer):
 		if title is not None:
 			plt.title(title)
 		# save and clear figure
-		image_save_path = "tmp/"+image_name+".png"
+		image_save_path = "tmp/paths/"+image_name+".png"
 		plt.savefig(image_save_path)
 		plt.clf()
 

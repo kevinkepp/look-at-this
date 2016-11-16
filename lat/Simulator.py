@@ -4,6 +4,7 @@ from lat.Environment import Environment
 from copy import copy
 # from enum import Enum
 import numpy as np
+import time
 
 
 def enum(**enums):
@@ -65,6 +66,8 @@ class SimpleMatrixSimulator(Environment):
 			i += np.random.choice([-1,1])
 		self.i_world = i
 		self.j_world = j
+		self.first_i = i
+		self.first_j = j
 		return self.world_state[i:i+n,j:j+m]
 
 	def _extract_state_from_world(self,i,j):
@@ -72,11 +75,8 @@ class SimpleMatrixSimulator(Environment):
 		return self.world_state[i:i+n,j:j+m]
 
 
-	def _run_epoch(self, visible=False, trainingmode=False):
+	def _run_epoch(self, trainingmode=False):
 		self.state = self._get_init_state(self.grid_dims)
-		if visible:
-			self.visual.visualize_state(self.state)
-			self.first_state = copy(self.state) # stores first state for later visualization
 		best = self.get_best_possible_steps()
 		steps = []
 		while len(steps) < self.max_steps:
@@ -88,9 +88,6 @@ class SimpleMatrixSimulator(Environment):
 				reward = self.reward.get_reward(self.old_state, self.state, self._is_oob())
 				#print("reward is ",reward)
 				self.agent.incorporate_reward(self.old_state, action, self.state, reward)
-			if visible:
-				self.visual.visualize_state(self.state)
-				# self.all_states = np.concatenate((self.all_states, self.state[np.newaxis, :, :]), axis=0)
 			if self._is_oob():
 				return 0, steps, best
 			elif self._at_goal(self.state):
@@ -99,9 +96,13 @@ class SimpleMatrixSimulator(Environment):
 
 	def run_epoch(self, epoch_no=1, visible=False, trainingmode=False):
 		self.agent.new_epoch(epoch_no)
-		r = self._run_epoch(visible, trainingmode)
+		r = self._run_epoch(trainingmode)
 		if visible:
-			self.visual.visualize_course_of_action(self.first_state, r[1], image_name="agent_path_" + str(epoch_no) + ".png")
+			timestamp = time.strftime("%Y%m%d_%H%M%S")
+			image_name = timestamp + "_agent_path_epoch" + str(epoch_no).zfill(4)
+			self.visual.visualize_course_of_action(self.world_state, self.first_i, self.first_j, self.grid_dims[0],
+												   self.grid_dims[1], r[1], title="Path epoch {0}".format(epoch_no),
+												   image_name=image_name)
 		return r
 
 	def run(self, epochs=1, visible=False, trainingmode=False):
