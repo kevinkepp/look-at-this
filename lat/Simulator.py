@@ -97,13 +97,17 @@ class SimpleMatrixSimulator(Environment):
 				return 1, steps, best
 		return 0, steps, best
 
+	def run_epoch(self, epoch_no=1, visible=False, trainingmode=False):
+		self.agent.new_epoch(epoch_no)
+		r = self._run_epoch(visible, trainingmode)
+		if visible:
+			self.visual.visualize_course_of_action(self.first_state, r[1], image_name="agent_path_" + str(epoch_no) + ".png")
+		return r
+
 	def run(self, epochs=1, visible=False, trainingmode=False):
 		res = []
 		for i in range(epochs):
-			self.agent.new_epoch(i)
-			r = self._run_epoch(visible, trainingmode)
-			if visible:
-				self.visual.visualize_course_of_action(self.first_state, r[1], image_name = "agent_path_" + str(i) + ".png")
+			r = self.run_epoch(i, visible, trainingmode)
 			# show progress
 			if epochs > 10 and i % int(epochs / 10) == 0:
 				print("Epoch {0}/{1}".format(i, epochs))
