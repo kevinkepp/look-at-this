@@ -13,9 +13,9 @@ from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator,
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 1000  # runs/games
-GRID_SIZE_N = 13
-GRID_SIZE_M = 13
+EPOCHS = 2000  # runs/games
+GRID_SIZE_N = 15
+GRID_SIZE_M = 15
 # max steps per run/game
 # MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M
 MAX_STEPS = GRID_SIZE_N * 10
@@ -114,7 +114,7 @@ include = [2]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
-ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
+ev = Evaluator(envs, names, EPOCHS, VISUALIZER, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
 			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH.split("/")[-1])
 # ev.run(True)
 ev.run_until(lambda score: score < GRID_SIZE_N * 0.02, True)

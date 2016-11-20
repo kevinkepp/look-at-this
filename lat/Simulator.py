@@ -5,7 +5,7 @@ from copy import copy
 # from enum import Enum
 import numpy as np
 import time
-
+import cv2
 
 def enum(**enums):
     return type('Enum', (), enums)
@@ -17,7 +17,7 @@ Actions.all = [Actions.up, Actions.down, Actions.left, Actions.right]
 class SimpleMatrixSimulator(Environment):
 
 	world_factor = 3 # the "world" has a size factor x grid_dims
-	window_gen_factor = 0.85
+	window_gen_factor = 0.9 # decides where to sample init state from, 1 -> goal can be at the edge
 	target = 1
 
 	"""simulates an image frame environment for a learning agent"""
@@ -59,8 +59,8 @@ class SimpleMatrixSimulator(Environment):
 		# create world-state
 		self.world_state = np.zeros((N,M))
 		self.world_state[mid_N, mid_M] = 1
-		i = np.random.randint(mid_N - n * self.window_gen_factor + 1, mid_N - n * (1 - self.window_gen_factor) + 1)
-		j = np.random.randint(mid_M - m * self.window_gen_factor + 1, mid_M - m * (1 - self.window_gen_factor) + 1)
+		i = np.random.randint(mid_N - np.round(n * self.window_gen_factor,0) + 1, mid_N - np.round(n * (1 - self.window_gen_factor)) + 1)
+		j = np.random.randint(mid_M - np.round(m * self.window_gen_factor,0) + 1, mid_M - np.round(m * (1 - self.window_gen_factor)) + 1)
 		# avoid generation in the middle
 		if i+n//2 == mid_N and j+m//2 == mid_M:
 			i += np.random.choice([-1,1])
@@ -196,8 +196,6 @@ class GaussSimulator(SimpleMatrixSimulator):
 		else:
 			return np.sum(self.state) == 0
 
-
-import cv2
 
 
 class ImageSimulator(SimpleMatrixSimulator):
