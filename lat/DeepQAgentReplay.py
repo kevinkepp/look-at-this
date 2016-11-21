@@ -5,8 +5,6 @@ import numpy as np
 
 
 class DeepQAgentReplay(DeepQAgent):
-	DEF_BATCH_SIZE = 16
-	DEF_BUFFER = 200
 
 	# actions: possible actions
 	# gamma: discount factor
@@ -15,7 +13,7 @@ class DeepQAgentReplay(DeepQAgent):
 	# model: estimator for q values
 	# batch size: size of minibatches for experience replay (see doi:10.1038/nature14236)
 	# buffer size: size of experience pool from which minibatches are randomly sampled
-	def __init__(self, actions, gamma, epsilon, epsilon_update, model, batch_size=DEF_BATCH_SIZE, buffer=DEF_BUFFER):
+	def __init__(self, actions, gamma, epsilon, epsilon_update, model, batch_size, buffer):
 		super(DeepQAgentReplay, self).__init__(actions, gamma, epsilon, epsilon_update, model)
 		self.batch_size = batch_size
 		self.buffer = max(buffer, batch_size)  # buffer has to be at least batch_size
