@@ -14,7 +14,7 @@ from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator,
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 3000  # runs/games
+EPOCHS = 2000  # runs/games
 GRID_SIZE_N = 15
 GRID_SIZE_M = 15
 # max steps per run/game
@@ -133,7 +133,7 @@ names.append("DeepQAgent[50] Positive Replay")
 
 ## Evaluate results
 # choose which agents to run
-include = [0, 1, 2, 3, 4, 5, 6, 7]
+include = [2, 4, 6]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
