@@ -1,7 +1,7 @@
 from __future__ import division
 import os
 import matplotlib
-if not "DISPLAY" in os.environ:
+if "DISPLAY" not in os.environ:
 	matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np

@@ -222,8 +222,10 @@ class ImageSimulator(SimpleMatrixSimulator):
 		img = np.array(img, np.float32)
 		img_min = np.min(img)
 		img_max = np.max(img)
-		img -= img_min
-		img /= img_max - img_min
+		img_diff = img_max - img_min
+		if img_diff != 0:
+			img -= img_min
+			img /= img_max - img_min
 		self.target = np.max(img)
 		self.img = img
 
