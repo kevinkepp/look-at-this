@@ -14,16 +14,16 @@ from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator,
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 5000  # runs/games
-GRID_SIZE_N = 25
-GRID_SIZE_M = 25
+EPOCHS = 3000  # runs/games
+GRID_SIZE_N = 15
+GRID_SIZE_M = 15
 # max steps per run/game
 # MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M
 MAX_STEPS = GRID_SIZE_N * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = ImageSimulatorSpecialSample
+SIMULATOR = ImageSimulator # ImageSimulatorSpecialSample
 #ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions
@@ -100,18 +100,40 @@ names.append("QAgent g=0.8")
 
 # Deep Q-Agents
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentPositiveReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model)
 envs.append(create_simulator(agent))
 names.append("DeepQAgent[]")
 
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model)
 envs.append(create_simulator(agent))
 names.append("DeepQAgent[50]")
 
+# Deep Q-Agents with Replay
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[] Replay")
+
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[50] Replay")
+
+# Deep Q-Agents with Positive Replay
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentPositiveReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[] Positive Replay")
+
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentPositiveReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[50] Positive Replay")
+
 ## Evaluate results
 # choose which agents to run
-include = [2]
+include = [0, 1, 2, 3, 4, 5, 6, 7]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
@@ -122,7 +144,7 @@ ev.run_until(lambda score: score < GRID_SIZE_N * 0.002, True)
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator
-if True:
+if False:
 	import matplotlib.pyplot as plt
 
 	f = plt.figure()

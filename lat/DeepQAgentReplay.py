@@ -5,7 +5,7 @@ import numpy as np
 
 
 class DeepQAgentReplay(DeepQAgent):
-	DEF_BATCH_SIZE = 8
+	DEF_BATCH_SIZE = 16
 	DEF_BUFFER = 200
 
 	# actions: possible actions

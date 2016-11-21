@@ -5,7 +5,7 @@ import numpy as np
 
 class DeepQAgentPositiveReplay(DeepQAgentReplay):
 
-	DEF_BATCH_SIZE = 8
+	DEF_BATCH_SIZE = 16
 	DEF_BUFFER = 200
 	DEF_POS_PORTION = 0.6
 	DEF_EPSILON_POS_RPL = 0.1

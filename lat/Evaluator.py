@@ -65,8 +65,8 @@ class Evaluator(object):
 	def _train_until(self, env, condition, window_size):
 		results = []
 		for i in range(self.epochs):
-			visible = True if self.epochs > 10 and i % int(self.epochs / 10) < 3 else False
-			env.use_special_sampling(i, self.epochs)
+			visible = False # True if self.epochs > 10 and i % int(self.epochs / 10) < 3 else False
+			# env.use_special_sampling(i, self.epochs)
 			res = env.run_epoch(i, visible=visible, trainingmode=True)
 			res = (res[0], len(res[1]), res[2])
 			results.append(res)
