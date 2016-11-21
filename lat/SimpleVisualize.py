@@ -69,7 +69,7 @@ class PlotMatrix(Visualizer):
 		plt.title(title)
 		ax_steps.set_xlabel("epochs")
 		ax_steps.set_ylabel("steps taken - min steps")
-		ax_success.set_ylabel("min steps / steps taken")
+		ax_success.set_ylabel("success-rate")
 		ax_success.grid(True)
 		ax_steps.grid(True, alpha=0.3)
 		ax_success.set_xlim((window_size - 1, epochs + 1))
