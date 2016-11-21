@@ -5,7 +5,7 @@ from copy import copy
 # from enum import Enum
 import numpy as np
 import time
-
+import cv2
 
 def enum(**enums):
     return type('Enum', (), enums)
@@ -17,7 +17,7 @@ Actions.all = [Actions.up, Actions.down, Actions.left, Actions.right]
 class SimpleMatrixSimulator(Environment):
 
 	world_factor = 3 # the "world" has a size factor x grid_dims
-	window_gen_factor = 0.85
+	window_gen_factor = 0.95 # decides where to sample init state from, 1 -> goal can be at the edge
 	target = 1
 
 	"""simulates an image frame environment for a learning agent"""
@@ -50,7 +50,7 @@ class SimpleMatrixSimulator(Environment):
 		return (n,m)
 
 	def _get_init_state(self,dims):
-		"""initialize a random state that is a matrix with zeros and one one in it at a random position """
+		""" sample an initial state (the top left corner of view-window to world-state) """
 		(n,m) = dims
 		N = self.world_factor * n
 		M = self.world_factor * m
@@ -59,8 +59,8 @@ class SimpleMatrixSimulator(Environment):
 		# create world-state
 		self.world_state = np.zeros((N,M))
 		self.world_state[mid_N, mid_M] = 1
-		i = np.random.randint(mid_N - n * self.window_gen_factor + 1, mid_N - n * (1 - self.window_gen_factor) + 1)
-		j = np.random.randint(mid_M - m * self.window_gen_factor + 1, mid_M - m * (1 - self.window_gen_factor) + 1)
+		i = np.random.randint(mid_N - np.round(n * self.window_gen_factor,0) + 1, mid_N - np.round(n * (1 - self.window_gen_factor)) + 1)
+		j = np.random.randint(mid_M - np.round(m * self.window_gen_factor,0) + 1, mid_M - np.round(m * (1 - self.window_gen_factor)) + 1)
 		# avoid generation in the middle
 		if i+n//2 == mid_N and j+m//2 == mid_M:
 			i += np.random.choice([-1,1])
@@ -197,14 +197,13 @@ class GaussSimulator(SimpleMatrixSimulator):
 			return np.sum(self.state) == 0
 
 
-import cv2
-
 
 class ImageSimulator(SimpleMatrixSimulator):
 	def __init__(self, agent, reward, img_path, grid_n, grid_m=1, orientation=0, max_steps=1000, visualizer=None,
 				 bounded=True):
 		super(ImageSimulator, self).__init__(agent, reward, grid_n, grid_m, orientation, max_steps, visualizer, bounded)
 		self._load_and_preprocess_img(img_path)
+		self.world_state = self.img
 
 	def _load_and_preprocess_img(self, path):
 		img = cv2.imread(path)
@@ -229,13 +228,74 @@ class ImageSimulator(SimpleMatrixSimulator):
 		self.target = np.max(img)
 		self.img = img
 
+	def _get_init_state(self,dims):
+		""" sample an initial state (the top left corner of view-window to world-state) """
+		(n,m) = dims
+		N = self.world_factor * n
+		M = self.world_factor * m
+		mid_N = N//2
+		mid_M = M//2
+		i = np.random.randint(mid_N - np.round(n * self.window_gen_factor,0) + 1, mid_N - np.round(n * (1 - self.window_gen_factor)) + 1)
+		j = np.random.randint(mid_M - np.round(m * self.window_gen_factor,0) + 1, mid_M - np.round(m * (1 - self.window_gen_factor)) + 1)
+		# avoid generation in the middle
+		if i+n//2 == mid_N and j+m//2 == mid_M:
+			i += np.random.choice([-1,1])
+		self.i_world = i
+		self.j_world = j
+		self.first_i = i
+		self.first_j = j
+		return self.world_state[i:i+n,j:j+m]
+
+
+class ImageSimulatorSpecialSample(ImageSimulator):
+	""" simulates image and samples with a special sampling (near center at beginning and farther away later) """
+
+	epoch = None
+	epoch_max = None
+	special_sampling = False
+
+	def use_special_sampling(self, epoch, max_epochs):
+		""" switching special sampling mode on/off (True/False) """
+		self.epoch_max = max_epochs
+		self.epoch = epoch
+		self.special_sampling = True
+
 	def _get_init_state(self, dims):
-		super(ImageSimulator, self)._get_init_state(dims)
-		self.world_state = self.img
-		state = self._extract_state_from_world(self.i_world, self.j_world)
-		# DEBUG, draw current view
-		# view = cv2.imread("tmp/view.png")
-		# cv2.rectangle(view, (self.i_world, self.j_world), (self.i_world + dims[0], self.j_world + dims[1]),
-		#			  (255, 255, 255), 1)
-		#cv2.imwrite("tmp/view_curr.png", view)
-		return state
+		if self.special_sampling:
+			self._get_init_state_special(dims, self.epoch_max, self.epoch)
+			state = self._extract_state_from_world(self.i_world, self.j_world)
+			return state
+		else:
+			super(ImageSimulatorSpecialSample, self)._get_init_state(dims)
+
+	def _get_init_state_special(self, dims, epochs, curr_epoch):
+		""" sample an initial state (the top left corner of view-window to world-state), start with sampling  near
+		center and begin to wander farther away"""
+		(n, m) = dims
+		N = self.world_factor * n
+		M = self.world_factor * m
+		mid_N = N // 2
+		mid_M = M // 2
+
+		min_wgf = 0.55 # min 0.5 -> then sampled directly in the middle
+		max_wgf = 1 # self.window_gen_factor
+		win_gen_factor = min(max_wgf, min_wgf + (curr_epoch / (epochs*0.6))*(max_wgf - min_wgf))
+		#print(win_gen_factor)
+		lower_i = mid_N - np.round(n * win_gen_factor, 0) + 1
+		upper_i = mid_N - np.round(n * (1 - win_gen_factor), 0) + 1
+
+		lower_j = mid_M - np.round(m * win_gen_factor, 0) + 1
+		upper_j = mid_M - np.round(m * (1 - win_gen_factor), 0) + 1
+
+		i = np.random.randint(lower_i, upper_i)
+		j = np.random.randint(lower_j, upper_j)
+
+		# avoid generation in the middle
+		if i + n // 2 == mid_N and j + m // 2 == mid_M:
+			i += np.random.choice([-1, 1])
+		self.i_world = i
+		self.j_world = j
+		self.first_i = i
+		self.first_j = j
+		return self.world_state[i:i + n, j:j + m]
+

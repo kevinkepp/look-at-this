@@ -6,23 +6,24 @@ from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
 from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
+from lat.DeepQAgentPositiveRepay import  DeepQAgentPositiveReplay
 from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
 from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
 from lat.SimpleVisualize import PlotMatrix
-from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, Actions
+from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, ImageSimulatorSpecialSample, Actions
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 1000  # runs/games
-GRID_SIZE_N = 13
-GRID_SIZE_M = 13
+EPOCHS = 3000  # runs/games
+GRID_SIZE_N = 15
+GRID_SIZE_M = 15
 # max steps per run/game
 # MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M
 MAX_STEPS = GRID_SIZE_N * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = ImageSimulator
+SIMULATOR = ImageSimulator # ImageSimulatorSpecialSample
 #ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions
@@ -99,25 +100,67 @@ names.append("QAgent g=0.8")
 
 # Deep Q-Agents
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model)
 envs.append(create_simulator(agent))
 names.append("DeepQAgent[]")
 
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model)
 envs.append(create_simulator(agent))
 names.append("DeepQAgent[50]")
 
+# Deep Q-Agents with Replay
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[] Replay")
+
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[50] Replay")
+
+# Deep Q-Agents with Positive Replay
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentPositiveReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[] Positive Replay")
+
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentPositiveReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[50] Positive Replay")
+
 ## Evaluate results
 # choose which agents to run
-include = [2]
+include = [0, 1, 2, 3, 4, 5, 6, 7]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
-ev = Evaluator(envs, names, EPOCHS, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
+ev = Evaluator(envs, names, EPOCHS, VISUALIZER, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
 			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH.split("/")[-1])
 # ev.run(True)
-ev.run_until(lambda score: score < GRID_SIZE_N * 0.02, True)
+ev.run_until(lambda score: score < GRID_SIZE_N * 0.002, True)
+
+# hacky way of visualizing the weights
+# TODO improve and include this in Evaluator
+if False:
+	import matplotlib.pyplot as plt
+
+	f = plt.figure()
+	# hacky access to weights
+	agent = envs[0].agent
+	weights = agent.model._model.layers[0].get_weights()[0]
+	print(weights.shape)
+	# print("Weights for " + names[1] + ":\n" + str(weights))
+	for i in range(weights.shape[1]):
+		ax = f.add_subplot(2, 2, i + 1)
+		w = weights[:, i].reshape((GRID_SIZE_N, GRID_SIZE_M))
+		ax.imshow(w, interpolation='nearest', aspect='auto', cmap="Blues")
+		# (up=0, down=1, left=2, right=3)
+		action_dict = {0: "up", 1: "down", 2: "left", 3: "right"}
+		ax.set_title("Action " + action_dict[i])
+	plt.show()
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator

@@ -4,7 +4,7 @@ from lat.Simulator import Actions
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import time
 
 class PlotMatrix(Visualizer):
 	""" Visualizes the states of a given matrix as state with one one in it as goal """
@@ -24,7 +24,7 @@ class PlotMatrix(Visualizer):
 			(x,y) = self._get_new_xy(x,y,ac)
 			xx = np.append(xx,x)
 			yy = np.append(yy,y)
-		# plt.figure()
+		# fig = plt.figure()
 		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
 		# plotting starting view window
 		first_win_x = np.array([first_j, first_j, first_j + m, first_j + m, first_j])
@@ -59,3 +59,43 @@ class PlotMatrix(Visualizer):
 		elif ac == Actions.left:
 			x -= 1
 		return x, y
+
+	def plot_results(self, names, results, epochs, window_size, params):
+		""" plot the results in a plot with two y axis, one the success-rate and the second
+		the difference between steps-taken and min-necessary steps"""
+		fig, ax_success = plt.subplots()
+		ax_steps = ax_success.twinx()
+		title = "Training over {0} epochs (steps avg over last {1} epochs)".format(epochs, window_size)
+		plt.title(title)
+		ax_steps.set_xlabel("epochs")
+		ax_steps.set_ylabel("steps taken - min steps")
+		ax_success.set_ylabel("success-rate")
+		ax_success.grid(True)
+		ax_steps.grid(True, alpha=0.3)
+		ax_success.set_xlim((window_size - 1, epochs + 1))
+		ax_success.set_ylim((-0.02, 1.02))
+
+		for name, result in zip(names, results):
+			self._plot_res_one_agent(ax_success, ax_steps, result, name, window_size)
+
+		ax_success.legend(loc='center right')
+		timestamp = time.strftime("%Y%m%d_%H%M%S")
+		para = "_epochs=%d" % epochs
+		for n, v in sorted(params.items()):
+			para += "_{0}={1}".format(n, v)
+		filename = "tmp/plots/" + timestamp + para + ".png"
+		plt.savefig(filename, bbox_inches='tight')
+		plt.show()
+
+	def _plot_res_one_agent(self, ax_success, ax_steps, results, name, window_size):
+		results = np.array(results)
+		step_diff = self._movingaverage(results[:, 1] - results[:, 2], window_size)
+		success = self._movingaverage(results[:, 0], window_size)
+		x = np.arange(window_size, len(results)+1)
+		ax_success.plot(x, success, '-', label=name)
+		ax_steps.plot(x, step_diff, '--')
+
+	def _movingaverage(self, values, window):
+		weights = np.repeat(1.0, window) / window
+		mav = np.convolve(values, weights, 'valid')
+		return mav
