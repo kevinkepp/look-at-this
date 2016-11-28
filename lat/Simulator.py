@@ -76,7 +76,8 @@ class SimpleMatrixSimulator(Environment):
 
 	def _extract_state_from_world(self, i, j):
 		(n, m) = self.grid_dims
-		return self.world_state[i:i + n, j:j + m]
+		cut = self.world_state[i:i + n, j:j + m]
+		return cut
 
 	def _run_epoch(self, trainingmode=False):
 		self.state = self._get_init_state(self.grid_dims)
@@ -132,9 +133,14 @@ class SimpleMatrixSimulator(Environment):
 		"""return the current state """
 		return self.state
 
-	# is out of bounds
+	# is out of bounds (if at edge of world_state this is already oob)
 	def _is_oob(self):
-		return np.sum(self.state) == 0
+		(N, M) = self.world_state.shape
+		(n, m) = self.grid_dims
+		if self.i_world == 0 or self.j_world == 0 or self.i_world + n == N or self.j_world + m == M:
+			return True
+		else:
+			return np.sum(self.state) == 0
 
 	def execute_action(self, action):
 		"""execute the action and therefore change the state """
@@ -158,8 +164,10 @@ class SimpleMatrixSimulator(Environment):
 		mid_y = int(np.floor(self.grid_dims[1] / 2))
 		calc_dist = lambda x, y: abs(mid_x - x) + abs(mid_y - y)
 		dists = [calc_dist(x, y) for x, y in zip(xs, ys)]
-		dist_min = np.min(dists)
-		return dist_min
+		if len(dists) > 0:
+			return np.min(dists)
+		else:
+			return -1
 
 
 class GaussSimulator(SimpleMatrixSimulator):
@@ -190,15 +198,6 @@ class GaussSimulator(SimpleMatrixSimulator):
 		self.j_world = j
 		return self._extract_state_from_world(i, j)
 
-	# is out of bounds (if at edge of world_state this is already oob)
-	def _is_oob(self):
-		(N, M) = self.world_state.shape
-		(n, m) = self.grid_dims
-		if self.i_world == 0 or self.j_world == 0 or self.i_world + n == N or self.j_world + m == M:
-			return True
-		else:
-			return np.sum(self.state) == 0
-
 
 class ImageSimulator(SimpleMatrixSimulator):
 	def __init__(self, agent, reward, img_path, grid_n, grid_m=1, orientation=0, max_steps=1000, visualizer=None,
@@ -210,9 +209,9 @@ class ImageSimulator(SimpleMatrixSimulator):
 	def _load_and_preprocess_img(self, path):
 		img = cv2.imread(path)
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-		blur_factor = 5.
-		blur_kernel = tuple([int(d / blur_factor + 1 if int(d / blur_factor) % 2 == 0 else 0) for d in self.grid_dims])
-		img = cv2.GaussianBlur(img, blur_kernel, 10)
+		blur_factor = 1./10.
+		blur_kernel = tuple([int(d * blur_factor + 1 if int(d * blur_factor) % 2 == 0 else 0) for d in self.grid_dims])
+		img = cv2.GaussianBlur(img, blur_kernel, 2)
 		world_dims = tuple([d * self.world_factor for d in self.grid_dims])
 		img = cv2.resize(img, world_dims)
 		# DEBUG, draw world dims frame around image
@@ -248,6 +247,11 @@ class ImageSimulator(SimpleMatrixSimulator):
 		self.j_world = j
 		self.first_i = i
 		self.first_j = j
+		# DEBUG, draw current view
+		view = cv2.imread("tmp/view.png")
+		cv2.rectangle(view, (self.i_world, self.j_world), (self.i_world + dims[0], self.j_world + dims[1]),
+					  (255, 255, 255), 1)
+		cv2.imwrite("tmp/view_curr.png", view)
 		return self.world_state[i:i + n, j:j + m]
 
 

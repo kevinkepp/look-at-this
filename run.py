@@ -6,7 +6,7 @@ from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
 from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
-from lat.DeepQAgentPositiveRepay import  DeepQAgentPositiveReplay
+from lat.DeepQAgentPositiveRepay import DeepQAgentPositiveReplay
 from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
 from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
 from lat.SimpleVisualize import PlotMatrix
@@ -23,8 +23,8 @@ MAX_STEPS = GRID_SIZE_N * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = ImageSimulator # ImageSimulatorSpecialSample
-#ACTIONS = Actions.all()
+SIMULATOR = ImageSimulator  # ImageSimulatorSpecialSample
+# ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions
 REWARD_LIN = LinearReward()
@@ -82,7 +82,8 @@ REPLAY_BUFFER = REPLAY_BUFFER_ATARI_SMALL
 envs = []
 names = []
 
-IMG_PATH = "tmp/white_circle.png"
+# IMG_PATH = "tmp/white_circle.png"
+IMG_PATH = "tmp/moon.jpg"
 VISUALIZER = PlotMatrix()
 def create_simulator(agent):
 	return SIMULATOR(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=PlotMatrix(),
@@ -133,13 +134,14 @@ names.append("DeepQAgent[50] Positive Replay")
 
 ## Evaluate results
 # choose which agents to run
-include = [2, 4, 6]
+include = [2]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
 ev = Evaluator(envs, names, EPOCHS, VISUALIZER, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
-			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN, img=IMG_PATH.split("/")[-1])
-		# TODO
+			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN,
+			   img=IMG_PATH.split("/")[-1])
+# TODO
 # ev.run(True)
 ev.run_until(lambda score: score < GRID_SIZE_N * 0.002, True)
 
@@ -149,10 +151,11 @@ if False:
 	import matplotlib.pyplot as plt
 
 	f = plt.figure()
+	agent_i = 0
 	# hacky access to weights
-	agent = envs[0].agent
+	agent = envs[agent_i].agent
 	weights = agent.model._model.layers[0].get_weights()[0]
-	print(weights.shape)
+	# print(weights.shape)
 	# print("Weights for " + names[1] + ":\n" + str(weights))
 	for i in range(weights.shape[1]):
 		ax = f.add_subplot(2, 2, i + 1)
@@ -162,6 +165,7 @@ if False:
 		action_dict = {0: "up", 1: "down", 2: "left", 3: "right"}
 		ax.set_title("Action " + action_dict[i])
 	plt.show()
+	plt.savefig("tmp_weights_" + names[agent_i] + ".png")
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator
