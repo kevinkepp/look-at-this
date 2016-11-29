@@ -2,6 +2,8 @@ import networkx as nx
 import numpy as np
 import cv2
 
+from lat.Simulator import ImageSimulator
+
 
 class Point:
 	def __init__(self, x, y):
@@ -86,7 +88,7 @@ class PathNode:
 		self.loc = loc
 
 
-class Simulator:
+class PathSimulator(ImageSimulator):
 	WORLD_SIZE_MIN_W = 20
 	WORLD_SIZE_MIN_H = 20
 
@@ -95,18 +97,27 @@ class Simulator:
 	PATH_LENGTH_MEAN = 12
 	PATH_LENGTH_STD = 5
 
-	def __init__(self, world_size, view_size):
+	IMG_PATH = "tmp/world.png"
+
+	def __init__(self, agent, reward, grid_n, grid_m=1, orientation=0, max_steps=1000,
+											visualizer=None, bounded=True, world_size=None):
+		world_size = world_size if world_size is not None else (grid_n * self.world_factor, grid_m * self.world_factor)
 		self.world_size = Size(world_size[0], world_size[1])
 		if self.world_size.w < self.WORLD_SIZE_MIN_W or self.world_size.h < self.WORLD_SIZE_MIN_H:
 			raise ValueError(
 				"World size too small. Minimum is (%d,%d)" % (self.WORLD_SIZE_MIN_W, self.WORLD_SIZE_MIN_H))
-		self.view_size = Size(view_size[0], view_size[1])
+		self.view_size = Size(grid_n, grid_m)
 		if self.view_size.w < 1 or self.view_size.h < 1:
 			raise ValueError("View size too small. Minimum is (1,1)")
 		if self.view_size.w > self.world_size.w * 1.5 or self.view_size.h > self.world_size.h * 1.5:
 			raise ValueError("View size too large. Maximum is 1.5 times world size.")
 		self.img = np.full(world_size, 0, dtype=np.float)
 		self.bbox = self.get_bbox(self.world_size, self.view_size)
+		self.graph = None
+		super(PathSimulator, self).__init__(agent, reward, self.IMG_PATH, grid_n, grid_m, orientation, max_steps,
+											visualizer, bounded)
+
+	def _load_and_preprocess_img(self, path):
 		self.graph = nx.Graph()
 		# only add one path for now
 		self.generate_path(path_id=0)
@@ -114,7 +125,9 @@ class Simulator:
 		# add target to random vertex
 		node_target = self.generate_target()
 		self.render_target(self.img, node_target)
-		cv2.imwrite("tmp/out.png", self.img)
+		# DEBUG
+		cv2.imwrite(path, self.img)
+		super(PathSimulator, self)._load_and_preprocess_img(path)
 
 	def render_paths(self, img):
 		for u, v in self.graph.edges():
@@ -215,12 +228,14 @@ class Simulator:
 		]
 		if interval_1[1] < interval_2[0]:
 			return False  # no mutual abcisses
+
 		# Try to compute interception
 		def line(p1, p2):
 			A = (p1.y - p2.y)
 			B = (p2.x - p1.x)
 			C = (p1.x * p2.y - p2.x * p1.y)
 			return A, B, -C
+
 		L1 = line(p1, p2)
 		L2 = line(p3, p4)
 		D = L1[0] * L2[1] - L1[1] * L2[0]

@@ -1,6 +1,8 @@
 from __future__ import division
 import random
 import numpy as np
+
+from lat.PathSimulator import PathSimulator
 from lat.RandomAgent import RandomAgent
 from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
@@ -23,7 +25,7 @@ MAX_STEPS = GRID_SIZE_N * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = ImageSimulator  # ImageSimulatorSpecialSample
+SIMULATOR = PathSimulator  # ImageSimulator  # ImageSimulatorSpecialSample
 # ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions
@@ -86,8 +88,8 @@ names = []
 IMG_PATH = "tmp/moon.jpg"
 VISUALIZER = PlotMatrix()
 def create_simulator(agent):
-	return SIMULATOR(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=PlotMatrix(),
-					 bounded=BOUNDED)
+	return SIMULATOR(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=PlotMatrix(),
+					 bounded=BOUNDED, world_size=(200, 200))
 
 # Random Agent as baseline
 agent = RandomAgent(ACTIONS)
