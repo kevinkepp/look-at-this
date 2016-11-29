@@ -111,12 +111,15 @@ class Simulator:
 		# only add one path for now
 		self.generate_path(path_id=0)
 		self.render_paths(self.img)
+		# add target to random vertex
+		node_target = self.generate_target()
+		self.render_target(self.img, node_target)
 		cv2.imwrite("tmp/out.png", self.img)
 
 	def render_paths(self, img):
 		for u, v in self.graph.edges():
 			e = self.graph[u][v]
-			color = (200, 200, 200)
+			color = 150
 			thickness = 2
 			# TODO dotted line from http://stackoverflow.com/questions/26690932/opencv-rectangle-with-dotted-or-dashed-lines
 			cv2.line(img, u.loc.tuple(), v.loc.tuple(), color=color, thickness=thickness)
@@ -140,7 +143,7 @@ class Simulator:
 		else:
 			# sample next node based on previous one
 			id_ = len(self.graph.nodes())
-			# only accept node if new edge does not intersect existing edges, maximally sample 20 times
+			# sample node and only accept it if new edge does not intersect existing edges, maximally sample 20 times
 			for i in range(20):
 				# try to sample step, maximally 10 times
 				for j in range(10):
@@ -152,7 +155,7 @@ class Simulator:
 				node_new = PathNode(id_, loc, path_id)
 				if not self.is_intersecting_any((nodes[-1], node_new), self.graph.edges()):
 					break
-			else:  # when loop ended normally we stop building path because we can't find non intersecting node anymore
+			else:  # when loop ended normally we stop building path because we can't find node with non-intersecting edge anymore
 				return
 		# add new node to the graph
 		self.graph.add_node(node_new)
@@ -234,6 +237,17 @@ class Simulator:
 				return not (p == p1 == p3 or p == p1 == p4)
 		else:
 			return False  # not intersecting
+
+	def generate_target(self):
+		nodes = self.graph.nodes()
+		node = np.random.choice(nodes)
+		self.graph[node]['target'] = 1
+		return node
+
+	def render_target(self, img, node):
+		radius = 4
+		color = 255
+		cv2.circle(img, node.loc.tuple(), radius, color, -1)
 
 	def sample_point(self, bbox):
 		x = self.sample_uniform(bbox.x, bbox.x + bbox.w)
