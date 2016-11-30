@@ -324,3 +324,107 @@ class PathSimulatorSimple(PathSimulator):
 		# step size is minimum two views
 		step_size_min = min(self.view_size.tuple()) * 2
 		return super(PathSimulatorSimple, self).sample_step_from(bbox, prev_node, step_size_min)
+
+class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
+	""" simple path simulation -> just a line with target on it + expansive sampling """
+	# IMPORTANT IF NAME IS CHANGED ALSO LOOK INTO 'RUN' OF EVALUATOR TO CHANGE NAME
+
+	epochs = None  # contains the overall max of epochs
+	curr_epoch = 1  # contains current number of epochs
+
+	pct_epochs_until_max = 0.7  # after what percentage of epochs to reach max sampling distance
+	pct_min_dist_in_grid_size = 0.4  # at which distance to start sampling (in percent of grid-size)
+
+	def _get_init_state(self):
+		""" use special sampling  """
+		self.state = None
+		# we need to generate a new world for every run
+		self._initialize_world()
+		self._add_border_of_zeros()  # TODO: talk about that, padding 1.5 grid size at top and bottom
+		# here special expansive sampling happens
+		# get parameters
+		i, j = self._get_target_loc()
+		N, M = self.world_state.shape
+		n, m = self.grid_dims
+		# get limits
+		i_lim, j_lim = self._get_limits(i, j, N, M, n, m)
+		# get start position of upper left corner of view
+		i_0 = np.random.randint(i_lim[0], i_lim[1]+1)
+		j_0 = np.random.randint(j_lim[0], j_lim[1] + 1)
+		# set state, start-state and extract the view
+		self.i_world, self.j_world = i_0, j_0
+		self.first_i, self.first_j = i_0, j_0
+		self.state = self._extract_state_from_world(i_0, j_0)
+		self.curr_epoch += 1
+		return self.state
+
+	def _get_limits(self, i_goal, j_goal, n_world, m_world, n_grid, m_grid):
+		i_lim = self._get_limit(i_goal, n_grid, n_world)
+		j_lim = self._get_limit(j_goal, m_grid, m_world)
+		return i_lim, j_lim
+
+	def _get_limit(self, i, n, N):
+		e = self.curr_epoch
+		e_max_reached = self.epochs * self.pct_epochs_until_max
+		if e >= e_max_reached:
+			i_lim = (n, N-2*n)
+		else:
+			min_dist = n * self.pct_min_dist_in_grid_size
+			max_dist = N
+			dist = int((max_dist - min_dist - i - n)*e/e_max_reached)
+			i_low = i - min_dist - dist - int(n/2)
+			i_high = i + min_dist + dist - int(n/2)
+			i_lim = (i_low, i_high)
+			i_lim = self._correct_to_within_world_state(i_lim, n, N)
+		return i_lim
+
+	def _correct_to_within_world_state(self, i_lim, n, N):
+		i_low = i_lim[0]
+		i_high = i_lim[1]
+		if i_low - n < 0:
+			i_low = n
+		if i_high > N - 2*n:
+			i_high = N - 2*n
+		return i_low, i_high
+
+	def _get_target_loc(self):
+		# TODO: there must be a better way to extract the goal location (middle of circle)
+		ij_target = np.where(self.world_state == 1)
+		ij_target = np.mean(ij_target, axis=1).astype(int)
+		assert ij_target.size == 2, "target location in expansive sampler does not contain 2 indices"
+		return ij_target
+
+	# somehow needs to know EPOCHS and current epoch
+
+	def restartExpansiveSampling(self, epochs):
+		self.epochs = epochs
+		self.curr_epoch = 1
+
+	# is out of bounds (if at edge of world_state this is already oob)
+	def _is_oob(self):
+		(N, M) = self.world_state.shape
+		(n, m) = self.grid_dims
+		if self.i_world <= 0 or self.j_world <= 0 or self.i_world + n >= N or self.j_world + m >= M:
+			return True
+		else:
+			return False
+
+	def _add_border_of_zeros(self):
+		pad_grid_factor = 1.5
+		pad_n, pad_m = (np.array(self.grid_dims) * pad_grid_factor).astype(int)
+		self.world_state = np.lib.pad(self.world_state, ((pad_n, pad_n), (pad_m, pad_m)), 'constant', constant_values=0)
+
+	# TODO: workaround to expand bbox, padding zeros later (see _add_border_of_zeros above)
+	def get_bbox(self, world_size, view_size):
+		border = Point(view_size.w, view_size.h)
+		# size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
+		size = Size(world_size.w - border.x, world_size.h - border.x)
+		return BoundingBox(border, size)
+
+	# # TODO: workaround to increase the length of paths (it would be good to have some longer paths, that extend through the entire image)
+	# def sample_normal(self, mean, std, low=float("-inf"), high=float("inf")):
+	# 	while True:
+	# 		idx = int(np.random.normal(mean*1.5, std, 1))
+	# 		if low <= idx <= high*1.5:
+	# 			return idx
+	# 	return float("nan")

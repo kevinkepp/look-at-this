@@ -56,6 +56,10 @@ class Evaluator(object):
 			for n, v in sorted(self.params.items()):
 				paras += ", {0}={1}".format(n, v)
 			print(paras)
+			# TODO: better integration then using constant string name of class
+			if env.__class__.__name__ == "PathSimSimpleExpansiveSampler":
+				print("Restarting Expansive Sampling")
+				env.restartExpansiveSampling(self.epochs)
 			t0 = time.time()
 			score, results = self._train_until(env, break_condition, window_size, visualize)
 			te = time.time()

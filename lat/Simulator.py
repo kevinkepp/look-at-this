@@ -128,7 +128,7 @@ class SimpleMatrixSimulator(Environment):
 	def _is_oob(self):
 		(N, M) = self.world_state.shape
 		(n, m) = self.grid_dims
-		if self.i_world == 0 or self.j_world == 0 or self.i_world + n == N or self.j_world + m == M:
+		if self.i_world <= 0 or self.j_world <= 0 or self.i_world + n >= N or self.j_world + m >= M:
 			return True
 		else:
 			return np.sum(self.state) == 0

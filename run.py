@@ -2,14 +2,14 @@ from __future__ import division
 import random
 import numpy as np
 
-from lat.PathSimulator import PathSimulator, PathSimulatorSimple
+from lat.PathSimulator import PathSimulator, PathSimulatorSimple, PathSimSimpleExpansiveSampler
 from lat.RandomAgent import RandomAgent
 from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
 from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
 from lat.DeepQAgentPositiveRepay import DeepQAgentPositiveReplay
-from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward, MiddleAbsoluteAsReward, SumAsReward
+from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward, MiddleAbsoluteAsReward, SumAsReward, RewardAtTheEndForOneInTheMiddle
 from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
 from lat.SimpleVisualize import PathAndResultsPlotter
 from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, ImageSimulatorSpecialSample, Actions
@@ -25,8 +25,8 @@ MAX_STEPS = GRID_SIZE_N * WORLD_SIZE_FACTOR * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = PathSimulatorSimple  # ImageSimulator  # ImageSimulatorSpecialSample
-SIMULATOR_NAME = "PathSimulator"
+SIMULATOR = PathSimSimpleExpansiveSampler #PathSimulatorSimple  # ImageSimulator  # ImageSimulatorSpecialSample
+SIMULATOR_NAME = "PathSimSimpleExpansiveSampler"
 # ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions
@@ -34,6 +34,8 @@ REWARD_LIN = LinearReward()
 REWARD_LIN_NAME = "linear"
 REWARD_AT_END = RewardAtTheEnd()  # also called "constant"
 REWARD_AT_END_NAME = "at-end"
+REWARD_AT_END_MIDDLE = RewardAtTheEndForOneInTheMiddle()
+REWARD_AT_END_NAME = "at-end-if-middle-one"
 REWARD_MID = MiddleAsReward()
 REWARD_MID_NAME = "middle"
 REWARD_MID_ABS = MiddleAbsoluteAsReward()
@@ -119,7 +121,7 @@ names.append("DeepQAgentReplay[8]")
 
 ## Evaluate results
 # choose which agents to run
-include = [2, 3]
+include = [2]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
