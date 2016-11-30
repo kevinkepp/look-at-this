@@ -13,10 +13,10 @@ class DeepQAgentReplay(DeepQAgent):
 	# model: estimator for q values
 	# batch size: size of minibatches for experience replay (see doi:10.1038/nature14236)
 	# buffer size: size of experience pool from which minibatches are randomly sampled
-	def __init__(self, actions, gamma, epsilon, epsilon_update, model, batch_size, buffer):
+	def __init__(self, actions, gamma, epsilon, epsilon_update, model, batch_size, buffer_):
 		super(DeepQAgentReplay, self).__init__(actions, gamma, epsilon, epsilon_update, model)
 		self.batch_size = batch_size
-		self.buffer = max(buffer, batch_size)  # buffer has to be at least batch_size
+		self.buffer = max(buffer_, batch_size)  # buffer has to be at least batch_size
 		self.replay = []
 		self.h = 0
 
@@ -24,13 +24,9 @@ class DeepQAgentReplay(DeepQAgent):
 		""" incorporates reward, states, action into replay list and updates the parameters of model """
 		exp_new = (old_state, action, new_state, reward)
 		self._update_replay_list(exp_new)
-		l_replay = len(self.replay)
-		if l_replay < self.buffer:
-			bt_size = l_replay if l_replay < self.batch_size else self.batch_size
-			mini_batch = random.sample(self.replay, bt_size)
-		else:
+		if len(self.replay) == self.buffer:
 			mini_batch = random.sample(self.replay, self.batch_size)
-		self._update_parameters_with_batch(mini_batch)
+			self._update_parameters_with_batch(mini_batch)
 
 	def _update_parameters_with_batch(self, mini_batch):
 		""" useed to update model parameters with the chosen batch """
@@ -39,7 +35,7 @@ class DeepQAgentReplay(DeepQAgent):
 		for old_state, action, new_state, reward in mini_batch:
 			# re-predict qs values for old state
 			qs_old = self.model.predict_qs(old_state)
-			target_qs = np.zeros((len(self.actions, )))
+			target_qs = np.zeros((len(self.actions,)))
 			target_qs[:] = qs_old[:]
 			if new_state is not None:
 				qs_new = self.model.predict_qs(new_state)
