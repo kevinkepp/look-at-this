@@ -11,7 +11,7 @@ from lat.DeepQAgentReplay import DeepQAgentReplay
 from lat.DeepQAgentPositiveRepay import DeepQAgentPositiveReplay
 from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward, MiddleAbsoluteAsReward, SumAsReward
 from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
-from lat.SimpleVisualize import PlotMatrix
+from lat.SimpleVisualize import PathAndResultsPlotter
 from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, ImageSimulatorSpecialSample, Actions
 from lat.Evaluator import Evaluator
 
@@ -91,9 +91,9 @@ envs = []
 names = []
 
 # IMG_PATH = "tmp/white_circle.png"  # "tmp/moon.jpg"
-VISUALIZER = PlotMatrix()
+VISUALIZER = PathAndResultsPlotter()
 def create_simulator(agent):
-	return SIMULATOR(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=PlotMatrix(),
+	return SIMULATOR(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=VISUALIZER,
 					 bounded=BOUNDED, world_size_factor=10)
 
 # Random Agent as baseline
@@ -151,21 +151,3 @@ if False:
 		ax.set_title("Action " + action_dict[i])
 	plt.show()
 	plt.savefig("tmp_weights_" + names[agent_i] + ".png")
-
-# hacky way of visualizing the weights
-# TODO improve and include this in Evaluator
-if False:
-	import matplotlib.pyplot as plt
-
-	f = plt.figure()
-	# hacky access to weights
-	agent = envs[0].agent
-	if isinstance(agent, DeepQAgent) and isinstance(agent.model, KerasMlpModel):
-		weights = agent.model.model.get_weights()[0]
-		# print("Weights for " + names[1] + ":\n" + str(weights))
-		for i in range(weights.shape[1]):
-			ax = f.add_subplot(2, 2, i + 1)
-			w = weights[:, i].reshape((GRID_SIZE_N, GRID_SIZE_M))
-			ax.imshow(w, interpolation='nearest', aspect='auto', cmap="Blues")
-			ax.set_title("Action " + str([a for a in Actions][i].name))
-		plt.show()
