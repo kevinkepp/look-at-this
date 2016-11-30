@@ -255,6 +255,63 @@ class ImageSimulator(SimpleMatrixSimulator):
 		return self.world_state[i:i + n, j:j + m]
 
 
+class GrosserSternImageSimulator(ImageSimulator):
+	""" world state is a gray scale google earth image of the grosser stern in berlin """
+
+	def _load_and_preprocess_img(self, path):
+		""" preprocess the given image"""
+		img = cv2.imread(path)
+		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+		img = img / float(np.max(img))  # renorm to 1 as max
+		# perhaps rescale it if necessary
+		#world_dims = tuple([d * self.world_factor for d in self.grid_dims])
+		#img = cv2.resize(img, world_dims)
+		self.img = img
+		self.target = np.max(img)
+
+	def _get_init_state(self, dims):
+		""" initial state is randomly sampled all over the picture except
+		for when it sampled on the goal, then started again """
+		(n, m) = dims
+		(N, M) = self.world_state.shape
+		i = np.random.randint(np.round((1 - self.window_gen_factor) * N, 0), np.round(N * self.window_gen_factor - n, 0))
+		j = np.random.randint(np.round((1 - self.window_gen_factor) * M, 0), np.round(M * self.window_gen_factor - m, 0))
+		# avoid generation with goal reached, so redo sampling
+		state = self._extract_state_from_world(i, j)
+		self.i_world = i
+		self.j_world = j
+		self.first_i = i
+		self.first_j = j
+		if self._at_goal(state):
+			state = self._get_init_state(dims)
+		return state
+
+	def get_best_possible_steps(self):
+		""" best possible steps is the distance in steps to the first 1 of gray scale image that appears within view """
+		goal_locations = np.where(self.world_state == 1)
+		goal_is = goal_locations[0]
+		goal_js = goal_locations[1]
+		(n, m) = self.grid_dims
+		(i, j) = (self.i_world, self.j_world)
+		distances = np.abs(goal_is - i - n/2) + np.abs(goal_js - j - m/2)
+		return np.min(distances)
+
+	def _at_goal(self, state):
+		""" returns 1 if at goal or 0 if not (goal is to get a 1 into the middle of the view) """
+		(n, m) = state.shape
+		if (state[int(n/2), int(m/2)] == 1) > 0:
+			return 1
+		else:
+			return 0
+
+	def execute_action(self, action):
+		world_state = self.world_state
+		super(ImageSimulator, self).execute_action(action)
+		i = self.i_world
+		j = self.j_world
+		(n, m) = self.grid_dims
+		self.visual.visualize_current_state(world_state, i, j, n, m)
+
 class ImageSimulatorSpecialSample(ImageSimulator):
 	""" simulates image and samples with a special sampling (near center at beginning and farther away later) """
 

@@ -6,12 +6,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-class PlotMatrix(Visualizer):
+
+class PathAndResultsPlotter(Visualizer):
 	""" Visualizes the states of a given matrix as state with one one in it as goal """
+
+	plt_is_shown = False
 
 	def visualize_state(self, state):
 		""" just plots current state in a simple print of matrix"""
 		print(state)
+
+	def visualize_current_state(self, world_state, i, j, n, m):
+		""" used to just plot and show the current state in the world_state (e.g. used to test simulators) """
+		plt.clf()
+		# plotting view window
+		win_x = np.array([j, j, j + m, j + m, j])
+		win_y = np.array([i, i + n, i + n, i, i])
+		print("x={} y={}".format(win_x,win_y))
+		plt.plot(win_x, win_y, 'r:')
+		# plot world-frame
+		plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
+		if self.plt_is_shown:
+			plt.draw()
+			plt.pause(0.001)
+		else:
+			self.plt_is_shown = True
+			plt.ion()
+			plt.show()
+			plt.draw()
+			plt.pause(0.001)
 
 	def visualize_course_of_action(self, world_state, first_i, first_j, grid_n, grid_m, actions, title=None, image_name="agent_path"):
 		""" plots a course of actions beginning from a certain first state """
