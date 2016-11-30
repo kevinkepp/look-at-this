@@ -2,7 +2,7 @@ import networkx as nx
 import numpy as np
 import cv2
 
-from lat.Simulator import ImageSimulator
+from lat.Simulator import ImageSimulator, SimpleMatrixSimulator
 
 
 class Point:
@@ -67,6 +67,9 @@ class Size:
 		self.w = w
 		self.h = h
 
+	def tuple(self):
+		return self.w, self.h
+
 
 class BoundingBox:
 	def __init__(self, point, size):
@@ -88,7 +91,7 @@ class PathNode:
 		self.loc = loc
 
 
-class PathSimulator(ImageSimulator):
+class PathSimulator(SimpleMatrixSimulator):
 	WORLD_SIZE_MIN_W = 20
 	WORLD_SIZE_MIN_H = 20
 
@@ -97,12 +100,12 @@ class PathSimulator(ImageSimulator):
 	PATH_LENGTH_MEAN = 12
 	PATH_LENGTH_STD = 5
 
-	IMG_PATH = "tmp/world.png"
-
 	def __init__(self, agent, reward, grid_n, grid_m=1, orientation=0, max_steps=1000,
-											visualizer=None, bounded=True, world_size=None):
-		world_size = world_size if world_size is not None else (grid_n * self.world_factor, grid_m * self.world_factor)
-		self.world_size = Size(world_size[0], world_size[1])
+											visualizer=None, bounded=True, world_size_factor=-1):
+		super(PathSimulator, self).__init__(agent, reward, grid_n, grid_m, orientation, max_steps, visualizer, bounded)
+		if world_size_factor > 1:
+			self.world_factor = world_size_factor
+		self.world_size = Size(grid_n * self.world_factor, grid_m * self.world_factor)
 		if self.world_size.w < self.WORLD_SIZE_MIN_W or self.world_size.h < self.WORLD_SIZE_MIN_H:
 			raise ValueError(
 				"World size too small. Minimum is (%d,%d)" % (self.WORLD_SIZE_MIN_W, self.WORLD_SIZE_MIN_H))
@@ -111,23 +114,52 @@ class PathSimulator(ImageSimulator):
 			raise ValueError("View size too small. Minimum is (1,1)")
 		if self.view_size.w > self.world_size.w * 1.5 or self.view_size.h > self.world_size.h * 1.5:
 			raise ValueError("View size too large. Maximum is 1.5 times world size.")
-		self.img = np.full(world_size, 0, dtype=np.float)
 		self.bbox = self.get_bbox(self.world_size, self.view_size)
-		self.graph = None
-		super(PathSimulator, self).__init__(agent, reward, self.IMG_PATH, grid_n, grid_m, orientation, max_steps,
-											visualizer, bounded)
+		# self._initialize_world()
 
-	def _load_and_preprocess_img(self, path):
+	def _initialize_world(self):
+		# world state
+		ws = np.full(self.world_size.tuple(), 0., dtype=np.float)
 		self.graph = nx.Graph()
 		# only add one path for now
 		self.generate_path(path_id=0)
-		self.render_paths(self.img)
+		self.render_paths(ws)
 		# add target to random vertex
 		node_target = self.generate_target()
-		self.render_target(self.img, node_target)
-		# DEBUG
-		cv2.imwrite(path, self.img)
-		super(PathSimulator, self)._load_and_preprocess_img(path)
+		self.render_target(ws, node_target)
+		# normalize image to [0, 1]
+		ws = np.array(ws, np.float32)
+		ws_min = np.min(ws)
+		ws_max = np.max(ws)
+		ws_diff = ws_max - ws_min
+		if ws_diff != 0:
+			ws -= ws_min
+			ws /= ws_diff
+		self.target = 1.
+		self.world_state = ws
+
+	def _get_init_state(self):
+		self.state = None
+		# we need to generate a new world for every run
+		self._initialize_world()
+		# find an initial state where a road is visible (sum of all visible pixel is not 0)
+		while self.state is None or self._is_oob():
+			view_pos = self.sample_view_position()
+			self.i_world, self.j_world = view_pos.tuple()
+			self.first_i, self.first_j = view_pos.tuple()
+			self.state = self.world_state[view_pos.x:view_pos.x + self.view_size.w, view_pos.y:view_pos.y + self.view_size.h]
+		# DEBUG, draw current view in world state
+		# view = self.world_state.copy() * 255
+		# cv2.rectangle(view, (view_pos.y, view_pos.x), (view_pos.y + self.view_size.h, view_pos.x + self.view_size.w),
+		#			  (255, 255, 255), 1)
+		# cv2.imwrite("tmp/view_curr.png", view)
+		return self.state
+
+	def sample_view_position(self):
+		# sample view position
+		i = self.sample_uniform(0, self.world_size.w - self.view_size.w)
+		j = self.sample_uniform(0, self.world_size.h - self.view_size.h)
+		return Point(i, j)
 
 	def render_paths(self, img):
 		for u, v in self.graph.edges():
@@ -278,6 +310,3 @@ class PathSimulator(ImageSimulator):
 			if low <= idx <= high:
 				return idx
 		return float("nan")
-
-	def is_oob(self, bbox, point):
-		return not bbox.contains(point)

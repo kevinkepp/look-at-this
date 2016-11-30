@@ -69,7 +69,8 @@ class PathAndResultsPlotter(Visualizer):
 		# save and clear figure
 		image_save_path = "tmp/paths/"+image_name+".png"
 		plt.savefig(image_save_path)
-		plt.clf()
+		# plt.clf()
+		plt.close()
 
 	def _get_new_xy(self, x, y, ac):
 		""" calculates the new position of the goal after a action """
