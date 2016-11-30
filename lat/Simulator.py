@@ -257,15 +257,15 @@ class ImageSimulator(SimpleMatrixSimulator):
 
 class GrosserSternImageSimulator(ImageSimulator):
 	""" world state is a gray scale google earth image of the grosser stern in berlin """
-
+	world_factor = 20
 	def _load_and_preprocess_img(self, path):
 		""" preprocess the given image"""
 		img = cv2.imread(path)
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		img = img / float(np.max(img))  # renorm to 1 as max
 		# perhaps rescale it if necessary
-		#world_dims = tuple([d * self.world_factor for d in self.grid_dims])
-		#img = cv2.resize(img, world_dims)
+		world_dims = tuple([d * self.world_factor for d in self.grid_dims])
+		img = cv2.resize(img, world_dims)
 		self.img = img
 		self.target = np.max(img)
 
