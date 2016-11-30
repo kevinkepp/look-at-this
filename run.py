@@ -2,7 +2,7 @@ from __future__ import division
 import random
 import numpy as np
 
-from lat.PathSimulator import PathSimulator
+from lat.PathSimulator import PathSimulator, PathSimulatorSimple
 from lat.RandomAgent import RandomAgent
 from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
@@ -25,7 +25,7 @@ MAX_STEPS = GRID_SIZE_N * WORLD_SIZE_FACTOR * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = PathSimulator  # ImageSimulator  # ImageSimulatorSpecialSample
+SIMULATOR = PathSimulatorSimple  # ImageSimulator  # ImageSimulatorSpecialSample
 SIMULATOR_NAME = "PathSimulator"
 # ACTIONS = Actions.all()
 ACTIONS = Actions.all

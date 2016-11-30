@@ -115,14 +115,13 @@ class PathSimulator(SimpleMatrixSimulator):
 		if self.view_size.w > self.world_size.w * 1.5 or self.view_size.h > self.world_size.h * 1.5:
 			raise ValueError("View size too large. Maximum is 1.5 times world size.")
 		self.bbox = self.get_bbox(self.world_size, self.view_size)
-		# self._initialize_world()
 
-	def _initialize_world(self):
-		# world state
+	def _initialize_world(self, path_length=-1):
+		# new world state
 		ws = np.full(self.world_size.tuple(), 0., dtype=np.float)
 		self.graph = nx.Graph()
 		# only add one path for now
-		self.generate_path(path_id=0)
+		self.generate_path(length=path_length, path_id=0)
 		self.render_paths(ws)
 		# add target to random vertex
 		node_target = self.generate_target()
@@ -170,7 +169,7 @@ class PathSimulator(SimpleMatrixSimulator):
 			cv2.line(img, u.loc.tuple(), v.loc.tuple(), color=color, thickness=thickness)
 
 	def get_bbox(self, world_size, view_size):
-		border = Point(view_size.w / 2, view_size.h / 2)
+		border = Point(view_size.w, view_size.h)
 		size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
 		return BoundingBox(border, size)
 
@@ -213,10 +212,11 @@ class PathSimulator(SimpleMatrixSimulator):
 			self.generate_path(nodes, length - 1, path_id)
 
 	# samples a location for a new node based on a given previous node
-	def sample_step_from(self, bbox, prev_node):
-		step_size_min = 1
+	def sample_step_from(self, bbox, prev_node, step_size_min=-1):
 		direction = self.sample_uniform(4)
 		step = Point(0, 0)
+		if step_size_min == -1:
+			step_size_min = max(min(self.view_size.tuple()) / 2., 2)
 		if direction == 0:  # up
 			step_size_max = prev_node.loc.y - bbox.y
 			step.y = -1
@@ -229,11 +229,12 @@ class PathSimulator(SimpleMatrixSimulator):
 		else:  # right
 			step_size_max = bbox.x + bbox.w - prev_node.loc.x
 			step.x = 1
+		step_size_diff = step_size_max - step_size_min
 		# check if step not possible
-		if step_size_max <= 1:
+		if step_size_diff <= 1:
 			return None
-		step_size_mean = np.mean([step_size_min, step_size_max])
-		step_size_std = (step_size_max - step_size_min) / 5.
+		step_size_mean = step_size_diff / 2 + step_size_min
+		step_size_std = max(step_size_diff / 5., 1)
 		step_size = self.sample_normal(step_size_mean, step_size_std, step_size_min, step_size_max)
 		step *= step_size
 		return prev_node.loc + step
@@ -310,3 +311,16 @@ class PathSimulator(SimpleMatrixSimulator):
 			if low <= idx <= high:
 				return idx
 		return float("nan")
+
+
+class PathSimulatorSimple(PathSimulator):
+
+	def _initialize_world(self, path_length=-1):
+		# always generate straight line path with length
+		length = 1
+		super(PathSimulatorSimple, self)._initialize_world(length)
+
+	def sample_step_from(self, bbox, prev_node, step_size_min=-1):
+		# step size is minimum two views
+		step_size_min = min(self.view_size.tuple()) * 2
+		return super(PathSimulatorSimple, self).sample_step_from(bbox, prev_node, step_size_min)
