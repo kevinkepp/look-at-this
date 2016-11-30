@@ -24,7 +24,7 @@ class KeyboardAgent(RobotAgent):
 	# overwrite
 	def choose_action(self, curr_state):
 		#print(curr_state)
-		key = input("w:up, s:down, d:right, a:left, input your choice and press enter: ")
+		key = raw_input("w:up, s:down, d:right, a:left, input your choice and press enter: ")
 		return self.key_to_action(key)
 
 	def incorporate_reward(self, old_state, action, new_state, value):
