@@ -99,7 +99,7 @@ class MiddleAsReward(Reward):
 	""" used together with GaussSimulator and returns the difference in the middle between 
 	the current state to the old one """
 
-	scaling_factor = 10 # in order to increase reward value from O(e-01) to O(e+00)
+	scaling_factor = 10  # in order to increase reward value from O(e-01) to O(e+00)
 
 	def get_reward(self, old_state, new_state, lost=False):
 		if lost:
@@ -108,3 +108,27 @@ class MiddleAsReward(Reward):
 			(n,m) = new_state.shape
 			d = ( new_state[n//2,m//2] - old_state[n//2,m//2] ) * self.scaling_factor
 			return d
+
+class MiddleAbsoluteAsReward(MiddleAsReward):
+	""" used together with GaussSimulator and returns the difference in the middle between
+	the current state to the old one """
+
+	def get_reward(self, old_state, new_state, lost=False):
+		if lost:
+			return -10
+		else:
+			(n,m) = new_state.shape
+			d = new_state[n//2,m//2] * self.scaling_factor
+			return d
+
+class SumAsReward(Reward):
+	""" used together with GaussSimulator and returns the difference in the middle between
+	the current state to the old one """
+
+	scaling_factor = 10
+
+	def get_reward(self, old_state, new_state, lost=False):
+		if lost:
+			return -10
+		else:
+			return (np.sum(new_state) - np.sum(old_state)) * self.scaling_factor

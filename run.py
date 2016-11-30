@@ -1,13 +1,15 @@
 from __future__ import division
 import random
 import numpy as np
+
+from lat.PathSimulator import PathSimulator
 from lat.RandomAgent import RandomAgent
 from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
 from lat.DeepQAgent import DeepQAgent
 from lat.DeepQAgentReplay import DeepQAgentReplay
 from lat.DeepQAgentPositiveRepay import DeepQAgentPositiveReplay
-from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward
+from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward, MiddleAbsoluteAsReward, SumAsReward
 from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
 from lat.SimpleVisualize import PlotMatrix
 from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, ImageSimulatorSpecialSample, Actions
@@ -17,25 +19,30 @@ from lat.Evaluator import Evaluator
 EPOCHS = 2000  # runs/games
 GRID_SIZE_N = 15
 GRID_SIZE_M = 15
+WORLD_SIZE_FACTOR = 10
 # max steps per run/game
-# MAX_STEPS = GRID_SIZE_N * GRID_SIZE_M
-MAX_STEPS = GRID_SIZE_N * 10
+MAX_STEPS = GRID_SIZE_N * WORLD_SIZE_FACTOR * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = ImageSimulator  # ImageSimulatorSpecialSample
+SIMULATOR = PathSimulator  # ImageSimulator  # ImageSimulatorSpecialSample
+SIMULATOR_NAME = "PathSimulator"
 # ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions
 REWARD_LIN = LinearReward()
 REWARD_LIN_NAME = "linear"
 REWARD_AT_END = RewardAtTheEnd()  # also called "constant"
-REWARD_AT_END_NAME = "at_end"
+REWARD_AT_END_NAME = "at-end"
 REWARD_MID = MiddleAsReward()
 REWARD_MID_NAME = "middle"
+REWARD_MID_ABS = MiddleAbsoluteAsReward()
+REWARD_MID_ABS_NAME = "middle-abs"
+REWARD_SUM = SumAsReward()
+REWARD_SUM_NAME = "sum"
 # actual reward we want to use
-REWARD = REWARD_MID
-REWARD_NAME = REWARD_MID_NAME
+REWARD = REWARD_AT_END
+REWARD_NAME = REWARD_AT_END_NAME
 
 ## Agent parameters
 # learning rate for Q-Agents
@@ -61,7 +68,8 @@ def EPSILON_UPDATE_KEV(n):
 	a = (np.exp(-1) * EPOCHS - 1) / (1 - np.exp(-1))
 	return max(-np.log((n + a) / (EPOCHS + a)), EPSILON_MIN)
 # actual epsilon-greedy strategy we want to use
-EPSILON_UPDATE = EPSILON_UPDATE_ATARI_SMALL
+EPSILON_UPDATE = EPSILON_UPDATE_LIN  # EPSILON_UPDATE_ATARI_SMALL
+EPSILON_UPDATE_NAME = "linear"  # "atari-small"
 # q value init (QAgent)
 Q_INIT = lambda state, action: random.random()
 # MLP architecture (DeepQAgent)
@@ -82,12 +90,11 @@ REPLAY_BUFFER = REPLAY_BUFFER_ATARI_SMALL
 envs = []
 names = []
 
-# IMG_PATH = "tmp/white_circle.png"
-IMG_PATH = "tmp/moon.jpg"
+# IMG_PATH = "tmp/white_circle.png"  # "tmp/moon.jpg"
 VISUALIZER = PlotMatrix()
 def create_simulator(agent):
-	return SIMULATOR(agent, REWARD, IMG_PATH, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=PlotMatrix(),
-					 bounded=BOUNDED)
+	return SIMULATOR(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=PlotMatrix(),
+					 bounded=BOUNDED, world_size_factor=10)
 
 # Random Agent as baseline
 agent = RandomAgent(ACTIONS)
@@ -101,49 +108,27 @@ names.append("QAgent g=0.8")
 
 # Deep Q-Agents
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model)
-envs.append(create_simulator(agent))
-names.append("DeepQAgent[]")
-
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model)
-envs.append(create_simulator(agent))
-names.append("DeepQAgent[50]")
-
-# Deep Q-Agents with Replay
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
 envs.append(create_simulator(agent))
-names.append("DeepQAgent[] Replay")
+names.append("DeepQAgentReplay[]")
 
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [8], MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
 envs.append(create_simulator(agent))
-names.append("DeepQAgent[50] Replay")
-
-# Deep Q-Agents with Positive Replay
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentPositiveReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
-envs.append(create_simulator(agent))
-names.append("DeepQAgent[] Positive Replay")
-
-model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [50], MODEL_OUT_LAYER_SIZE)
-agent = DeepQAgentPositiveReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
-envs.append(create_simulator(agent))
-names.append("DeepQAgent[50] Positive Replay")
+names.append("DeepQAgentReplay[8]")
 
 ## Evaluate results
 # choose which agents to run
-include = [2]
+include = [2, 3]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
 ev = Evaluator(envs, names, EPOCHS, VISUALIZER, grid="{0}x{1}".format(GRID_SIZE_N, GRID_SIZE_M), actions=len(ACTIONS),
-			   max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME, eps_min=EPSILON_MIN,
-			   img=IMG_PATH.split("/")[-1])
+			   simulator=SIMULATOR_NAME, max_steps=MAX_STEPS, discount=GAMMA, reward=REWARD_NAME,
+			   eps_min=EPSILON_MIN, eps_update=EPSILON_UPDATE_NAME)  # img=IMG_PATH.split("/")[-1])
 # TODO
-# ev.run(True)
-ev.run_until(lambda score: score < GRID_SIZE_N * 0.002, True)
+ev.run(None, True)
+# ev.run(lambda score: score < GRID_SIZE_N * 0.002, True)
 
 # hacky way of visualizing the weights
 # TODO improve and include this in Evaluator

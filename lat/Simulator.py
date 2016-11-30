@@ -51,9 +51,9 @@ class SimpleMatrixSimulator(Environment):
 			print("Redefining dimension m to be ", m, "to have a middle pixel")
 		return (n, m)
 
-	def _get_init_state(self, dims):
+	def _get_init_state(self):
 		""" sample an initial state (the top left corner of view-window to world-state) """
-		(n, m) = dims
+		(n, m) = self.grid_dims
 		N = self.world_factor * n
 		M = self.world_factor * m
 		mid_N = N // 2
@@ -80,7 +80,7 @@ class SimpleMatrixSimulator(Environment):
 		return cut
 
 	def _run_epoch(self, trainingmode=False):
-		self.state = self._get_init_state(self.grid_dims)
+		self.state = self._get_init_state()
 		best = self.get_best_possible_steps()
 		steps = []
 		while len(steps) < self.max_steps:
@@ -88,36 +88,27 @@ class SimpleMatrixSimulator(Environment):
 			action = self.agent.choose_action(self.state)
 			steps.append(action)
 			self.execute_action(action)
+			is_oob = self._is_oob()
 			if trainingmode:
-				reward = self.reward.get_reward(self.old_state, self.state, self._is_oob())
+				reward = self.reward.get_reward(self.old_state, self.state, is_oob)
 				# print("reward is ",reward)
 				self.agent.incorporate_reward(self.old_state, action, self.state, reward)
-			if self._is_oob():
+			if is_oob:
 				return 0, steps, best
 			elif self._at_goal(self.state):
 				return 1, steps, best
 		return 0, steps, best
 
-	def run_epoch(self, epoch_no=1, visible=False, trainingmode=False):
+	def run(self, epoch_no=1, visualize=False, trainingmode=False):
 		self.agent.new_epoch(epoch_no)
 		r = self._run_epoch(trainingmode)
-		if visible:
+		if visualize:
 			timestamp = time.strftime("%Y%m%d_%H%M%S")
 			image_name = timestamp + "_agent_path_epoch" + str(epoch_no).zfill(4)
 			self.visual.visualize_course_of_action(self.world_state, self.first_i, self.first_j, self.grid_dims[0],
 												   self.grid_dims[1], r[1], title="Path epoch {0}".format(epoch_no),
 												   image_name=image_name)
 		return r
-
-	def run(self, epochs=1, visible=False, trainingmode=False):
-		res = []
-		for i in range(epochs):
-			r = self.run_epoch(i, visible, trainingmode)
-			# show progress
-			if epochs > 10 and i % int(epochs / 10) == 0:
-				print("Epoch {0}/{1}".format(i, epochs))
-			res.append(r)
-		return res
 
 	def _get_middle(self):
 		""" returns middle of the state grid as tuple (mid_i, mid_j)"""
@@ -176,9 +167,9 @@ class GaussSimulator(SimpleMatrixSimulator):
 	std = 3
 	world_factor = 3  # the "world" has a size factor x grid_dims
 
-	def _get_init_state(self, dims):
+	def _get_init_state(self):
 		"""initialize a random state that is a matrix with zeros and one one in it at a random position """
-		(n, m) = dims
+		(n, m) = self.grid_dims
 		N = self.world_factor * n
 		M = self.world_factor * m
 		mid_N = N // 2
@@ -204,14 +195,14 @@ class ImageSimulator(SimpleMatrixSimulator):
 				 bounded=True):
 		super(ImageSimulator, self).__init__(agent, reward, grid_n, grid_m, orientation, max_steps, visualizer, bounded)
 		self._load_and_preprocess_img(img_path)
-		self.world_state = self.img
 
 	def _load_and_preprocess_img(self, path):
 		img = cv2.imread(path)
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-		blur_factor = 1./10.
-		blur_kernel = tuple([int(d * blur_factor + 1 if int(d * blur_factor) % 2 == 0 else 0) for d in self.grid_dims])
-		img = cv2.GaussianBlur(img, blur_kernel, 2)
+		# blur_factor = 1./10.
+		# blur_kernel = tuple([int(d * blur_factor + 1 if int(d * blur_factor) % 2 == 0 else 0) for d in self.grid_dims])
+		blur_kernel = (3, 3)
+		img = cv2.GaussianBlur(img, blur_kernel, 0)
 		world_dims = tuple([d * self.world_factor for d in self.grid_dims])
 		img = cv2.resize(img, world_dims)
 		# DEBUG, draw world dims frame around image
@@ -227,11 +218,11 @@ class ImageSimulator(SimpleMatrixSimulator):
 			img -= img_min
 			img /= img_max - img_min
 		self.target = np.max(img)
-		self.img = img
+		self.world_state = img
 
-	def _get_init_state(self, dims):
+	def _get_init_state(self):
 		""" sample an initial state (the top left corner of view-window to world-state) """
-		(n, m) = dims
+		(n, m) = self.grid_dims
 		N = self.world_factor * n
 		M = self.world_factor * m
 		mid_N = N // 2
@@ -249,10 +240,9 @@ class ImageSimulator(SimpleMatrixSimulator):
 		self.first_j = j
 		# DEBUG, draw current view
 		view = cv2.imread("tmp/view.png")
-		cv2.rectangle(view, (self.i_world, self.j_world), (self.i_world + dims[0], self.j_world + dims[1]),
-					  (255, 255, 255), 1)
+		cv2.rectangle(view, (i, j), (i + self.grid_dims[0], j + self.grid_dims[1]), (255, 255, 255), 1)
 		cv2.imwrite("tmp/view_curr.png", view)
-		return self.world_state[i:i + n, j:j + m]
+		return self._extract_state_from_world(i, j)
 
 
 class GrosserSternImageSimulator(ImageSimulator):
@@ -325,18 +315,18 @@ class ImageSimulatorSpecialSample(ImageSimulator):
 		self.epoch = epoch
 		self.special_sampling = True
 
-	def _get_init_state(self, dims):
+	def _get_init_state(self):
 		if self.special_sampling:
-			self._get_init_state_special(dims, self.epoch_max, self.epoch)
+			self._get_init_state_special(self.epoch_max, self.epoch)
 			state = self._extract_state_from_world(self.i_world, self.j_world)
 			return state
 		else:
-			super(ImageSimulatorSpecialSample, self)._get_init_state(dims)
+			return super(ImageSimulatorSpecialSample, self)._get_init_state()
 
-	def _get_init_state_special(self, dims, epochs, curr_epoch):
+	def _get_init_state_special(self, epochs, curr_epoch):
 		""" sample an initial state (the top left corner of view-window to world-state), start with sampling  near
 		center and begin to wander farther away"""
-		(n, m) = dims
+		(n, m) = self.grid_dims
 		N = self.world_factor * n
 		M = self.world_factor * m
 		mid_N = N // 2
