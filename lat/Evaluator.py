@@ -30,7 +30,7 @@ class Evaluator(object):
 	def _train_until(self, env, break_condition, window_size, visualize):
 		results = []
 		for i in range(self.epochs):
-			visualize_epoch = visualize and self.epochs > 10 and i % int(self.epochs / 10) < 3
+			visualize_epoch = visualize and self.epochs > 20 and i % int(self.epochs / 20) < 3
 			# env.use_special_sampling(i, self.epochs)
 			res = env.run(i, visualize=visualize_epoch, trainingmode=True)
 			res = (res[0], len(res[1]), res[2])
@@ -38,7 +38,7 @@ class Evaluator(object):
 			if i >= window_size:
 				scores_window = [self.calc_score(success, steps, best) for success, steps, best in results[-window_size:]]
 				score = sum(scores_window) / float(window_size)
-				if self.epochs > 20 and i % int(self.epochs / 10) == 0:
+				if self.epochs > 20 and i % int(self.epochs / 20) == 0:
 					print("Epoch {0}/{1}: {2}".format(i, self.epochs, np.round(score, 3)))
 				if break_condition is not None and break_condition(score):
 					break
@@ -57,7 +57,8 @@ class Evaluator(object):
 				paras += ", {0}={1}".format(n, v)
 			print(paras)
 			# TODO: better integration then using constant string name of class
-			if env.__class__.__name__ == "PathSimSimpleExpansiveSampler":
+			if env.__class__.__name__ == "PathSimSimpleExpansiveSampler" or \
+				env.__class__.__name__ == "PathSimExpSplImages":
 				print("Restarting Expansive Sampling")
 				env.restartExpansiveSampling(self.epochs)
 			t0 = time.time()

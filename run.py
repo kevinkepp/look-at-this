@@ -2,7 +2,7 @@ from __future__ import division
 import random
 import numpy as np
 
-from lat.PathSimulator import PathSimulator, PathSimulatorSimple, PathSimSimpleExpansiveSampler
+from lat.PathSimulator import PathSimulator, PathSimulatorSimple, PathSimSimpleExpansiveSampler, PathSimExpSplImages
 from lat.RandomAgent import RandomAgent
 from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
@@ -16,7 +16,7 @@ from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator,
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 2000  # runs/games
+EPOCHS = 3000  # runs/games
 GRID_SIZE_N = 15
 GRID_SIZE_M = 15
 WORLD_SIZE_FACTOR = 10
@@ -25,8 +25,8 @@ MAX_STEPS = GRID_SIZE_N * WORLD_SIZE_FACTOR * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = PathSimSimpleExpansiveSampler #PathSimulatorSimple  # ImageSimulator  # ImageSimulatorSpecialSample
-SIMULATOR_NAME = "PathSimSimpleExpansiveSampler"
+SIMULATOR = PathSimExpSplImages #PathSimSimpleExpansiveSampler #PathSimulatorSimple  # ImageSimulator  # ImageSimulatorSpecialSample
+SIMULATOR_NAME = "PathSimExpSplImages"
 # ACTIONS = Actions.all()
 ACTIONS = Actions.all
 # different reward functions

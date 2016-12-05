@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import cv2
+import os
 
 from lat.Simulator import ImageSimulator, SimpleMatrixSimulator
 
@@ -332,7 +333,7 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 	epochs = None  # contains the overall max of epochs
 	curr_epoch = 1  # contains current number of epochs
 
-	pct_epochs_until_max = 0.7  # after what percentage of epochs to reach max sampling distance
+	pct_epochs_until_max = 0.5  # after what percentage of epochs to reach max sampling distance
 	pct_min_dist_in_grid_size = 0.4  # at which distance to start sampling (in percent of grid-size)
 
 	def _get_init_state(self):
@@ -367,11 +368,11 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 		e = self.curr_epoch
 		e_max_reached = self.epochs * self.pct_epochs_until_max
 		if e >= e_max_reached:
-			i_lim = (n, N-2*n)
+			i_lim = (2*n, N-3*n)
 		else:
 			min_dist = n * self.pct_min_dist_in_grid_size
 			max_dist = N
-			dist = int((max_dist - min_dist - i - n)*e/e_max_reached)
+			dist = np.abs(int((max_dist - min_dist - i - 2*n)*e/e_max_reached))
 			i_low = i - min_dist - dist - int(n/2)
 			i_high = i + min_dist + dist - int(n/2)
 			i_lim = (i_low, i_high)
@@ -381,10 +382,12 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 	def _correct_to_within_world_state(self, i_lim, n, N):
 		i_low = i_lim[0]
 		i_high = i_lim[1]
-		if i_low - n < 0:
-			i_low = n
-		if i_high > N - 2*n:
-			i_high = N - 2*n
+		if i_low - 2*n < 0:
+			i_low = 2*n
+		if i_high > N - 3*n:
+			i_high = N - 3*n
+		if i_low > i_high:
+			i_high = i_low + 1
 		return i_low, i_high
 
 	def _get_target_loc(self):
@@ -428,3 +431,48 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 	# 		if low <= idx <= high*1.5:
 	# 			return idx
 	# 	return float("nan")
+
+
+class PathSimExpSplImages(PathSimSimpleExpansiveSampler):
+
+	world_images = [] # array used to store the already created images
+	world_img_path = "tmp/line-worldstates"
+	world_img_format = ".png"
+
+	def _get_init_state(self):
+		""" use special sampling and already created images """
+		self.state = None
+		# we need to generate a new world for every run <- sampled from existing line configurations
+		self.world_state = self._sample_from_images(only_hor_vert=True, only_end=True)
+		# here special expansive sampling happens
+		# get parameters
+		i, j = self._get_target_loc()
+		N, M = self.world_state.shape
+		n, m = self.grid_dims
+		# get limits
+		i_lim, j_lim = self._get_limits(i, j, N, M, n, m)
+		# get start position of upper left corner of view
+		i_0 = np.random.randint(i_lim[0], i_lim[1]+1)
+		j_0 = np.random.randint(j_lim[0], j_lim[1] + 1)
+		# set state, start-state and extract the view
+		self.i_world, self.j_world = i_0, j_0
+		self.first_i, self.first_j = i_0, j_0
+		self.state = self._extract_state_from_world(i_0, j_0)
+		self.curr_epoch += 1
+		return self.state
+
+	def _sample_from_images(self, only_hor_vert=True, only_end=True):
+		if len(self.world_images) == 0:
+			self._load_images(only_hor_vert, only_end=True)
+		i_images = range(len(self.world_images))
+		return self.world_images[np.random.choice(i_images)]
+
+	def _load_images(self, only_hor_vert=True, only_end=True):
+		dir_list = os.listdir(self.world_img_path)
+		for f in dir_list:
+			if f.endswith(self.world_img_format):
+				f = self.world_img_path + "/" + f
+				img = cv2.imread(f)
+				img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+				img = img / float(np.max(img))  # renorm to 1 as max
+				self.world_images.append(img)
