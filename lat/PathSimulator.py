@@ -102,7 +102,7 @@ class PathSimulator(SimpleMatrixSimulator):
 	PATH_LENGTH_STD = 5
 
 	def __init__(self, agent, reward, grid_n, grid_m=1, orientation=0, max_steps=1000,
-											visualizer=None, bounded=True, world_size_factor=-1):
+				 visualizer=None, bounded=True, world_size_factor=-1):
 		super(PathSimulator, self).__init__(agent, reward, grid_n, grid_m, orientation, max_steps, visualizer, bounded)
 		if world_size_factor > 1:
 			self.world_factor = world_size_factor
@@ -147,7 +147,8 @@ class PathSimulator(SimpleMatrixSimulator):
 			view_pos = self.sample_view_position()
 			self.i_world, self.j_world = view_pos.tuple()
 			self.first_i, self.first_j = view_pos.tuple()
-			self.state = self.world_state[view_pos.x:view_pos.x + self.view_size.w, view_pos.y:view_pos.y + self.view_size.h]
+			self.state = self.world_state[view_pos.x:view_pos.x + self.view_size.w,
+						 view_pos.y:view_pos.y + self.view_size.h]
 		# DEBUG, draw current view in world state
 		# view = self.world_state.copy() * 255
 		# cv2.rectangle(view, (view_pos.y, view_pos.x), (view_pos.y + self.view_size.h, view_pos.x + self.view_size.w),
@@ -164,13 +165,14 @@ class PathSimulator(SimpleMatrixSimulator):
 	def render_paths(self, img):
 		for u, v in self.graph.edges():
 			e = self.graph[u][v]
+			# here we can get edge attributes from e
 			color = 150
 			thickness = 2
 			# TODO dotted line from http://stackoverflow.com/questions/26690932/opencv-rectangle-with-dotted-or-dashed-lines
 			cv2.line(img, u.loc.tuple(), v.loc.tuple(), color=color, thickness=thickness)
 
 	def get_bbox(self, world_size, view_size):
-		border = Point(view_size.w, view_size.h)
+		border = Point(view_size.w + 1, view_size.h + 1)
 		size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
 		return BoundingBox(border, size)
 
@@ -311,22 +313,9 @@ class PathSimulator(SimpleMatrixSimulator):
 			idx = int(np.random.normal(mean, std, 1))
 			if low <= idx <= high:
 				return idx
-		return float("nan")
 
 
-class PathSimulatorSimple(PathSimulator):
-
-	def _initialize_world(self, path_length=-1):
-		# always generate straight line path with length
-		length = 1
-		super(PathSimulatorSimple, self)._initialize_world(length)
-
-	def sample_step_from(self, bbox, prev_node, step_size_min=-1):
-		# step size is minimum two views
-		step_size_min = min(self.view_size.tuple()) * 2
-		return super(PathSimulatorSimple, self).sample_step_from(bbox, prev_node, step_size_min)
-
-class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
+class PathSimExpansiveSampler(PathSimulator):
 	""" simple path simulation -> just a line with target on it + expansive sampling """
 	# IMPORTANT IF NAME IS CHANGED ALSO LOOK INTO 'RUN' OF EVALUATOR TO CHANGE NAME
 
@@ -341,7 +330,6 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 		self.state = None
 		# we need to generate a new world for every run
 		self._initialize_world()
-		self._add_border_of_zeros()  # TODO: talk about that, padding 1.5 grid size at top and bottom
 		# here special expansive sampling happens
 		# get parameters
 		i, j = self._get_target_loc()
@@ -350,7 +338,7 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 		# get limits
 		i_lim, j_lim = self._get_limits(i, j, N, M, n, m)
 		# get start position of upper left corner of view
-		i_0 = np.random.randint(i_lim[0], i_lim[1]+1)
+		i_0 = np.random.randint(i_lim[0], i_lim[1] + 1)
 		j_0 = np.random.randint(j_lim[0], j_lim[1] + 1)
 		# set state, start-state and extract the view
 		self.i_world, self.j_world = i_0, j_0
@@ -368,13 +356,13 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 		e = self.curr_epoch
 		e_max_reached = self.epochs * self.pct_epochs_until_max
 		if e >= e_max_reached:
-			i_lim = (2*n, N-3*n)
+			i_lim = (2 * n, N - 3 * n)
 		else:
 			min_dist = n * self.pct_min_dist_in_grid_size
 			max_dist = N
-			dist = np.abs(int((max_dist - min_dist - i - 2*n)*e/e_max_reached))
-			i_low = i - min_dist - dist - int(n/2)
-			i_high = i + min_dist + dist - int(n/2)
+			dist = np.abs(int((max_dist - min_dist - i - 2 * n) * e / e_max_reached))
+			i_low = i - min_dist - dist - int(n / 2)
+			i_high = i + min_dist + dist - int(n / 2)
 			i_lim = (i_low, i_high)
 			i_lim = self._correct_to_within_world_state(i_lim, n, N)
 		return i_lim
@@ -382,10 +370,10 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 	def _correct_to_within_world_state(self, i_lim, n, N):
 		i_low = i_lim[0]
 		i_high = i_lim[1]
-		if i_low - 2*n < 0:
-			i_low = 2*n
-		if i_high > N - 3*n:
-			i_high = N - 3*n
+		if i_low - 2 * n < 0:
+			i_low = 2 * n
+		if i_high > N - 3 * n:
+			i_high = N - 3 * n
 		if i_low > i_high:
 			i_high = i_low + 1
 		return i_low, i_high
@@ -412,30 +400,135 @@ class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
 		else:
 			return False
 
-	def _add_border_of_zeros(self):
-		pad_grid_factor = 1.5
-		pad_n, pad_m = (np.array(self.grid_dims) * pad_grid_factor).astype(int)
-		self.world_state = np.lib.pad(self.world_state, ((pad_n, pad_n), (pad_m, pad_m)), 'constant', constant_values=0)
 
-	# TODO: workaround to expand bbox, padding zeros later (see _add_border_of_zeros above)
-	def get_bbox(self, world_size, view_size):
-		border = Point(view_size.w, view_size.h)
-		# size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
-		size = Size(world_size.w - border.x, world_size.h - border.x)
-		return BoundingBox(border, size)
+class PathSimExpansiveSamplerOnPath(PathSimExpansiveSampler):
+	def _get_init_state(self):
+		state = super(PathSimExpansiveSamplerOnPath, self)._get_init_state()
+		# generate new states as long as there is no road visible or the target is visible
+		while is_state_empty(state):
+			state = super(PathSimExpansiveSamplerOnPath, self)._get_init_state()
+		return state
 
-	# # TODO: workaround to increase the length of paths (it would be good to have some longer paths, that extend through the entire image)
-	# def sample_normal(self, mean, std, low=float("-inf"), high=float("inf")):
-	# 	while True:
-	# 		idx = int(np.random.normal(mean*1.5, std, 1))
-	# 		if low <= idx <= high*1.5:
-	# 			return idx
-	# 	return float("nan")
+
+class PathSimulatorSimple(PathSimulator):
+	def _initialize_world(self, path_length=-1):
+		# always generate straight line path with length
+		length = 1
+		super(PathSimulatorSimple, self)._initialize_world(length)
+
+	def sample_step_from(self, bbox, prev_node, step_size_min=-1):
+		# step size is minimum five views
+		step_size_min = min(self.view_size.tuple()) * 5
+		return super(PathSimulatorSimple, self).sample_step_from(bbox, prev_node, step_size_min)
+
+
+class PathSimulatorSimpleOnPath(PathSimulatorSimple):
+	def _get_init_state(self):
+		state = super(PathSimulatorSimpleOnPath, self)._get_init_state()
+		# generate new states as long as there is no road visible or the target is visible
+		while is_state_empty(state) or contains_target(state, 1):
+			state = super(PathSimulatorSimpleOnPath, self)._get_init_state()
+		return state
+
+
+class PathSimSimpleExpansiveSampler(PathSimulatorSimple):
+	""" simple path simulation -> just a line with target on it + expansive sampling """
+	# IMPORTANT IF NAME IS CHANGED ALSO LOOK INTO 'RUN' OF EVALUATOR TO CHANGE NAME
+
+	epochs = None  # contains the overall max of epochs
+	curr_epoch = 1  # contains current number of epochs
+
+	pct_epochs_until_max = 0.5  # after what percentage of epochs to reach max sampling distance
+	pct_min_dist_in_grid_size = 0.4  # at which distance to start sampling (in percent of grid-size)
+
+	def _get_init_state(self):
+		""" use special sampling  """
+		self.state = None
+		# we need to generate a new world for every run
+		self._initialize_world()
+		# here special expansive sampling happens
+		# get parameters
+		i, j = self._get_target_loc()
+		N, M = self.world_state.shape
+		n, m = self.grid_dims
+		# get limits
+		i_lim, j_lim = self._get_limits(i, j, N, M, n, m)
+		# get start position of upper left corner of view
+		i_0 = np.random.randint(i_lim[0], i_lim[1] + 1)
+		j_0 = np.random.randint(j_lim[0], j_lim[1] + 1)
+		# set state, start-state and extract the view
+		self.i_world, self.j_world = i_0, j_0
+		self.first_i, self.first_j = i_0, j_0
+		self.state = self._extract_state_from_world(i_0, j_0)
+		self.curr_epoch += 1
+		return self.state
+
+	def _get_limits(self, i_goal, j_goal, n_world, m_world, n_grid, m_grid):
+		i_lim = self._get_limit(i_goal, n_grid, n_world)
+		j_lim = self._get_limit(j_goal, m_grid, m_world)
+		return i_lim, j_lim
+
+	def _get_limit(self, i, n, N):
+		e = self.curr_epoch
+		e_max_reached = self.epochs * self.pct_epochs_until_max
+		if e >= e_max_reached:
+			i_lim = (2 * n, N - 3 * n)
+		else:
+			min_dist = n * self.pct_min_dist_in_grid_size
+			max_dist = N
+			dist = np.abs(int((max_dist - min_dist - i - 2 * n) * e / e_max_reached))
+			i_low = i - min_dist - dist - int(n / 2)
+			i_high = i + min_dist + dist - int(n / 2)
+			i_lim = (i_low, i_high)
+			i_lim = self._correct_to_within_world_state(i_lim, n, N)
+		return i_lim
+
+	def _correct_to_within_world_state(self, i_lim, n, N):
+		i_low = i_lim[0]
+		i_high = i_lim[1]
+		if i_low - 2 * n < 0:
+			i_low = 2 * n
+		if i_high > N - 3 * n:
+			i_high = N - 3 * n
+		if i_low > i_high:
+			i_high = i_low + 1
+		return i_low, i_high
+
+	def _get_target_loc(self):
+		# TODO: there must be a better way to extract the goal location (middle of circle)
+		ij_target = np.where(self.world_state == 1)
+		ij_target = np.mean(ij_target, axis=1).astype(int)
+		assert ij_target.size == 2, "target location in expansive sampler does not contain 2 indices"
+		return ij_target
+
+	# somehow needs to know EPOCHS and current epoch
+
+	def restartExpansiveSampling(self, epochs):
+		self.epochs = epochs
+		self.curr_epoch = 1
+
+	# is out of bounds (if at edge of world_state this is already oob)
+	def _is_oob(self):
+		(N, M) = self.world_state.shape
+		(n, m) = self.grid_dims
+		if self.i_world <= 0 or self.j_world <= 0 or self.i_world + n >= N or self.j_world + m >= M:
+			return True
+		else:
+			return False
+
+
+class PathSimSimpleExpansiveSamplerOnPath(PathSimSimpleExpansiveSampler):
+
+	def _get_init_state(self):
+		state = super(PathSimSimpleExpansiveSamplerOnPath, self)._get_init_state()
+		# generate new states as long as there is no road visible or the target is visible
+		while is_state_empty(state):
+			state = super(PathSimSimpleExpansiveSamplerOnPath, self)._get_init_state()
+		return state
 
 
 class PathSimExpSplImages(PathSimSimpleExpansiveSampler):
-
-	world_images = [] # array used to store the already created images
+	world_images = []  # array used to store the already created images
 	world_img_path = "tmp/line-worldstates"
 	world_img_format = ".png"
 
@@ -452,7 +545,7 @@ class PathSimExpSplImages(PathSimSimpleExpansiveSampler):
 		# get limits
 		i_lim, j_lim = self._get_limits(i, j, N, M, n, m)
 		# get start position of upper left corner of view
-		i_0 = np.random.randint(i_lim[0], i_lim[1]+1)
+		i_0 = np.random.randint(i_lim[0], i_lim[1] + 1)
 		j_0 = np.random.randint(j_lim[0], j_lim[1] + 1)
 		# set state, start-state and extract the view
 		self.i_world, self.j_world = i_0, j_0
@@ -476,3 +569,20 @@ class PathSimExpSplImages(PathSimSimpleExpansiveSampler):
 				img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 				img = img / float(np.max(img))  # renorm to 1 as max
 				self.world_images.append(img)
+
+
+class PathSimExpSplImagesOnPath(PathSimExpSplImages):
+	def _get_init_state(self):
+		state = super(PathSimExpSplImagesOnPath, self)._get_init_state()
+		# generate new states as long as there is no road visible or the target is visible
+		while is_state_empty(state):
+			state = super(PathSimExpSplImagesOnPath, self)._get_init_state()
+		return state
+
+
+def is_state_empty(state):
+	return np.sum(state) == 0
+
+
+def contains_target(state, target):
+	return np.where(state == target)[0].size > 0

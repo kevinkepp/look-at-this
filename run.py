@@ -2,7 +2,9 @@ from __future__ import division
 import random
 import numpy as np
 
-from lat.PathSimulator import PathSimulator, PathSimulatorSimple, PathSimSimpleExpansiveSampler, PathSimExpSplImages
+from lat.PathSimulator import PathSimulator, PathSimulatorSimple, PathSimSimpleExpansiveSampler, PathSimExpSplImages, \
+	PathSimExpSplImagesOnPath, PathSimulatorSimpleOnPath, PathSimSimpleExpansiveSamplerOnPath, PathSimExpansiveSampler, \
+	PathSimExpansiveSamplerOnPath
 from lat.RandomAgent import RandomAgent
 from lat.QAgent import QAgent
 from lat.KerasMlpModel import KerasMlpModel
@@ -16,7 +18,7 @@ from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator,
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 3000  # runs/games
+EPOCHS = 2000  # runs/games
 GRID_SIZE_N = 15
 GRID_SIZE_M = 15
 WORLD_SIZE_FACTOR = 10
@@ -25,26 +27,31 @@ MAX_STEPS = GRID_SIZE_N * WORLD_SIZE_FACTOR * 10
 BOUNDED = False  # false means terminate on out of bounds, true means no out of bounds possible
 
 ## Environment parameters
-SIMULATOR = PathSimExpSplImages #PathSimSimpleExpansiveSampler #PathSimulatorSimple  # ImageSimulator  # ImageSimulatorSpecialSample
-SIMULATOR_NAME = "PathSimExpSplImages"
-# ACTIONS = Actions.all()
 ACTIONS = Actions.all
+SIMULATOR_IMAGE = ImageSimulator
+SIMULATOR_IMAGE_SPECIAL = ImageSimulatorSpecialSample
+SIMULATOR_PATH = PathSimulator
+SIMULATOR_PATH_EXP = PathSimExpansiveSampler
+SIMULATOR_PATH_EXP_ON_PATH = PathSimExpansiveSamplerOnPath
+SIMULATOR_PATH_SIMPLE = PathSimulatorSimple
+SIMULATOR_PATH_SIMPLE_ON_PATH = PathSimulatorSimpleOnPath
+SIMULATOR_PATH_SIMPLE_EXP = PathSimSimpleExpansiveSampler
+SIMULATOR_PATH_SIMPLE_EXP_ON_PATH = PathSimSimpleExpansiveSamplerOnPath
+SIMULATOR_PATH_SIMPLE_EXP_IMAGES = PathSimExpSplImages
+SIMULATOR_PATH_SIMPLE_EXP_IMAGES_ON_PATH = PathSimExpSplImagesOnPath
+# actual simulator we want to use
+SIMULATOR = SIMULATOR_PATH_EXP_ON_PATH
+SIMULATOR_NAME = SIMULATOR.__name__
 # different reward functions
-REWARD_LIN = LinearReward()
-REWARD_LIN_NAME = "linear"
-REWARD_AT_END = RewardAtTheEnd()  # also called "constant"
-REWARD_AT_END_NAME = "at-end"
-REWARD_AT_END_MIDDLE = RewardAtTheEndForOneInTheMiddle()
-REWARD_AT_END_NAME = "at-end-if-middle-one"
-REWARD_MID = MiddleAsReward()
-REWARD_MID_NAME = "middle"
-REWARD_MID_ABS = MiddleAbsoluteAsReward()
-REWARD_MID_ABS_NAME = "middle-abs"
-REWARD_SUM = SumAsReward()
-REWARD_SUM_NAME = "sum"
+REWARD_LIN = LinearReward
+REWARD_AT_END = RewardAtTheEnd  # also called "constant"
+REWARD_AT_END_MIDDLE = RewardAtTheEndForOneInTheMiddle
+REWARD_MID = MiddleAsReward
+REWARD_MID_ABS = MiddleAbsoluteAsReward
+REWARD_SUM = SumAsReward
 # actual reward we want to use
-REWARD = REWARD_AT_END
-REWARD_NAME = REWARD_AT_END_NAME
+REWARD = REWARD_AT_END_MIDDLE()
+REWARD_NAME = REWARD.__class__.__name__
 
 ## Agent parameters
 # learning rate for Q-Agents
@@ -121,7 +128,7 @@ names.append("DeepQAgentReplay[8]")
 
 ## Evaluate results
 # choose which agents to run
-include = [2]
+include = [2, 3]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents

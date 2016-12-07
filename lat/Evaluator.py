@@ -30,7 +30,7 @@ class Evaluator(object):
 	def _train_until(self, env, break_condition, window_size, visualize):
 		results = []
 		for i in range(self.epochs):
-			visualize_epoch = visualize and self.epochs > 20 and i % int(self.epochs / 20) < 3
+			visualize_epoch = visualize and self.epochs > 20 and i % int(self.epochs / 20) < 5
 			# env.use_special_sampling(i, self.epochs)
 			res = env.run(i, visualize=visualize_epoch, trainingmode=True)
 			res = (res[0], len(res[1]), res[2])
@@ -56,9 +56,7 @@ class Evaluator(object):
 			for n, v in sorted(self.params.items()):
 				paras += ", {0}={1}".format(n, v)
 			print(paras)
-			# TODO: better integration then using constant string name of class
-			if env.__class__.__name__ == "PathSimSimpleExpansiveSampler" or \
-				env.__class__.__name__ == "PathSimExpSplImages":
+			if hasattr(env, "restartExpansiveSampling"):
 				print("Restarting Expansive Sampling")
 				env.restartExpansiveSampling(self.epochs)
 			t0 = time.time()

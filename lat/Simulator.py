@@ -259,10 +259,10 @@ class GrosserSternImageSimulator(ImageSimulator):
 		self.img = img
 		self.target = np.max(img)
 
-	def _get_init_state(self, dims):
+	def _get_init_state(self):
 		""" initial state is randomly sampled all over the picture except
 		for when it sampled on the goal, then started again """
-		(n, m) = dims
+		(n, m) = self.grid_dims
 		(N, M) = self.world_state.shape
 		i = np.random.randint(np.round((1 - self.window_gen_factor) * N, 0), np.round(N * self.window_gen_factor - n, 0))
 		j = np.random.randint(np.round((1 - self.window_gen_factor) * M, 0), np.round(M * self.window_gen_factor - m, 0))
@@ -273,7 +273,7 @@ class GrosserSternImageSimulator(ImageSimulator):
 		self.first_i = i
 		self.first_j = j
 		if self._at_goal(state):
-			state = self._get_init_state(dims)
+			state = self._get_init_state()
 		return state
 
 	def get_best_possible_steps(self):
