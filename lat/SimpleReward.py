@@ -37,7 +37,7 @@ class RewardAtTheEndForOneInTheMiddle(Reward):
 	""" gives a reward of 10 when a 1 is in the middle and -10 if agent is lost and 0 otherwise """
 	def get_reward(self, old_state, new_state, lost=False):
 		if lost:
-			return -10
+			return -2
 		elif self._at_goal(new_state):
 			return 10
 		else:

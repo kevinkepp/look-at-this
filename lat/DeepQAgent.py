@@ -2,7 +2,7 @@ from __future__ import division
 import random
 from lat.RobotAgent import RobotAgent
 import numpy as np
-
+from lat.Simulator import Actions
 
 class DeepQAgent(RobotAgent):
 	qs_old = None
@@ -19,6 +19,7 @@ class DeepQAgent(RobotAgent):
 		self.epsilon = epsilon
 		self.epsilon_update = epsilon_update
 		self.model = model
+		self.action_hist = np.zeros([model.action_hist_len, len(actions)])
 
 	def choose_action(self, curr_state):
 		qs = self.model.predict_qs(curr_state)
@@ -32,6 +33,17 @@ class DeepQAgent(RobotAgent):
 			ai = np.argmax(qs)
 			# print("Chosen action based on qs: {0}".format(qs))
 		return self.actions[ai]
+
+	def _update_action_hist(self, action):
+		self.action_hist[1:, :] = self.action_hist[:-1, :]
+		if action == Actions.up:
+			self.action_hist[0, :] = [0, 1, 0, 0]
+		elif action == Actions.down:
+			self.action_hist[0, :] = [0, 0, 0, 1]
+		elif action == Actions.left:
+			self.action_hist[0, :] = [1, 0, 0, 0]
+		elif action == Actions.right:
+			self.action_hist[0, :] = [0, 0, 0, 1]
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
 		# retrieved stored qs for old state or re-predict them
