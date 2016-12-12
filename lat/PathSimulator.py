@@ -139,9 +139,9 @@ class PathSimulator(SimpleMatrixSimulator):
 		self.world_state = ws
 
 	def _get_init_state(self):
-		self.state = None
 		# we need to generate a new world for every run
 		self._initialize_world()
+		self.state = None
 		# find an initial state where a road is visible (sum of all visible pixel is not 0)
 		while self.state is None or self._is_oob():
 			view_pos = self.sample_view_position()

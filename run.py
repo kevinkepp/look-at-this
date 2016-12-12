@@ -18,7 +18,7 @@ from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator,
 from lat.Evaluator import Evaluator
 
 ## Global parameters
-EPOCHS = 2000  # runs/games
+EPOCHS = 4000  # runs/games
 GRID_SIZE_N = 15
 GRID_SIZE_M = 15
 WORLD_SIZE_FACTOR = 10
@@ -40,7 +40,7 @@ SIMULATOR_PATH_SIMPLE_EXP_ON_PATH = PathSimSimpleExpansiveSamplerOnPath
 SIMULATOR_PATH_SIMPLE_EXP_IMAGES = PathSimExpSplImages
 SIMULATOR_PATH_SIMPLE_EXP_IMAGES_ON_PATH = PathSimExpSplImagesOnPath
 # actual simulator we want to use
-SIMULATOR = SIMULATOR_PATH_EXP_ON_PATH
+SIMULATOR = SIMULATOR_PATH
 SIMULATOR_NAME = SIMULATOR.__name__
 # different reward functions
 REWARD_LIN = LinearReward
@@ -115,7 +115,13 @@ agent = QAgent(ACTIONS, ALPHA, 0.8, Q_INIT)
 envs.append(create_simulator(agent))
 names.append("QAgent g=0.8")
 
-# Deep Q-Agents
+# Deep Q-Agent
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgent(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model)
+envs.append(create_simulator(agent))
+names.append("DeepQAgent[]")
+
+# Deep Q-Agents with Replay
 model = KerasMlpModel(MODEL_IN_LAYER_SIZE, MODEL_HID_LAYER_SIZES, MODEL_OUT_LAYER_SIZE)
 agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER)
 envs.append(create_simulator(agent))
@@ -128,7 +134,7 @@ names.append("DeepQAgentReplay[8]")
 
 ## Evaluate results
 # choose which agents to run
-include = [2, 3]
+include = [4]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents
