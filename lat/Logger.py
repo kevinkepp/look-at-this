@@ -37,7 +37,7 @@ class Logger:
 
 	def _get_name_from_config_file(self, configfile_path):
 		"""  use config file for naming folder """
-		# TODO: get proper name
+		# TODO: get proper name from config file
 		self.name_setup = "something from the config file"
 
 	def _copy_config_file(self, configfile_path):
@@ -91,7 +91,8 @@ class Logger:
 		# TODO: code logging of init state and world state for later use
 		pass
 
-	def end_logging(self):  # TODO: include this to clean up!
+	# TODO: include closing of files method to clean up!
+	def end_logging(self):
 		""" ends logging and closes all open files """
 		for each_file in self.files_params.values():
 			each_file.close()
