@@ -1,30 +1,36 @@
-import os
-
+import os, Image
+import numpy as np
 import datetime as dt
 from shutil import copyfile
 
 
 class Logger:
 	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
-	def __init__(self, configfile_path):
+	def __init__(self, world_cfg_path, agent_cfg_path, agent_name):
 		# default names of the files and folders
-		self.file_suffix_logs = ".log"
-		self.file_suffix_cfg = ".cfg"
+		self.file_suffix_logs = ".tsv"
+		self.file_suffix_cfg = ".py"
 		self.general_log_dir = "tmp/logs"  # later is replaced with dir of current experiment
+		self.name_folder_cfg = "config"
 		self.name_folder_parameters = "parameter_logs"
+		self.name_folder_world_init = "world_init_logs"
+		self.name_folder_models = "models"
+		self.name_file_init = "init_states" + self.file_suffix_logs
 		self.name_file_messages = "messages" + self.file_suffix_logs
-		self.name_file_cfg = "configuration" + self.file_suffix_cfg
+		self.name_file_cfg_agent = "agent-config" + self.file_suffix_cfg
+		self.name_file_cfg_world = "world" + self.file_suffix_cfg
 		self.name_file_results = "results" + self.file_suffix_logs
+		self.name_setup = agent_name
 
-		self.epoch = 1
+		self.epoch = 0
 		self.files_params = {}  # dictionary with all parameter files in it
 		self.file_messages = None  # file for logging the general messages
 		self.file_results = None  # file for logging the results
-		self.name_setup = ""  # later stores the name of the folder to be created
+		self.file_init_states = None  # file for logging the init states
 
-		self._get_name_from_config_file(configfile_path)
+		# self._get_name_from_config_file(agent_cfg_path)
 		self._create_folders()
-		self._copy_config_file(configfile_path)
+		self._copy_config_file(world_cfg_path, agent_cfg_path)
 
 	def next_epoch(self):
 		""" increases epoch, which is used for logging """
@@ -35,14 +41,16 @@ class Logger:
 		now = dt.datetime.now()
 		return now.strftime("%Y%m%d-%H%M%S")
 
-	def _get_name_from_config_file(self, configfile_path):
+	def _get_name_from_config_file(self, agent_cfg_path):
 		"""  use config file for naming folder """
 		# TODO: get proper name from config file
 		self.name_setup = "something from the config file"
 
-	def _copy_config_file(self, configfile_path):
-		""" makes a copy of the configfile to the logging folder """
-		copyfile(configfile_path, self.general_log_dir + "/" + self.name_file_cfg)
+	def _copy_config_file(self, world_cfg_path, agent_cfg_path):
+		""" makes a copy of the configfiles to the logging folder """
+		copyfile(world_cfg_path, self.general_log_dir + "/" + self.name_folder_cfg + "/" + self.name_file_cfg_world)
+		copyfile(agent_cfg_path, self.general_log_dir + "/" + self.name_folder_cfg + "/" + self.name_file_cfg_agent)
+
 
 	def _create_folders(self):
 		""" creates the folder structure for the current experiment """
@@ -55,6 +63,9 @@ class Logger:
 		self.general_log_dir = dir_path
 		# create folder for saving the parameter files
 		os.makedirs(self.general_log_dir + "/" + self.name_folder_parameters)
+		# config dir
+		os.makedirs(self.general_log_dir + "/" + self.name_folder_cfg)
+
 
 	def log_parameter(self, para_name, para_val):
 		""" logs a parameter value to a file """
@@ -86,10 +97,34 @@ class Logger:
 			self.file_results.write("epoch\tsuccess\tactions-taken\n")
 		self.file_results.write("{}\t{}\t{}\n".format(self.epoch, success, actions_taken))
 
-	def log_init_state_and_world(self, world_state, agent_pos_i, agent_pos_j, view_dims):
+	def log_init_state_and_world(self, world_state, agent_pos_x, agent_pos_y):
 		""" saves initial state and world-configuration """
-		# TODO: code logging of init state and world state for later use
-		pass
+		if self.file_init_states is None:
+			os.makedirs(self.general_log_dir + "/" + self.name_folder_world_init)
+			path = self.general_log_dir + "/" + self.name_folder_world_init + "/" + self.name_folder_world_init
+			self.file_init_states = open(path, 'w')
+			self.log_message("created logfile and folder for init states and world states")
+			headline = "{}\t{}\t{}\n".format("epoch", "agent-init-x", "agent-init-y")
+			self.file_init_states.write(headline)
+		# logging the init state and view dims in a logfile
+		init_state_text_line = "{}\t{}\t{}\n".format(self.epoch, agent_pos_x, agent_pos_y)
+		self.file_init_states.write(init_state_text_line)
+		# logging the worldstate as an grayscale png image
+		img = (world_state * 255.9).astype(np.uint8)
+		img_file_name = "epoch{}_worldstate.png".format(self.epoch)
+		path = self.general_log_dir + "/" + self.name_folder_world_init + "/" + img_file_name
+		img = Image.fromarray(img)
+		img.save(path)
+
+	def log_model(self, model):
+		""" log model for later analysis """
+		# TODO: save model somehow
+		# create directory for saving the models
+		path = self.general_log_dir + "/" + self.name_folder_models
+		if not os.path.exists(path):
+			os.makedirs(path)
+
+
 
 	# TODO: include closing of files method to clean up!
 	def end_logging(self):
