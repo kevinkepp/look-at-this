@@ -24,6 +24,7 @@ optimizer = keras.optimizers.RMSprop(
 
 _model_input_size = view_size.w * view_size.h + action_hist_len * nb_actions
 model = sft.agent.model.KerasMlpModel.KerasMlpModel(
+	logger=logger,
 	layers=[
 		Dense(input_shape=(_model_input_size,), output_dim=16, init='lecun_uniform'),
 		Activation('relu'),
@@ -35,6 +36,7 @@ model = sft.agent.model.KerasMlpModel.KerasMlpModel(
 )
 
 agent = sft.agent.DeepQAgentReplay.DeepQAgentReplay(
+	logger=logger,
 	actions=Actions.all,
 	model=model,
 	discount=0.99,

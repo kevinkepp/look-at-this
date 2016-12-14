@@ -16,13 +16,15 @@ class DeepQAgent(RobotAgent):
 	# epsilon: epsilon-greedy strategy
 	# epsilon: discount function for epsilon
 	# model: estimator for q values
-	def __init__(self, actions, gamma, model):
+	def __init__(self, logger, actions, gamma, model):
+		self.logger = logger
 		self.actions = actions
 		self.gamma = gamma
 		self.model = model
 
 	def choose_action(self, curr_state, eps):
 		qs = self.model.predict_qs(curr_state)
+		self.logger.log_parameter("q", qs)
 		# print("Q-Values " + str(qs))
 		# store qs for current state because usually we can use them in subsequent call to incorporate_reward
 		self.qs_old = qs

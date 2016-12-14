@@ -7,6 +7,7 @@ from shutil import copyfile
 
 class Logger:
 	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
+
 	def __init__(self, world_cfg_path, agent_cfg_path, agent_name):
 		# default names of the files and folders
 		self.file_suffix_logs = ".tsv"
@@ -35,7 +36,7 @@ class Logger:
 
 	def next_epoch(self):
 		""" increases epoch, which is used for logging """
-		self.epoch += 1  # TODO: talk about convention if we start with 0 or 1 and when to increase
+		self.epoch += 1
 
 	def _get_timestamp(self):
 		""" creates a timestamp that can be used to log """
@@ -52,7 +53,6 @@ class Logger:
 		copyfile(world_cfg_path, self.general_log_dir + "/" + self.name_folder_cfg + "/" + self.name_file_cfg_world)
 		copyfile(agent_cfg_path, self.general_log_dir + "/" + self.name_folder_cfg + "/" + self.name_file_cfg_agent)
 
-
 	def _create_folders(self):
 		""" creates the folder structure for the current experiment """
 		if not os.path.exists(self.general_log_dir):
@@ -67,12 +67,11 @@ class Logger:
 		# config dir
 		os.makedirs(self.general_log_dir + "/" + self.name_folder_cfg)
 
-
 	def log_parameter(self, para_name, para_val):
 		""" logs a parameter value to a file """
 		if para_name not in self.files_params:
 			path = self.general_log_dir + "/" + self.name_folder_parameters + "/" + para_name + self.file_suffix_logs
-			self.files_params[para_name] = open(path , 'w')
+			self.files_params[para_name] = open(path, 'w')
 			self.log_message("created parameter logfile for '{}'".format(para_name))
 			self.files_params[para_name].write("epoch\tparameter-value\n")
 		self.files_params[para_name].write("{}\t{}\n".format(self.epoch, para_val))
@@ -85,7 +84,7 @@ class Logger:
 			self.file_messages.write(self._create_line_for_msg_logfile("created this logfile"))
 		self.file_messages.write(self._create_line_for_msg_logfile(message))
 
-	def _create_line_for_msg_logfile(self,message):
+	def _create_line_for_msg_logfile(self, message):
 		""" adds timestamp, tab and succeeding newline operator"""
 		return self._get_timestamp() + "\t" + message + "\n"
 
@@ -98,7 +97,7 @@ class Logger:
 			self.file_results.write("epoch\tsuccess\tactions-taken\n")
 		self.file_results.write("{}\t{}\t{}\n".format(self.epoch, success, actions_taken))
 
-	def log_init_state_and_world(self, world_state, agent_pos_x, agent_pos_y):
+	def log_init_state_and_world(self, world_state, agent_pos):
 		""" saves initial state and world-configuration """
 		if self.file_init_states is None:
 			os.makedirs(self.general_log_dir + "/" + self.name_folder_world_init)
@@ -108,7 +107,7 @@ class Logger:
 			headline = "{}\t{}\t{}\n".format("epoch", "agent-init-x", "agent-init-y")
 			self.file_init_states.write(headline)
 		# logging the init state and view dims in a logfile
-		init_state_text_line = "{}\t{}\t{}\n".format(self.epoch, agent_pos_x, agent_pos_y)
+		init_state_text_line = "{}\t{}\t{}\n".format(self.epoch, agent_pos.x, agent_pos.y)
 		self.file_init_states.write(init_state_text_line)
 		# logging the worldstate as an grayscale png image
 		img = (world_state * 255.9).astype(np.uint8)
@@ -125,8 +124,6 @@ class Logger:
 		path = self.general_log_dir + "/" + self.name_folder_models
 		if not os.path.exists(path):
 			os.makedirs(path)
-
-
 
 	# TODO: include closing of files method to clean up!
 	def end_logging(self):

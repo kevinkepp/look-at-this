@@ -6,7 +6,8 @@ from sft.agent.model.DeepQModel import DeepQModel
 
 
 class KerasMlpModel(DeepQModel):
-	def __init__(self, layers, loss, optimizer):
+	def __init__(self, logger, layers, loss, optimizer):
+		self.logger = logger
 		self._build_model(layers, loss, optimizer)
 
 	def _build_model(self, layers, loss, optimizer):
@@ -27,7 +28,9 @@ class KerasMlpModel(DeepQModel):
 		self._model.fit(states, targets, batch_size=n_samples, nb_epoch=1, verbose=0)
 
 	def load_from_file(self, file_path):
+		self.logger.log_message("Load model from {0}".format(file_path))
 		return load_model(file_path)
 
 	def save_to_file(self, file_path):
+		self.logger.log_message("Save model to {0}".format(file_path))
 		self._model.save(file_path)

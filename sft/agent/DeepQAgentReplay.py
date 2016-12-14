@@ -8,7 +8,6 @@ from sft.agent.DeepQAgent import DeepQAgent
 
 
 class DeepQAgentReplay(DeepQAgent):
-
 	# actions: possible actions
 	# gamma: discount factor
 	# epsilon: epsilon-greedy strategy
@@ -16,8 +15,8 @@ class DeepQAgentReplay(DeepQAgent):
 	# model: estimator for q values
 	# batch size: size of minibatches for experience replay (see doi:10.1038/nature14236)
 	# buffer size: size of experience pool from which minibatches are randomly sampled
-	def __init__(self, actions, discount, model, batch_size, buffer_size):
-		super(DeepQAgentReplay, self).__init__(actions, discount, model)
+	def __init__(self, logger, actions, discount, model, batch_size, buffer_size):
+		super(DeepQAgentReplay, self).__init__(logger, actions, discount, model)
 		self.batch_size = batch_size
 		self.buffer = max(buffer_size, batch_size)  # buffer has to be at least batch_size
 		self.replay = []
@@ -25,6 +24,7 @@ class DeepQAgentReplay(DeepQAgent):
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
 		""" incorporates reward, states, action into replay list and updates the parameters of model """
+		self.logger.log_parameter("reward", reward)
 		exp_new = (old_state, action, new_state, reward)
 		self._update_replay_list(exp_new)
 		if len(self.replay) == self.buffer:
@@ -38,7 +38,7 @@ class DeepQAgentReplay(DeepQAgent):
 		for old_state, action, new_state, reward in mini_batch:
 			# re-predict qs values for old state
 			qs_old = self.model.predict_qs(old_state)
-			target_qs = np.zeros((len(self.actions,)))
+			target_qs = np.zeros((len(self.actions, )))
 			target_qs[:] = qs_old[:]
 			if new_state is not None:
 				qs_new = self.model.predict_qs(new_state)
