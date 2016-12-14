@@ -5,7 +5,7 @@ class Update(object):
 	__metaclass__ = ABCMeta
 
 	@abstractmethod
-	def get_value(self, nb_epoch):
+	def get_value(self, epoch):
 		pass
 
 
@@ -16,8 +16,8 @@ class Linear(Update):
 		self.start = start
 		self._step_size = (end - start) / steps
 
-	def get_value(self, n):
-		return self.start + self._step_size * n
+	def get_value(self, epoch):
+		return self.start + self._step_size * epoch
 
 # custom update function with convex shape, adapted -log(x) with f(1) = 1 and f(EPOCHS) = 0
 # def EPSILON_UPDATE_KEV(n):

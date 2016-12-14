@@ -13,9 +13,9 @@ class DeepQModel(object):
 		pass
 
 	@abstractmethod
-	def load_from_file(self, filepath):
+	def load_from_file(self, file_path):
 		pass
 
 	@abstractmethod
-	def save_to_file(self, filepath):
+	def save_to_file(self, file_path):
 		pass

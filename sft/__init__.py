@@ -97,6 +97,7 @@ class Rectangle:
 
 
 # normalize array to [0, 1]
+# TODO test
 def normalize(arr):
 	_min = np.min(arr)
 	_max = np.max(arr)
@@ -108,3 +109,9 @@ def normalize(arr):
 
 def submatrix(mat, rect):
 	return mat[rect.x:rect.x + rect.w, rect.y:rect.y + rect.h]
+
+
+def bbox(world_size, view_size):
+	border = Point(view_size.w + 1, view_size.h + 1)
+	size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
+	return Rectangle(border, size)
