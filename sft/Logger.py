@@ -1,4 +1,5 @@
-import os, Image
+import os
+import cv2
 import numpy as np
 import datetime as dt
 from shutil import copyfile
@@ -113,8 +114,9 @@ class Logger:
 		img = (world_state * 255.9).astype(np.uint8)
 		img_file_name = "epoch{}_worldstate.png".format(self.epoch)
 		path = self.general_log_dir + "/" + self.name_folder_world_init + "/" + img_file_name
-		img = Image.fromarray(img)
-		img.save(path)
+		# img = Image.fromarray(img)
+		# img.save(path)
+		cv2.imwrite(path, img)
 
 	def log_model(self, model):
 		""" log model for later analysis """

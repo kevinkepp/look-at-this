@@ -14,7 +14,7 @@ class Trainer(object):
 	WORLD_CONFIG_NAME = "world"
 	AGENT_CONFIG_NAME_DIR = "agents"
 
-	def run(self, experiment, threaded=True):
+	def run(self, experiment, threaded=False):
 		world_config, agent_configs = self.get_configs(experiment)
 		scenarios = self.init_scenarios(world_config)
 		for agent in agent_configs:
@@ -40,11 +40,13 @@ class Trainer(object):
 		return [config.world_gen.get_next() for n in range(config.epochs)]
 
 	def run_agent(self, config, scenarios):
+		logger = config.logger
 		for n in range(config.epochs):  # TODO check whether epochs in config
 			success, action_hist = self.run_epoch(config, n, scenarios[n])
-			# TODO log success and action_hist
+			logger.log_results(action_hist, success)
 			# if n % (epochs / 100) == 0:
 			print("Agent {0} - Epoch {1}: {2}".format(config.__name__, n, success))
+			logger.next_epoch()
 
 	def run_epoch(self, config, epoch, scenario):
 		sim = Simulator(config.view_size)

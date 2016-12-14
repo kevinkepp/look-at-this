@@ -5,8 +5,12 @@ import sft.agent.DeepQAgentReplay
 import sft.agent.model.KerasMlpModel
 import sft.reward.SimpleReward
 import sft.EpsilonUpdate
+from Logger import Logger
 
+import sft.config.exp1.world
 from sft.config.exp1.world import *
+
+logger = Logger(sft.config.exp1.world.__file__, __file__, __name__)
 
 epsilon_update = sft.EpsilonUpdate.Linear(
 	start=1,
