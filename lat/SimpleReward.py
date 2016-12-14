@@ -37,9 +37,11 @@ class RewardAtTheEndForOneInTheMiddle(Reward):
 	""" gives a reward of 10 when a 1 is in the middle and -10 if agent is lost and 0 otherwise """
 	def get_reward(self, old_state, new_state, lost=False):
 		if lost:
-			return -2
+			return 0 # testing without punishment, when running out #-2
 		elif self._at_goal(new_state):
-			return 10
+			return 100
+		#elif self._at_line(new_state):
+		#	return 5
 		else:
 			return 0
 
@@ -47,6 +49,12 @@ class RewardAtTheEndForOneInTheMiddle(Reward):
 		""" checks if a one is in the middle of current state/view """
 		(n, m) = new_state.shape
 		return new_state[int(n/2), int(m/2)]==1
+
+	# just for short experiment
+	def _at_line(self, state):
+		(n, m) = state.shape
+		val = state[int(n / 2), int(m / 2)]
+		return val != 0 and val != 1
 
 # linear version, returning 10 if at goal, -10 if goal lost from focus, 1 if decreasing distane to goal, -1 if distance increases
 class LinearReward(RewardAtTheEnd):
