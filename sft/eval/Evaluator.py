@@ -1,11 +1,12 @@
 from __future__ import division
 import os
 import matplotlib
+
 if "DISPLAY" not in os.environ:
 	matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 import time
+
 
 class Evaluator(object):
 	_eval_epoch_min = 50
@@ -31,12 +32,13 @@ class Evaluator(object):
 		results = []
 		for i in range(self.epochs):
 			visualize_epoch = visualize and self.epochs > 20 and i % int(self.epochs / 20) < 5
-			# env.use_special_sampling(i, self.epochs)
+			# sim.use_special_sampling(i, self.epochs)
 			res = env.run(i, visualize=visualize_epoch, trainingmode=True)
 			res = (res[0], len(res[1]), res[2])
 			results.append(res)
 			if i >= window_size:
-				scores_window = [self.calc_score(success, steps, best) for success, steps, best in results[-window_size:]]
+				scores_window = [self.calc_score(success, steps, best) for success, steps, best in
+								 results[-window_size:]]
 				score = sum(scores_window) / float(window_size)
 				if self.epochs > 20 and i % int(self.epochs / 20) == 0:
 					print("Epoch {0}/{1}: {2}".format(i, self.epochs, np.round(score, 3)))

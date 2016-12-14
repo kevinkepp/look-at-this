@@ -1,9 +1,12 @@
 from __future__ import division
-from lat.DeepQModel import DeepQModel
-from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Dropout
-from keras.optimizers import SGD, RMSprop
+
 import numpy as np
+from keras.layers.core import Dense, Activation
+from keras.models import Sequential
+from keras.optimizers import RMSprop
+from keras.models import load_model
+
+from sft.agent.model.DeepQModel import DeepQModel
 
 
 class KerasMlpModel(DeepQModel):
@@ -36,17 +39,26 @@ class KerasMlpModel(DeepQModel):
 		model.compile(loss=loss, optimizer=optimizer)
 		self._model = model
 
+	@staticmethod
+	def _flatten_state(state):
+		view = state.view.reshape((1, state.view.size))
+		actions = state.action_hist.reshape((1, state.action_hist.size))
+		return np.hstack((view, actions))
+
+	@staticmethod
+	def _flatten_states(states):
+		states = [KerasMlpModel._flatten_state(s) for s in states]
+		states = [s.reshape(s.size, ) for s in states]
+		return np.matrix(states)
+
 	def predict_qs(self, state):
-		assert state.size == self._l_in_size
-		state = state.reshape((1, state.size))
-		p = self._model.predict(state, batch_size=1, verbose=0)
+		assert state.view.size + state.action_hist.size == self._l_in_size
+		x = self._flatten_state(state)
+		p = self._model.predict(x, batch_size=1, verbose=0)
 		return p
 
 	def update_qs(self, states, targets):
-		if states.ndim == 2:
-			states = np.array([states])
-			targets = np.array([targets])
-		states = states.reshape(states.shape[0], states.shape[1] * states.shape[2])
+		states = KerasMlpModel._flatten_states(states)
 		n_samples = states.shape[0]
 		n_features = states.shape[1]
 		n_outputs = targets.shape[1]
@@ -54,8 +66,8 @@ class KerasMlpModel(DeepQModel):
 		assert n_outputs == self._l_out_size
 		self._model.fit(states, targets, batch_size=n_samples, nb_epoch=1, verbose=0)
 
-	def load_weights(self, filepath):
-		self._model.load_weights(filepath)
+	def load_from_file(self, filepath):
+		return load_model(filepath)
 
-	def save_weights(self, filepath):
-		self._model.save_weights(filepath)
+	def save_to_file(self, filepath):
+		self._model.save(filepath)

@@ -1,17 +1,19 @@
 from __future__ import division
-from lat.DeepQAgentReplay import DeepQAgentReplay
+
 import numpy as np
+
+from sft.agent.DeepQAgentReplay import DeepQAgentReplay
 
 
 class DeepQAgentPositiveReplay(DeepQAgentReplay):
 	DEF_POS_PORTION = 0.6
 	DEF_EPSILON_POS_RPL = 0.1
 
-	def __init__(self, actions, gamma, epsilon, epsilon_update, model, batch_size, buffer_, pos_portion=DEF_POS_PORTION,
+	def __init__(self, actions, discount, epsilon, epsilon_update, model, batch_size, buffer_size, pos_portion=DEF_POS_PORTION,
 				 epsilon_pos_rpl=DEF_EPSILON_POS_RPL):
-		super(DeepQAgentPositiveReplay, self).__init__(actions, gamma, epsilon, epsilon_update, model, batch_size, buffer_)
-		self.len_repl_pos = int(np.round(pos_portion * buffer_, 0))
-		self.len_repl_non_pos = int(np.round((1-pos_portion) * buffer_, 0))
+		super(DeepQAgentPositiveReplay, self).__init__(actions, discount, epsilon, epsilon_update, model, batch_size, buffer_size)
+		self.len_repl_pos = int(np.round(pos_portion * buffer_size, 0))
+		self.len_repl_non_pos = int(np.round((1-pos_portion) * buffer_size, 0))
 		self.replay_pos = []
 		self.replay_non_pos = []
 		self.epsilon_pos_repl = epsilon_pos_rpl

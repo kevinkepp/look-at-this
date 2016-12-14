@@ -1,19 +1,12 @@
 from __future__ import division
-from lat.Environment import Environment
 
-from copy import copy
-# from enum import Enum
-import numpy as np
 import time
+from copy import copy
+
 import cv2
+import numpy as np
 
-
-def enum(**enums):
-	return type('Enum', (), enums)
-
-
-Actions = enum(up=0, down=1, left=2, right=3)
-Actions.all = [Actions.up, Actions.down, Actions.left, Actions.right]
+from sft.sim.Environment import Environment
 
 
 class SimpleMatrixSimulator(Environment):

@@ -1,7 +1,7 @@
-from lat.Simulator import GaussSimulator as Simulator
-from lat.KeyboardAgent import KeyboardAgent
-from lat.SimpleReward import LinearReward as Reward
-from lat.SimpleVisualize import PlotMatrix as Visual
+from reward.SimpleReward import LinearReward as Reward
+from sft.agent.KeyboardAgent import KeyboardAgent
+from sft.eval.SimpleVisualize import PlotMatrix as Visual
+from sft.sim.Simulator import GaussSimulator as Simulator
 
 agent = KeyboardAgent()
 reward = Reward()

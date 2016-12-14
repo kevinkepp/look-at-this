@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 
 
-class Reward():
+class Reward(object):
 	__metaclass__ = ABCMeta
 
 	@abstractmethod

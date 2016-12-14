@@ -1,5 +1,6 @@
 from __future__ import division
-from lat.RobotAgent import RobotAgent
+
+from sft.agent.RobotAgent import RobotAgent
 
 
 class QAgent(RobotAgent):
@@ -36,7 +37,7 @@ class QAgent(RobotAgent):
 		state_str = str(old_state)
 		self.exp[state_str][action] = value
 
-	def choose_action(self, curr_state):
+	def choose_action(self, curr_state, eps):
 		# get index of maximum q value for current state
 		return self.max_q_value(curr_state)[0]
 

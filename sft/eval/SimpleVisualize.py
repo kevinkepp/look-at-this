@@ -1,10 +1,12 @@
 from __future__ import division
-from lat.Visualizer import Visualizer
-from lat.Simulator import Actions
 
-import numpy as np
-import matplotlib.pyplot as plt
 import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sft.Actions import Actions
+from sft.eval.Visualizer import Visualizer
 
 
 class PathAndResultsPlotter(Visualizer):
@@ -22,7 +24,7 @@ class PathAndResultsPlotter(Visualizer):
 		# plotting view window
 		win_x = np.array([j, j, j + m, j + m, j])
 		win_y = np.array([i, i + n, i + n, i, i])
-		print("x={} y={}".format(win_x,win_y))
+		print("x={} y={}".format(win_x, win_y))
 		plt.plot(win_x, win_y, 'r:')
 		# plot world-frame
 		plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
@@ -36,28 +38,29 @@ class PathAndResultsPlotter(Visualizer):
 			plt.draw()
 			plt.pause(0.001)
 
-	def visualize_course_of_action(self, world_state, first_i, first_j, grid_n, grid_m, actions, title=None, image_name="agent_path"):
+	def visualize_course_of_action(self, world_state, first_i, first_j, grid_n, grid_m, actions, title=None,
+								   image_name="agent_path"):
 		""" plots a course of actions beginning from a certain first state """
 		n, m = grid_n, grid_m
-		x = first_j + m//2
-		y = first_i + n//2
+		x = first_j + m // 2
+		y = first_i + n // 2
 		xx = np.array(x)
 		yy = np.array(y)
 		for ac in actions:
-			(x,y) = self._get_new_xy(x,y,ac)
-			xx = np.append(xx,x)
-			yy = np.append(yy,y)
+			(x, y) = self._get_new_xy(x, y, ac)
+			xx = np.append(xx, x)
+			yy = np.append(yy, y)
 		# fig = plt.figure()
 		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
 		# plotting starting view window
 		first_win_x = np.array([first_j, first_j, first_j + m, first_j + m, first_j])
-		first_win_y = np.array([first_i, first_i+n, first_i+n, first_i, first_i])
+		first_win_y = np.array([first_i, first_i + n, first_i + n, first_i, first_i])
 		plt.plot(first_win_x, first_win_y, 'r:')
 		# plotting final view window
-		mid_m = m//2
-		mid_n = n//2
-		final_win_x = np.array([xx[-1]-mid_m, xx[-1]-mid_m, xx[-1]+mid_m, xx[-1]+mid_m, xx[-1]-mid_m])
-		final_win_y = np.array([yy[-1]-mid_n, yy[-1]+mid_n, yy[-1]+mid_n, yy[-1]-mid_n, yy[-1]-mid_n])
+		mid_m = m // 2
+		mid_n = n // 2
+		final_win_x = np.array([xx[-1] - mid_m, xx[-1] - mid_m, xx[-1] + mid_m, xx[-1] + mid_m, xx[-1] - mid_m])
+		final_win_y = np.array([yy[-1] - mid_n, yy[-1] + mid_n, yy[-1] + mid_n, yy[-1] - mid_n, yy[-1] - mid_n])
 		plt.plot(final_win_x, final_win_y, 'r:')
 		# plot world-frame
 		plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
@@ -67,20 +70,20 @@ class PathAndResultsPlotter(Visualizer):
 		if title is not None:
 			plt.title(title)
 		# save and clear figure
-		image_save_path = "tmp/paths/"+image_name+".png"
+		image_save_path = "tmp/paths/" + image_name + ".png"
 		plt.savefig(image_save_path)
 		# plt.clf()
 		plt.close()
 
 	def _get_new_xy(self, x, y, ac):
 		""" calculates the new position of the goal after a action """
-		if ac == Actions.up:
+		if ac == Actions.UP:
 			y -= 1
-		elif ac == Actions.down:
+		elif ac == Actions.DOWN:
 			y += 1
-		elif ac == Actions.right:
+		elif ac == Actions.RIGHT:
 			x += 1
-		elif ac == Actions.left:
+		elif ac == Actions.LEFT:
 			x -= 1
 		return x, y
 
@@ -115,7 +118,7 @@ class PathAndResultsPlotter(Visualizer):
 		results = np.array(results)
 		step_diff = self._movingaverage(results[:, 1] - results[:, 2], window_size)
 		success = self._movingaverage(results[:, 0], window_size)
-		x = np.arange(window_size, len(results)+1)
+		x = np.arange(window_size, len(results) + 1)
 		ax_success.plot(x, success, '-', label=name)
 		ax_steps.plot(x, step_diff, '--')
 

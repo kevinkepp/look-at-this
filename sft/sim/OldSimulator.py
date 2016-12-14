@@ -1,8 +1,11 @@
 from __future__ import division
+
 from random import random
+
 import numpy as np
 from scipy.ndimage.interpolation import shift
-from lat.Environment import Environment
+
+from sft.sim.Environment import Environment
 
 
 def enum(**enums):

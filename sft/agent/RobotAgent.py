@@ -2,21 +2,18 @@ from abc import ABCMeta, abstractmethod
 
 
 # abstract class for robot agent
-class RobotAgent():
+class RobotAgent(object):
 	__metaclass__ = ABCMeta
 
 	# choose action based on current state
+	# epsilon determines how random the action is chosen
 	# return None means abort
 	@abstractmethod
-	def choose_action(self, curr_state):
+	def choose_action(self, curr_state, eps):
 		pass
 
 	# receive reward for a action that moved agent from old to new state
+	# use state defined in environment class
 	@abstractmethod
 	def incorporate_reward(self, old_state, action, new_state, value):
-		pass
-
-	@abstractmethod
-	# signals start of epoch n
-	def new_epoch(self, n):
 		pass

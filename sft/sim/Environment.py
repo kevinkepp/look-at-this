@@ -1,11 +1,11 @@
 from abc import abstractmethod, ABCMeta
 
 
-class Environment():
+class Environment(object):
 	__metaclass__ = ABCMeta
 
 	@abstractmethod
-	def run(self):
+	def run(self, agent):
 		pass
 
 	@abstractmethod

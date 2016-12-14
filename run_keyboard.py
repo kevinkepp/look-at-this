@@ -1,7 +1,7 @@
 from random import random
 
-from lat.KeyboardQAgent import KeyboardQAgent
-from lat.OldSimulator import Simulator, Actions
+from sft.agent.KeyboardQAgent import KeyboardQAgent
+from sft.sim.OldSimulator import Simulator, Actions
 
 ALPHA = 0.1
 GAMMA = 0.1

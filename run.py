@@ -2,20 +2,21 @@ from __future__ import division
 import random
 import numpy as np
 
-from lat.PathSimulator import PathSimulator, PathSimulatorSimple, PathSimSimpleExpansiveSampler, PathSimExpSplImages, \
-	PathSimExpSplImagesOnPath, PathSimulatorSimpleOnPath, PathSimSimpleExpansiveSamplerOnPath, PathSimExpansiveSampler, \
-	PathSimExpansiveSamplerOnPath
-from lat.RandomAgent import RandomAgent
-from lat.QAgent import QAgent
-from lat.KerasMlpModel import KerasMlpModel
-from lat.DeepQAgent import DeepQAgent
-from lat.DeepQAgentReplay import DeepQAgentReplay
-from lat.DeepQAgentPositiveRepay import DeepQAgentPositiveReplay
-from lat.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward, MiddleAbsoluteAsReward, SumAsReward, RewardAtTheEndForOneInTheMiddle
-from lat.OldSimulator import Simulator as OldSimulator, Actions as OldActions
-from lat.SimpleVisualize import PathAndResultsPlotter
-from lat.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, ImageSimulatorSpecialSample, Actions
-from lat.Evaluator import Evaluator
+from sft.agent.RandomAgent import RandomAgent
+from sft.agent.QAgent import QAgent
+from sft.agent.model.KerasMlpModel import KerasMlpModel
+from sft.agent.DeepQAgent import DeepQAgent
+from sft.agent.DeepQAgentReplay import DeepQAgentReplay
+from sft.agent.DeepQAgentPositiveRepay import DeepQAgentPositiveReplay
+from sft.agent.DeepQAgentReplayCloning import DeepQAgentReplayCloning
+from sft.reward.SimpleReward import RewardAtTheEnd, LinearReward, MiddleAsReward, MiddleAbsoluteAsReward, SumAsReward, \
+	RewardAtTheEndForOneInTheMiddle
+from sft.sim.PathSimulator import PathSimulator
+from sft.sim.OldSimulator import Simulator as OldSimulator, Actions as OldActions
+from sft.sim.Simulator import SimpleMatrixSimulator, GaussSimulator, ImageSimulator, ImageSimulatorSpecialSample
+from sft.eval.SimpleVisualize import PathAndResultsPlotter
+from sft.eval.Evaluator import Evaluator
+from sft.Actions import Actions
 
 ## Global parameters
 EPOCHS = 4000  # runs/games
@@ -31,14 +32,6 @@ ACTIONS = Actions.all
 SIMULATOR_IMAGE = ImageSimulator
 SIMULATOR_IMAGE_SPECIAL = ImageSimulatorSpecialSample
 SIMULATOR_PATH = PathSimulator
-SIMULATOR_PATH_EXP = PathSimExpansiveSampler
-SIMULATOR_PATH_EXP_ON_PATH = PathSimExpansiveSamplerOnPath
-SIMULATOR_PATH_SIMPLE = PathSimulatorSimple
-SIMULATOR_PATH_SIMPLE_ON_PATH = PathSimulatorSimpleOnPath
-SIMULATOR_PATH_SIMPLE_EXP = PathSimSimpleExpansiveSampler
-SIMULATOR_PATH_SIMPLE_EXP_ON_PATH = PathSimSimpleExpansiveSamplerOnPath
-SIMULATOR_PATH_SIMPLE_EXP_IMAGES = PathSimExpSplImages
-SIMULATOR_PATH_SIMPLE_EXP_IMAGES_ON_PATH = PathSimExpSplImagesOnPath
 # actual simulator we want to use
 SIMULATOR = SIMULATOR_PATH
 SIMULATOR_NAME = SIMULATOR.__name__
@@ -72,10 +65,14 @@ EPSILON_UPDATE_ATARI = lambda n: _EPSILON_UPDATE_LIN_UNTIL(n, EPOCHS / 50)
 EPSILON_UPDATE_ATARI_SMALL = lambda n: _EPSILON_UPDATE_LIN_UNTIL(n, max(EPOCHS / 4, 100))
 # multiply by fixed factor but minimum min_e
 _EPSILON_UPDATE_FACTOR = lambda n, f: max(np.power(f, n), EPSILON_MIN)
+
+
 # custom update function with convex shape, adapted -log(x) with f(1) = 1 and f(EPOCHS) = 0
 def EPSILON_UPDATE_KEV(n):
 	a = (np.exp(-1) * EPOCHS - 1) / (1 - np.exp(-1))
 	return max(-np.log((n + a) / (EPOCHS + a)), EPSILON_MIN)
+
+
 # actual epsilon-greedy strategy we want to use
 EPSILON_UPDATE = EPSILON_UPDATE_LIN  # EPSILON_UPDATE_ATARI_SMALL
 EPSILON_UPDATE_NAME = "linear"  # "atari-small"
@@ -101,9 +98,12 @@ names = []
 
 # IMG_PATH = "tmp/white_circle.png"  # "tmp/moon.jpg"
 VISUALIZER = PathAndResultsPlotter()
+
+
 def create_simulator(agent):
 	return SIMULATOR(agent, REWARD, GRID_SIZE_N, GRID_SIZE_M, max_steps=MAX_STEPS, visualizer=VISUALIZER,
 					 bounded=BOUNDED, world_size_factor=10)
+
 
 # Random Agent as baseline
 agent = RandomAgent(ACTIONS)
@@ -132,9 +132,15 @@ agent = DeepQAgentReplay(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, R
 envs.append(create_simulator(agent))
 names.append("DeepQAgentReplay[8]")
 
+model = KerasMlpModel(MODEL_IN_LAYER_SIZE, [8], MODEL_OUT_LAYER_SIZE)
+agent = DeepQAgentReplayCloning(ACTIONS, GAMMA, EPSILON_START, EPSILON_UPDATE, model, REPLAY_BATCH_SIZE, REPLAY_BUFFER,
+								30)
+envs.append(create_simulator(agent))
+names.append("DeepQAgentReplayCloning[8]")
+
 ## Evaluate results
 # choose which agents to run
-include = [4]
+include = [5]
 envs = [envs[i] for i in include]
 names = [names[i] for i in include]
 # run and evaluate agents

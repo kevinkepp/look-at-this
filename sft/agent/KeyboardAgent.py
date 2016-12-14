@@ -1,5 +1,5 @@
-from lat.RobotAgent import RobotAgent
-from lat.Simulator import Actions
+from sft.agent.RobotAgent import RobotAgent
+from sft.Actions import Actions
 
 
 class KeyboardAgent(RobotAgent):
@@ -11,18 +11,18 @@ class KeyboardAgent(RobotAgent):
 	@staticmethod
 	def key_to_action(k):
 		if k == 'w':
-			return Actions.up
+			return Actions.UP
 		elif k == 's':
-			return Actions.down
+			return Actions.DOWN
 		elif k == 'd':
-			return Actions.right
+			return Actions.RIGHT
 		elif k == 'a':
-			return Actions.left
+			return Actions.LEFT
 		else:
 			return None
 
 	# overwrite
-	def choose_action(self, curr_state):
+	def choose_action(self, curr_state, eps):
 		#print(curr_state)
 		key = raw_input("w:up, s:down, d:right, a:left, input your choice and press enter: ")
 		return self.key_to_action(key)

@@ -1,7 +1,11 @@
 from __future__ import division
+
 import random
-from lat.RobotAgent import RobotAgent
+
 import numpy as np
+
+from sft.agent.RobotAgent import RobotAgent
+
 
 class DeepQAgent(RobotAgent):
 	qs_old = None
@@ -12,21 +16,19 @@ class DeepQAgent(RobotAgent):
 	# epsilon: epsilon-greedy strategy
 	# epsilon: discount function for epsilon
 	# model: estimator for q values
-	def __init__(self, actions, gamma, epsilon, epsilon_update, model):
+	def __init__(self, actions, gamma, model):
 		self.actions = actions
 		self.gamma = gamma
-		self.epsilon = epsilon
-		self.epsilon_update = epsilon_update
 		self.model = model
 
-	def choose_action(self, curr_state):
+	def choose_action(self, curr_state, eps):
 		qs = self.model.predict_qs(curr_state)
+		# print("Q-Values " + str(qs))
 		# store qs for current state because usually we can use them in subsequent call to incorporate_reward
 		self.qs_old = qs
 		self.qs_old_state = curr_state
-		if random.random() < self.epsilon:
+		if random.random() < eps:
 			ai = np.random.randint(0, len(self.actions))
-			# print("Chosen action randomly")
 		else:
 			ai = np.argmax(qs)
 			# print("Chosen action based on qs: {0}".format(qs))
@@ -47,7 +49,3 @@ class DeepQAgent(RobotAgent):
 		target_qs[ai] = update
 		self.model.update_qs(old_state, target_qs)
 		# print("Incorporated reward")
-
-	def new_epoch(self, n):
-		self.epsilon = self.epsilon_update(n)
-		# print("Updated epsilon for epoch {0}: {1}".format(n, self.epsilon))

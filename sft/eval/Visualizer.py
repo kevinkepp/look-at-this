@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 
 # abstract class for visualizing state - action course
-class Visualizer():
+class Visualizer(object):
 	__metaclass__ = ABCMeta
 
 	# visualizes just one given state
