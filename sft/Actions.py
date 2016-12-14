@@ -1,0 +1,18 @@
+class Actions(object):
+	UP = 0
+	DOWN = 1
+	LEFT = 2
+	RIGHT = 3
+
+	all = [UP, DOWN, LEFT, RIGHT]
+
+	@staticmethod
+	def get_one_hot(action):
+		if action == Actions.UP:
+			return [0, 1, 0, 0]
+		elif action == Actions.DOWN:
+			return [0, 0, 0, 1]
+		elif action == Actions.LEFT:
+			return [1, 0, 0, 0]
+		elif action == Actions.RIGHT:
+			return [0, 0, 1, 0]
