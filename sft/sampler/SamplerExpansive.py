@@ -18,6 +18,7 @@ class SamplerExpansive(Sampler):
 		self.epoch += 1
 		return sample_point_within(spl_box)
 
+	# TODO: talk about splbox only as big as bbox and if target at edge of bbox, then intersect is only half of bbox
 	def _get_sample_bbox(self, bbox, target_pos):
 		"""returns a new bbox from which to sample afterwards based on the current bounds and the target position"""
 		h_spl_box = self._get_side_length(self.min_sample_size.h, bbox.h)
@@ -38,6 +39,6 @@ class SamplerExpansive(Sampler):
 		if self.epoch <= self.epochs_until_max:
 			d = side_length_max - side_length_min
 			l = float(self.epoch) / self.epochs_until_max * d
-			return l + side_length_min
+			return int(l + side_length_min)
 		else:
-			return side_length_max
+			return int(side_length_max)
