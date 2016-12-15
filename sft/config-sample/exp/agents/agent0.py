@@ -10,7 +10,7 @@ from sft.Logger import Logger
 from .. import world
 from ..world import *
 
-logger = Logger(world.__file__, __file__, __name__)
+logger = Logger(__file__, __name__, world.world_logger.get_exp_log_path())
 
 epsilon_update = sft.EpsilonUpdate.Linear(
 	start=1,
