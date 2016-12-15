@@ -20,27 +20,28 @@ class PathWorldGenerator(ScenarioGenerator):
 	TARGET_COLOR = int(Simulator.TARGET_VALUE * 255)
 	TARGET_RADIUS = 2
 
-	def __init__(self, view_size, world_size, path_in_init_view=False):
+	def __init__(self, view_size, world_size, sampler, path_in_init_view=False):
 		self.view_size = view_size
 		self.world_size = world_size
 		self.bbox = bbox(world_size, view_size)
+		self.sampler = sampler
 		self.path_in_init_view = path_in_init_view
 		self.generator = PathGenerator(view_size, self.bbox)
 
 	def get_next(self):
-		world = self.init_world()
-		pos = self.init_pos(world)
-		return Scenario(world, pos)
+		world, target_pos = self.init_world()
+		view_pos = self.init_pos(world, target_pos)
+		return Scenario(world, view_pos)
 
 	def init_world(self):
 		world = np.full(self.world_size.tuple(), 0., dtype=np.float)
 		graph = nx.Graph()
 		self.init_path(world, graph)
-		self.init_target(world, graph)
+		target_pos = self.init_target(world, graph)
 		world = np.array(world, np.float32)
 		# normalize world image to [0, 1]
 		normalize(world)
-		return world
+		return world, target_pos
 
 	def init_path(self, world, graph):
 		# only add one path for now
@@ -60,6 +61,8 @@ class PathWorldGenerator(ScenarioGenerator):
 	def init_target(self, world, graph):
 		node_target = self.generate_target(graph)
 		self.render_target(world, node_target)
+		# return target position
+		return node_target.pos
 
 	def generate_target(self, graph):
 		# pick one of the graph nodes as target
@@ -72,12 +75,12 @@ class PathWorldGenerator(ScenarioGenerator):
 		# thickness -1 means fill circle
 		cv2.circle(image, center=node.pos.tuple(), radius=self.TARGET_RADIUS, color=self.TARGET_COLOR, thickness=-1)
 
-	def init_pos(self, world):
+	def init_pos(self, world, target_pos):
 		pos = None
 		view = None
 		# when required find initial view where path is visible
 		while view is None or (self.path_in_init_view and not self.is_path_in_view(view)):
-			pos = sample_point_within(self.bbox)
+			pos = self.sampler.sample_init_pos(self.bbox, target_pos)
 			view = self.get_view(world, pos)
 		return pos
 

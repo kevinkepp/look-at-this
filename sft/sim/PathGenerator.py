@@ -1,5 +1,5 @@
 from sft import Point
-from sft.sim import sample_normal, sample_point_within, sample_uniform
+from sft import sample_normal, sample_point_within, sample_uniform
 
 
 class PathNode:

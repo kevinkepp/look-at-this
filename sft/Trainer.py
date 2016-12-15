@@ -36,12 +36,13 @@ class Trainer(object):
 				agent_configs.append(agent_config)
 		return world_config, agent_configs
 
+	# TODO find a way to log world
 	def init_scenarios(self, config):
 		scenarios = []
 		for n in range(config.epochs):
 			scenarios.append(config.world_gen.get_next())
-			config.logger.next_epoch()
-		config.logger.reset_epoch()
+			# config.logger.next_epoch()
+		# config.logger.reset_epoch()
 		return scenarios
 
 	def run_agent(self, config, scenarios):
