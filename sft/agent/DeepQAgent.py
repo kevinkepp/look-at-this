@@ -24,16 +24,7 @@ class DeepQAgent(RobotAgent):
 
 	def choose_action(self, curr_state, eps):
 		qs = self.model.predict_qs(curr_state)
-		# do not log every q value, but every tenth
-		kth = 10
-		if not hasattr(self, 'log_step'):
-			self.log_step = 0
-		else:
-			if self.log_step % kth == 0:
-				self.logger.log_parameter("q", qs)
-				self.log_step = 0
-			self.log_step += 1
-		# print("Q-Values " + str(qs))
+		self.logger.log_parameter("q", qs)
 		# store qs for current state because usually we can use them in subsequent call to incorporate_reward
 		self.qs_old = qs
 		self.qs_old_state = curr_state
@@ -41,7 +32,7 @@ class DeepQAgent(RobotAgent):
 			ai = np.random.randint(0, len(self.actions))
 		else:
 			ai = np.argmax(qs)
-			# print("Chosen action based on qs: {0}".format(qs))
+			# log chosen action?
 		return self.actions[ai]
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
@@ -58,4 +49,3 @@ class DeepQAgent(RobotAgent):
 		ai = self.actions.index(action)
 		target_qs[ai] = update
 		self.model.update_qs(old_state, target_qs)
-		# print("Incorporated reward")
