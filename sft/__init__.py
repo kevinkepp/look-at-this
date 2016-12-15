@@ -121,7 +121,7 @@ def normalize(arr):
 
 
 def submatrix(mat, rect):
-	return mat[rect.x:rect.x + rect.w, rect.y:rect.y + rect.h]
+	return mat[rect.y:rect.y + rect.h, rect.x:rect.x + rect.w]
 
 
 def bbox(world_size, view_size):
