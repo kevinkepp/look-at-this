@@ -2,12 +2,11 @@ import cv2
 import networkx as nx
 import numpy as np
 
-from Scenario import Scenario
-from sft import Point, Rectangle, normalize, submatrix, bbox
-from sft.sim import sample_normal, sample_point_within
+from sft.Scenario import Scenario
+from sft import Point, Rectangle, normalize, submatrix, bbox, sample_normal, sample_point_within
 from sft.sim.Simulator import Simulator
 from sft.sim.PathGenerator import PathGenerator
-from sim.ScenarioGenerator import ScenarioGenerator
+from sft.sim.ScenarioGenerator import ScenarioGenerator
 
 
 class PathWorldGenerator(ScenarioGenerator):

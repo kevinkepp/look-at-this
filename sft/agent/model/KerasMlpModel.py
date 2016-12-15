@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.models import load_model
 
-from State import State
+from sft.State import State
 from sft.agent.model.DeepQModel import DeepQModel
 
 

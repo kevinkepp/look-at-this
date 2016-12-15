@@ -37,7 +37,12 @@ class Trainer(object):
 		return world_config, agent_configs
 
 	def init_scenarios(self, config):
-		return [config.world_gen.get_next() for n in range(config.epochs)]
+		scenarios = []
+		for n in range(config.epochs):
+			scenarios.append(config.world_gen.get_next())
+			config.logger.next_epoch()
+		config.logger.reset_epoch()
+		return scenarios
 
 	def run_agent(self, config, scenarios):
 		logger = config.logger
@@ -56,6 +61,7 @@ class Trainer(object):
 		agent = config.agent
 		reward = config.reward
 		eps = config.epsilon_update.get_value(epoch)
+		config.logger.log_parameter("epsilon", eps)
 		action_hist = []
 		while len(action_hist) < config.max_steps:
 			view = sim.get_current_view()

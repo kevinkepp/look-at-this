@@ -95,6 +95,19 @@ class Rectangle:
 	def __str__(self):
 		return "Rectangle(start={0},size={1})".format(self.start, self.size)
 
+	def intersection(self, other_rect):
+		"""get intersection of other rectangle with this(self) rectangle"""
+		x_min = max(self.x, other_rect.x)
+		y_min = max(self.y, other_rect.y)
+		y_max = min(self.y + self.h, other_rect.y + other_rect.h)
+		x_max = min(self.x + self.w, other_rect.x + other_rect.w)
+		pt_up_left = Point(x_min, y_min)
+		w = x_max - x_min
+		h = y_max - y_min
+		inter_size = Size(w, h)
+		intersect_rect = Rectangle(pt_up_left, inter_size)
+		return intersect_rect
+
 
 # normalize array to [0, 1]
 # TODO test
@@ -115,3 +128,20 @@ def bbox(world_size, view_size):
 	border = Point(view_size.w + 1, view_size.h + 1)
 	size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
 	return Rectangle(border, size)
+
+
+def sample_uniform(low, high=None):
+	return np.random.randint(low, high)
+
+
+def sample_normal(mean, std, low=float("-inf"), high=float("inf")):
+	while True:
+		idx = int(np.random.normal(mean, std, 1))
+		if low <= idx <= high:
+			return idx
+
+
+def sample_point_within(rect):
+	x = sample_uniform(rect.x, rect.x + rect.w)
+	y = sample_uniform(rect.y, rect.y + rect.h)
+	return Point(x, y)

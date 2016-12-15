@@ -24,7 +24,15 @@ class DeepQAgent(RobotAgent):
 
 	def choose_action(self, curr_state, eps):
 		qs = self.model.predict_qs(curr_state)
-		self.logger.log_parameter("q", qs)
+		# do not log every q value, but every tenth
+		kth = 10
+		if not hasattr(self, 'log_step'):
+			self.log_step = 0
+		else:
+			if self.log_step % kth == 0:
+				self.logger.log_parameter("q", qs)
+				self.log_step = 0
+			self.log_step += 1
 		# print("Q-Values " + str(qs))
 		# store qs for current state because usually we can use them in subsequent call to incorporate_reward
 		self.qs_old = qs

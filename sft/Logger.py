@@ -133,3 +133,7 @@ class Logger:
 		self.file_results.close()
 		self.log_message("ending logging and closed files, now also closing this log file")
 		self.file_messages.close()
+
+	def reset_epoch(self):
+		""" resets epoch = 0 (needed for world generator) """
+		self.epoch = 0

@@ -2,7 +2,7 @@ from __future__ import division
 
 import numpy as np
 
-from reward.Reward import Reward
+from sft.reward.Reward import Reward
 
 
 # simplest version, returning 10 if at goal, -10 if goal lost from focus, 0 otherwise
