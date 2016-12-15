@@ -14,7 +14,7 @@ class Logger:
 		self.file_suffix_cfg = ".py"
 		self.file_suffix_model = ".h5"
 		self.general_log_dir = "tmp/logs"  # later is replaced with dir of current experiment
-		self.name_folder_cfg = "config"
+		self.name_folder_cfg = "config-sample"
 		self.name_folder_parameters = "parameter_logs"
 		self.name_folder_world_init = "world_init_logs"
 		self.name_folder_models = "models"
@@ -58,9 +58,9 @@ class Logger:
 		return now.strftime("%Y%m%d-%H%M%S")
 
 	def _get_name_from_config_file(self, agent_cfg_path):
-		"""  use config file for naming folder """
-		# TODO: get proper name from config file
-		self.name_setup = "something from the config file"
+		"""  use config-sample file for naming folder """
+		# TODO: get proper name from config-sample file
+		self.name_setup = "something from the config-sample file"
 
 	def _copy_config_file(self, world_cfg_path, agent_cfg_path):
 		""" makes a copy of the configfiles to the logging folder """
@@ -78,7 +78,7 @@ class Logger:
 		self.general_log_dir = dir_path
 		# create folder for saving the parameter files
 		os.makedirs(self.general_log_dir + "/" + self.name_folder_parameters)
-		# config dir
+		# config-sample dir
 		os.makedirs(self.general_log_dir + "/" + self.name_folder_cfg)
 
 	def log_parameter(self, para_name, para_val):

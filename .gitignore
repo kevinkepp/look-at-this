@@ -93,3 +93,4 @@ ENV/
 tmp/
 *.cprof
 testarea.py
+config/
