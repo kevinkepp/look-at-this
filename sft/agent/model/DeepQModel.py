@@ -13,9 +13,13 @@ class DeepQModel(object):
 		pass
 
 	@abstractmethod
-	def load_from_file(self, file_path):
+	def load(self, file_path):
 		pass
 
 	@abstractmethod
-	def save_to_file(self, file_path):
+	def save(self, file_path):
+		pass
+
+	@abstractmethod
+	def copy_from(self, file_path):
 		pass

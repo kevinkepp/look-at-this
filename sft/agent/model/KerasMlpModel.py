@@ -8,6 +8,7 @@ from sft.agent.model.DeepQModel import DeepQModel
 class KerasMlpModel(DeepQModel):
 	def __init__(self, logger, layers, loss, optimizer):
 		self.logger = logger
+		self.layers = layers
 		self._build_model(layers, loss, optimizer)
 
 	def _build_model(self, layers, loss, optimizer):
@@ -19,18 +20,24 @@ class KerasMlpModel(DeepQModel):
 
 	def predict_qs(self, state):
 		x = state.flatten()
+		assert x.shape[1] == self.layers[0].input_shape[1]
 		p = self._model.predict(x, batch_size=1, verbose=0)
 		return p
 
 	def update_qs(self, states, targets):
-		states = State.flatten_states(states)
-		n_samples = states.shape[0]
-		self._model.fit(states, targets, batch_size=n_samples, nb_epoch=1, verbose=0)
+		X = State.flatten_states(states)
+		assert X.shape[1] == self.layers[0].input_shape[1]
+		n_samples = X.shape[0]
+		self._model.fit(X, targets, batch_size=n_samples, nb_epoch=1, verbose=0)
 
-	def load_from_file(self, file_path):
+	def load(self, file_path):
 		self.logger.log_message("Load model from {0}".format(file_path))
 		return load_model(file_path)
 
-	def save_to_file(self, file_path):
+	def save(self, file_path):
 		self.logger.log_message("Save model to {0}".format(file_path))
 		self._model.save(file_path)
+
+	def copy_from(self, other):
+		assert isinstance(other, KerasMlpModel)
+		self._model.set_weights(other._model.get_weights())

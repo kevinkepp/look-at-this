@@ -12,6 +12,7 @@ class Logger:
 		# default names of the files and folders
 		self.file_suffix_logs = ".tsv"
 		self.file_suffix_cfg = ".py"
+		self.file_suffix_model = ".h5"
 		self.general_log_dir = "tmp/logs"  # later is replaced with dir of current experiment
 		self.name_folder_cfg = "config"
 		self.name_folder_parameters = "parameter_logs"
@@ -19,9 +20,10 @@ class Logger:
 		self.name_folder_models = "models"
 		self.name_file_init = "init_states" + self.file_suffix_logs
 		self.name_file_messages = "messages" + self.file_suffix_logs
-		self.name_file_cfg_agent = "agent-config" + self.file_suffix_cfg
+		self.name_file_cfg_agent = "agent" + self.file_suffix_cfg
 		self.name_file_cfg_world = "world" + self.file_suffix_cfg
 		self.name_file_results = "results" + self.file_suffix_logs
+		self.name_file_model= "model"
 		self.name_setup = agent_name
 
 		self.epoch = 0
@@ -33,6 +35,18 @@ class Logger:
 		# self._get_name_from_config_file(agent_cfg_path)
 		self._create_folders()
 		self._copy_config_file(world_cfg_path, agent_cfg_path)
+
+	def get_dir_path(self, *dirs):
+		assert len(dirs) > 0
+		# append all directory names
+		path = os.path.join(dirs[0], *dirs[1:]) if len(dirs) > 1 else dirs[0]
+		# make sure directory exists
+		os.makedirs(path)
+		return path
+
+	def open_file(self, path):
+		buffering = 1  # 1 means line buffering
+		return open(path, 'w', buffering)
 
 	def next_epoch(self):
 		""" increases epoch, which is used for logging """
@@ -71,7 +85,7 @@ class Logger:
 		""" logs a parameter value to a file """
 		if para_name not in self.files_params:
 			path = self.general_log_dir + "/" + self.name_folder_parameters + "/" + para_name + self.file_suffix_logs
-			self.files_params[para_name] = open(path, 'w')
+			self.files_params[para_name] = self.open_file(path)
 			self.log_message("created parameter logfile for '{}'".format(para_name))
 			self.files_params[para_name].write("epoch\tparameter-value\n")
 		self.files_params[para_name].write("{}\t{}\n".format(self.epoch, para_val))
@@ -80,7 +94,7 @@ class Logger:
 		""" logs a message (e.g. cloned network) to a general logfile """
 		if self.file_messages is None:
 			path = self.general_log_dir + "/" + self.name_file_messages
-			self.file_messages = open(path, 'w')
+			self.file_messages = self.open_file(path)
 			self.file_messages.write(self._create_line_for_msg_logfile("created this logfile"))
 		self.file_messages.write(self._create_line_for_msg_logfile(message))
 
@@ -92,7 +106,7 @@ class Logger:
 		""" log the results (actions taken and success-bool) and close the files of this experiment"""
 		if self.file_results is None:
 			path = self.general_log_dir + "/" + self.name_file_results
-			self.file_results = open(path, 'w')
+			self.file_results = self.open_file(path)
 			self.log_message("created results logfile")
 			self.file_results.write("epoch\tsuccess\tactions-taken\n")
 		self.file_results.write("{}\t{}\t{}\n".format(self.epoch, success, actions_taken))
@@ -102,7 +116,7 @@ class Logger:
 		if self.file_init_states is None:
 			os.makedirs(self.general_log_dir + "/" + self.name_folder_world_init)
 			path = self.general_log_dir + "/" + self.name_folder_world_init + "/" + self.name_folder_world_init
-			self.file_init_states = open(path, 'w')
+			self.file_init_states = self.open_file(path)
 			self.log_message("created logfile and folder for init states and world states")
 			headline = "{}\t{}\t{}\n".format("epoch", "agent-init-x", "agent-init-y")
 			self.file_init_states.write(headline)
@@ -119,11 +133,12 @@ class Logger:
 
 	def log_model(self, model):
 		""" log model for later analysis """
-		# TODO: save model somehow
 		# create directory for saving the models
 		path = self.general_log_dir + "/" + self.name_folder_models
 		if not os.path.exists(path):
 			os.makedirs(path)
+		path = path + "/" + self.name_file_model + self.file_suffix_model
+		model.save(path)
 
 	# TODO: include closing of files method to clean up!
 	def end_logging(self):

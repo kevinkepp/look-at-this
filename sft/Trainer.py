@@ -46,14 +46,16 @@ class Trainer(object):
 
 	def run_agent(self, config, scenarios):
 		logger = config.logger
+		logger.log_message("{0} - Start training over {1} epochs".format(config.__name__, config.epochs))
 		for n in range(config.epochs):
 			scenario = scenarios[n]
 			logger.log_init_state_and_world(scenario.world, scenario.pos)
 			success, action_hist = self.run_epoch(config, n, scenario)
 			logger.log_results(action_hist, success)
 			# if n % (epochs / 100) == 0:
-			print("Agent {0} - Epoch {1}: {2}".format(config.__name__, n, success))
+			print("{0} - Epoch {1} - Success: {2}".format(config.__name__, n, success))
 			logger.next_epoch()
+		logger.log_model(config.model)
 
 	def run_epoch(self, config, epoch, scenario):
 		sim = Simulator(config.view_size)
