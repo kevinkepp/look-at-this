@@ -1,6 +1,6 @@
 import sft.sampler.SamplerExpansive
 import sft.sim.PathWorldGenerator
-from Actions import Actions
+from sft.Actions import Actions
 from sft import Size
 
 epochs = 2000

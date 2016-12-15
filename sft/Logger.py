@@ -32,6 +32,7 @@ class Logger:
 		self.name_file_cfg_agent = "agent" + self.file_suffix_cfg
 		self.name_file_cfg_world = "world" + self.file_suffix_cfg
 		self.name_file_results = "results" + self.file_suffix_logs
+		self.name_file_actions_taken = "actions" + self.file_suffix_logs
 		self.name_file_model= "model"
 		self.name_setup = agent_name
 
@@ -39,6 +40,7 @@ class Logger:
 		self.files_params = {}  # dictionary with all parameter files in it
 		self.file_messages = None  # file for logging the general messages
 		self.file_results = None  # file for logging the results
+		self.file_actions_taken = None  # file for logging the actions taken
 		self.file_init_states = None  # file for logging the init states
 
 		# self._get_name_from_config_file(agent_cfg_path)
@@ -114,11 +116,18 @@ class Logger:
 	def log_results(self, actions_taken, success):
 		""" log the results (actions taken and success-bool) and close the files of this experiment"""
 		if self.file_results is None:
+			# create result file
 			path = self.general_log_dir + "/" + self.name_file_results
 			self.file_results = self.open_file(path)
 			self.log_message("created results logfile")
-			self.file_results.write("epoch\tsuccess\tactions-taken\n")
-		self.file_results.write("{}\t{}\t{}\n".format(self.epoch, success, actions_taken))
+			self.file_results.write("epoch\tsuccess\t#actions-taken\n")
+			# create actions-taken file
+			path = self.general_log_dir + "/" + self.name_file_actions_taken
+			self.file_actions_taken = self.open_file(path)
+			self.log_message("created actions-taken logfile")
+			self.file_actions_taken.write("epoch\tactions-taken\n")
+		self.file_actions_taken.write("{}\t{}\n".format(self.epoch, actions_taken))
+		self.file_results.write("{}\t{}\t{}\n".format(self.epoch, success, len(actions_taken)))
 
 	def log_init_state_and_world(self, world_state, agent_pos):
 		""" saves initial state and world-configuration """
