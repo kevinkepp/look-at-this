@@ -12,7 +12,6 @@ action_hist_len = 4
 
 sampler = sft.sampler.SamplerExpansive.SamplerExpansive(
 	logger=None,
-	epochs=epochs,
 	epochs_until_max=1000,
 	min_sample_size=Size(int(view_size.w / 2), int(view_size.h / 2))
 )

@@ -15,7 +15,7 @@ logger = Logger(world.__file__, __file__, __name__)
 epsilon_update = sft.EpsilonUpdate.Linear(
 	start=1,
 	end=0.1,
-	steps=epochs
+	steps=epochs  # anneal epsilon over all epochs
 )
 
 optimizer = keras.optimizers.RMSprop(
