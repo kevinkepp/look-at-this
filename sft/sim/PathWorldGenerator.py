@@ -78,14 +78,10 @@ class PathWorldGenerator(ScenarioGenerator):
 	def init_pos(self, world, target_pos):
 		pos = None
 		view = None
-		tries = 0
 		# when required find initial view where path is visible
 		while view is None or (self.path_in_init_view and not self.is_path_in_view(view)):
 			pos = self.sampler.sample_init_pos(self.bbox, target_pos)
 			view = self.get_view(world, pos)
-			tries += 1
-			if tries > 50:
-				raise BufferError("Can't find initial view with visible path")
 		return pos
 
 	def get_view(self, world, pos):
