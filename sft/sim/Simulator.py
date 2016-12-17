@@ -1,4 +1,4 @@
-from sft import Point, Size, Rectangle, submatrix, normalize, bbox
+from sft import Point, Size, Rectangle, normalize, get_bbox
 from sft.Actions import Actions
 
 
@@ -17,17 +17,19 @@ class Simulator(object):
 	def initialize(self, world, pos):
 		normalize(world)
 		self.world_size = Size(world.shape)
-		self.bbox = bbox(self.world_size, self.view_size)
+		self.bbox = get_bbox(self.world_size, self.view_size)
 		self.world_image = world
 		self.view_pos = pos
 		self.update_view_image()
 
 	def update_view_image(self):
+		# if view position is out of bounds we can't generate the next view image
 		if self.is_oob():
 			self.view_image = None
-		# find start of view because view_pos indicates center of view
-		view_start = self.view_pos - Point(self.view_size.w / 2, self.view_size.h / 2)
-		self.view_image = submatrix(self.world_image, Rectangle(view_start, self.view_size))
+		else:
+			# find start of view because view_pos indicates center of view
+			view_start = self.view_pos - Point(self.view_size.w / 2, self.view_size.h / 2)
+			self.view_image = Rectangle(view_start, self.view_size).crop_matrix(self.world_image)
 
 	def get_current_view(self):
 		return self.view_image
@@ -54,4 +56,4 @@ class Simulator(object):
 		return not self.bbox.contains(self.view_pos)
 
 	def is_at_target(self):
-		return self.world_image[self.view_pos.x, self.view_pos.y] == self.TARGET_VALUE
+		return self.view_pos.at_matrix(self.world_image) == self.TARGET_VALUE

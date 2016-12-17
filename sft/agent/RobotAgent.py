@@ -13,7 +13,7 @@ class RobotAgent(object):
 		pass
 
 	# receive reward for a action that moved agent from old to new state
-	# use state defined in environment class
+	# if new_state is terminal None will be given as value
 	@abstractmethod
 	def incorporate_reward(self, old_state, action, new_state, value):
 		pass

@@ -1,4 +1,4 @@
 from sft.Trainer import Trainer
 
-import sft.config.exp1
-Trainer().run(sft.config.exp1)
+import sft.config.exp
+Trainer().run(sft.config.exp)
