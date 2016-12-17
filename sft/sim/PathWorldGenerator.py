@@ -2,11 +2,11 @@ import cv2
 import networkx as nx
 import numpy as np
 
+from sft import Rectangle, normalize, get_bbox, sample_normal
 from sft.Scenario import Scenario
-from sft import Point, Rectangle, normalize, submatrix, bbox, sample_normal, sample_point_within
-from sft.sim.Simulator import Simulator
 from sft.sim.PathGenerator import PathGenerator
 from sft.sim.ScenarioGenerator import ScenarioGenerator
+from sft.sim.Simulator import Simulator
 
 
 class PathWorldGenerator(ScenarioGenerator):
@@ -18,12 +18,12 @@ class PathWorldGenerator(ScenarioGenerator):
 	PATH_COLOR = 150
 
 	TARGET_COLOR = int(Simulator.TARGET_VALUE * 255)
-	TARGET_RADIUS = 2
+	TARGET_RADIUS = 1
 
 	def __init__(self, view_size, world_size, sampler, path_in_init_view=False):
 		self.view_size = view_size
 		self.world_size = world_size
-		self.bbox = bbox(world_size, view_size)
+		self.bbox = get_bbox(world_size, view_size)
 		self.sampler = sampler
 		self.path_in_init_view = path_in_init_view
 		self.generator = PathGenerator(view_size, self.bbox)
@@ -90,8 +90,8 @@ class PathWorldGenerator(ScenarioGenerator):
 
 	def get_view(self, world, pos):
 		# find start of view because view_pos indicates center of view
-		pos_start = pos - Point(self.view_size.w / 2, self.view_size.h / 2)
-		view = submatrix(world, Rectangle(pos_start, self.view_size))
+		view_pos_start = pos - Rectangle(None, self.view_size).get_middle()
+		view = Rectangle(view_pos_start, self.view_size).crop_matrix(world)
 		return view
 
 	def is_path_in_view(self, view):

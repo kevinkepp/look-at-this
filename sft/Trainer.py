@@ -72,13 +72,18 @@ class Trainer(object):
 			action = agent.choose_action(state, eps)
 			action_hist.append(action)
 			view2 = sim.update_view(action)
-			state2 = self.get_state(config, view2, action_hist) if view2 is not None else None
 			reward_value = reward.get_reward(view, view2)
+			oob = sim.is_oob()
+			at_target = sim.is_at_target()
+			# epoch ends when agent runs out of bounds or hits the target
+			terminal = oob or at_target
+			# if new state is terminal None will be given to agent
+			state2 = self.get_state(config, view2, action_hist) if not terminal else None
 			agent.incorporate_reward(state, action, state2, reward_value)
-			if sim.is_oob():
-				return 0, action_hist
-			elif sim.is_at_target():
-				return 1, action_hist
+			if terminal:
+				success = 1 if at_target else 0
+				return success, action_hist
+		# if max steps are exceeded epoch was not successful
 		return 0, action_hist
 
 	def get_state(self, config, view, action_hist):

@@ -46,6 +46,10 @@ class Point:
 	def tuple(self):
 		return self.x, self.y
 
+	def at_matrix(self, mat):
+		"""Returns the value in a given matrix at the position represented by this point"""
+		return mat[self.y, self.x]
+
 	def __str__(self):
 		return "Point(x={0},y={1})".format(self.x, self.y)
 
@@ -82,18 +86,15 @@ class Size:
 
 class Rectangle:
 	def __init__(self, start_point, size):
-		self.start = start_point
-		self.x = start_point.x
-		self.y = start_point.y
+		self.start = start_point if start_point is not None else Point(0, 0)
+		self.x = self.start.x
+		self.y = self.start.y
 		self.size = size
 		self.w = size.w
 		self.h = size.h
 
 	def contains(self, point):
 		return self.x <= point.x <= self.x + self.w and self.y <= point.y <= self.y + self.h
-
-	def __str__(self):
-		return "Rectangle(start={0},size={1})".format(self.start, self.size)
 
 	def intersection(self, other_rect):
 		"""get intersection of other rectangle with this(self) rectangle"""
@@ -108,6 +109,16 @@ class Rectangle:
 		intersect_rect = Rectangle(pt_up_left, inter_size)
 		return intersect_rect
 
+	def crop_matrix(self, mat):
+		"""Returns a sub-matrix of the given matrix defined by the bounds of this rectangle"""
+		return mat[self.y:self.y + self.h, self.x:self.x + self.w]
+
+	def get_middle(self):
+		return Point(self.x + int(self.w / 2), self.y + int(self.h / 2))
+
+	def __str__(self):
+		return "Rectangle(start={0},size={1})".format(self.start, self.size)
+
 
 # normalize array to [0, 1]
 # TODO test
@@ -120,11 +131,7 @@ def normalize(arr):
 		arr /= diff
 
 
-def submatrix(mat, rect):
-	return mat[rect.y:rect.y + rect.h, rect.x:rect.x + rect.w]
-
-
-def bbox(world_size, view_size):
+def get_bbox(world_size, view_size):
 	border = Point(view_size.w + 1, view_size.h + 1)
 	size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
 	return Rectangle(border, size)
