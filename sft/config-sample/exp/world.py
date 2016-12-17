@@ -21,7 +21,7 @@ sampler = sft.sampler.SamplerExpansive.SamplerExpansive(
 )
 
 world_gen = sft.sim.PathWorldGenerator.PathWorldGenerator(
-	world_logger=world_logger,
+	logger=world_logger,
 	view_size=view_size,
 	world_size=world_size,
 	sampler=sampler,
