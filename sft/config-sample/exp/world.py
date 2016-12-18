@@ -4,9 +4,10 @@ from Actions import Actions
 from sft import Size
 
 epochs = 2000
-world_size = Size(50, 50)
+world_size = Size(49, 49)
 view_size = Size(7, 7)
-nb_actions = len(Actions.all)
+actions = Actions.all
+nb_actions = len(actions)
 max_steps = 500
 action_hist_len = 4
 

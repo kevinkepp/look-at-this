@@ -10,7 +10,7 @@ from Logger import Logger
 from .. import world
 from ..world import *
 
-logger = Logger(world.__file__, __file__, __name__)
+logger = Logger(__name__)
 
 epsilon_update = sft.EpsilonUpdate.Linear(
 	start=1,
@@ -37,7 +37,7 @@ model = sft.agent.model.KerasMlpModel.KerasMlpModel(
 
 agent = sft.agent.DeepQAgentReplayCloning.DeepQAgentReplayCloning(
 	logger=logger,
-	actions=Actions.all,
+	actions=actions,
 	model=model,
 	discount=0.99,
 	batch_size=16,

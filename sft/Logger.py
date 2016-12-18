@@ -1,4 +1,5 @@
 import os
+import sys
 import cv2
 import numpy as np
 import datetime as dt
@@ -8,7 +9,15 @@ from shutil import copyfile
 class Logger:
 	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
 
-	def __init__(self, world_cfg_path, agent_cfg_path, agent_name):
+	def __init__(self, agent_module_name):
+		agent_module = sys.modules[agent_module_name]
+		world_cfg_path = agent_module.world.__file__
+		if world_cfg_path.endswith("pyc"):
+			world_cfg_path = world_cfg_path[:-1]  # make .py
+		agent_cfg_path = agent_module.__file__
+		if agent_cfg_path.endswith("pyc"):
+			agent_cfg_path = agent_cfg_path[:-1]  # make .py
+		agent_name = agent_module_name
 		# default names of the files and folders
 		self.file_suffix_logs = ".tsv"
 		self.file_suffix_cfg = ".py"
