@@ -1,63 +1,74 @@
 import os
+from datetime import datetime
+from shutil import copyfile
 
-from sft.logging.BaseLogger import BaseLogger
 
+class BaseLogger(object):
+	TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S"
+	FILE_SUFFIX_LOGS = ".tsv"
+	FILE_SUFFIX_CFG = ".py"
+	OVERALL_LOG_FOLDER = "tmp/logs"
+	NAME_FOLDER_PARAMETERS = "parameter_logs"
+	NAME_FILE_MESSAGES = "messages" + FILE_SUFFIX_LOGS
 
-class Logger(BaseLogger):
-	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
+	def __init__(self):
+		# dictionary storing currently opened files based
+		self.open_files = {}
+		self.log_dir = self.OVERALL_LOG_FOLDER
+		self.epoch = 0
+		self.files_params = {}  # dictionary with all parameter files in it
+		self.file_messages = None  # file for logging the general messages
 
-	def __init__(self, agent_cfg_path, agent_name, exp_log_folder):
-		super(Logger, self).__init__()
-		# default names of the files and folders
-		self.file_suffix_model = ".h5"
-		self.log_dir = exp_log_folder  # later is replaced with dir of current experiment
-		self.name_folder_models = "models"
-		self.name_file_cfg_agent = "agent" + self.FILE_SUFFIX_CFG
-		self.name_file_results = "results" + self.FILE_SUFFIX_LOGS
-		self.name_file_actions_taken = "actions" + self.FILE_SUFFIX_LOGS
-		self.name_file_model = "model"
-		self.name_setup = agent_name.split(".")[-1]
+	def __del__(self):
+		# make sure all files are closed when object is destructed
+		if len(self.open_files) > 0:
+			self.close_files()
 
-		self.file_results = None  # file for logging the results
-		self.file_actions_taken = None  # file for logging the actions taken
+	def open_file(self, path):
+		_file = open(path, 'w')
+		self.open_files[path] = _file
+		return _file
 
-		# self._get_name_from_config_file(agent_cfg_path)
-		self._create_folders()
-		self._copy_config_file(agent_cfg_path, self.name_file_cfg_agent)
+	def next_epoch(self):
+		""" increases epoch, which is used for logging """
+		self.epoch += 1
+		# flush files after each epoch
+		self.flush_files()
 
-	def _create_folders(self):
-		""" creates the folder structure for the current experiment """
-		if not os.path.exists(self.log_dir):
-			os.makedirs(self.log_dir)
-		# create folder for current experiment
-		folder_name = self.name_setup
-		dir_path = self.log_dir + "/" + folder_name
-		os.makedirs(dir_path)
-		self.log_dir = dir_path
-		# create folder for saving the parameter files
-		os.makedirs(self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS)
+	def _get_timestamp(self):
+		""" creates a timestamp that can be used to log """
+		return datetime.now().strftime(self.TIMESTAMP_FORMAT)
 
-	def log_results(self, actions_taken, success):
-		""" log the results (actions taken and success-bool) and close the files of this experiment"""
-		if self.file_results is None:
-			# create result file
-			path = self.log_dir + "/" + self.name_file_results
-			self.file_results = self.open_file(path)
-			self.log_message("created results logfile")
-			self.file_results.write("epoch\tsuccess\t#actions-taken\n")
-			# create actions-taken file
-			path = self.log_dir + "/" + self.name_file_actions_taken
-			self.file_actions_taken = self.open_file(path)
-			self.log_message("created actions-taken logfile")
-			self.file_actions_taken.write("epoch\tactions-taken\n")
-		self.file_actions_taken.write("{}\t{}\n".format(self.epoch, actions_taken))
-		self.file_results.write("{}\t{}\t{}\n".format(self.epoch, success, len(actions_taken)))
+	def _copy_config_file(self, cfg_file_path, file_name):
+		""" makes a copy of the configfiles to the logging folder """
+		copyfile(cfg_file_path, self.log_dir + "/" + file_name)
 
-	def log_model(self, model):
-		""" log model for later analysis """
-		# create directory for saving the models
-		path = self.log_dir + "/" + self.name_folder_models
-		if not os.path.exists(path):
-			os.makedirs(path)
-		path = path + "/" + self.name_file_model + self.file_suffix_model
-		model.save(path)
+	def log_parameter(self, para_name, para_val):
+		""" logs a parameter value to a file """
+		if para_name not in self.files_params:
+			path = self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS + "/" + para_name + self.FILE_SUFFIX_LOGS
+			self.files_params[para_name] = self.open_file(path)
+			self.log_message("created parameter logfile for '{}'".format(para_name))
+			self.files_params[para_name].write("epoch\tparameter-value\n")
+		self.files_params[para_name].write("{}\t{}\n".format(self.epoch, para_val))
+
+	def log_message(self, message):
+		""" logs a message (e.g. cloned network) to a general logfile """
+		if self.file_messages is None:
+			path = self.log_dir + "/" + self.NAME_FILE_MESSAGES
+			self.file_messages = self.open_file(path)
+			self.file_messages.write(self._create_line_for_msg_logfile("created this logfile"))
+		self.file_messages.write(self._create_line_for_msg_logfile(message))
+
+	def _create_line_for_msg_logfile(self, message):
+		""" adds timestamp, tab and succeeding newline operator"""
+		return self._get_timestamp() + "\t" + message + "\n"
+
+	def flush_files(self):
+		for _, _file in self.open_files.items():
+			_file.flush()
+
+	def close_files(self):
+		for _, _file in self.open_files.items():
+			_file.close()
+		self.open_files.clear()

@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-from sft.logging.BaseLogger import BaseLogger
+from sft.logging.Logger import BaseLogger
 
 
 class WorldLogger(BaseLogger):
