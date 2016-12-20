@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 
-from sft.logging.Logger import BaseLogger
+from sft.log.Logger import BaseLogger
 
 
 class WorldLogger(BaseLogger):
@@ -17,7 +17,7 @@ class WorldLogger(BaseLogger):
 		self.name_file_cfg_world = "world" + self.FILE_SUFFIX_CFG
 		self.name_setup = self._get_exp_name(config_name)
 
-		self.file_init_states = None  # file for logging the init states
+		self.file_init_states = None  # file for log the init states
 
 		# self._get_name_from_config_file(agent_cfg_path)
 		self.curr_exp_log_dir = self.log_dir
@@ -57,10 +57,10 @@ class WorldLogger(BaseLogger):
 			self.log_message("created logfile and folder for init states and world states")
 			headline = "{}\t{}\t{}\n".format("epoch", "agent-init-x", "agent-init-y")
 			self.file_init_states.write(headline)
-		# logging the init state and view dims in a logfile
+		# log the init state and view dims in a logfile
 		init_state_text_line = "{}\t{}\t{}\n".format(self.epoch, agent_pos.x, agent_pos.y)
 		self.file_init_states.write(init_state_text_line)
-		# logging the worldstate as an grayscale png image
+		# log the worldstate as an grayscale png image
 		img = (world_state * 255.9).astype(np.uint8)
 		img_file_name = "epoch{}_worldstate.png".format(self.epoch)
 		path = self.log_dir + "/" + self.name_folder_world_init + "/" + img_file_name

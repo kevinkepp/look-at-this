@@ -4,10 +4,8 @@ from keras.layers import Dense, Activation
 import sft.EpsilonUpdate
 import sft.agent.DeepQAgentReplayCloning
 import sft.agent.model.KerasMlpModel
-import sft.reward.SimpleReward
-from sft.logging.AgentLogger import AgentLogger
 import sft.reward.TargetMiddleReward
-from sft.logging.Logger import Logger
+from sft.log.AgentLogger import AgentLogger
 from .. import world
 from ..world import *
 

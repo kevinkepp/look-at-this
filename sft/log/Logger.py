@@ -17,7 +17,7 @@ class BaseLogger(object):
 		self.log_dir = self.OVERALL_LOG_FOLDER
 		self.epoch = 0
 		self.files_params = {}  # dictionary with all parameter files in it
-		self.file_messages = None  # file for logging the general messages
+		self.file_messages = None  # file for log the general messages
 
 	def __del__(self):
 		# make sure all files are closed when object is destructed
@@ -30,7 +30,7 @@ class BaseLogger(object):
 		return _file
 
 	def next_epoch(self):
-		""" increases epoch, which is used for logging """
+		""" increases epoch, which is used for log """
 		self.epoch += 1
 		# flush files after each epoch
 		self.flush_files()
@@ -40,7 +40,7 @@ class BaseLogger(object):
 		return datetime.now().strftime(self.TIMESTAMP_FORMAT)
 
 	def _copy_config_file(self, cfg_file_path, file_name):
-		""" makes a copy of the configfiles to the logging folder """
+		""" makes a copy of the configfiles to the log folder """
 		copyfile(cfg_file_path, self.log_dir + "/" + file_name)
 
 	def log_parameter(self, para_name, para_val):

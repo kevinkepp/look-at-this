@@ -1,6 +1,6 @@
 import os
 
-from sft.logging.Logger import BaseLogger
+from sft.log.Logger import BaseLogger
 
 
 class AgentLogger(BaseLogger):
@@ -18,8 +18,8 @@ class AgentLogger(BaseLogger):
 		self.name_file_model = "model"
 		self.name_setup = agent_name.split(".")[-1]
 
-		self.file_results = None  # file for logging the results
-		self.file_actions_taken = None  # file for logging the actions taken
+		self.file_results = None  # file for log the results
+		self.file_actions_taken = None  # file for log the actions taken
 
 		# self._get_name_from_config_file(agent_cfg_path)
 		self._create_folders()
