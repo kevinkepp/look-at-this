@@ -17,12 +17,17 @@ class Trainer(object):
 	def run(self, experiment, threaded=False):
 		world_config, agent_configs = self.get_configs(experiment)
 		scenarios = self.init_scenarios(world_config)
-		for agent in agent_configs:
-			if threaded:
+		if threaded:
+			threads = []
+			for agent in agent_configs:
 				thread = threading.Thread(target=self.run_agent, args=(agent, scenarios))
 				thread.daemon = False
 				thread.start()
-			else:
+				threads.append(thread)
+			for t in threads:
+				t.join()
+		else:
+			for agent in agent_configs:
 				self.run_agent(agent, scenarios)
 
 	def get_configs(self, experiment):

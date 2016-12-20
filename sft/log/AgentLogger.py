@@ -1,12 +1,20 @@
 import os
 
+import sys
+
 from sft.log.Logger import BaseLogger
 
 
 class AgentLogger(BaseLogger):
 	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
 
-	def __init__(self, agent_cfg_path, agent_name, exp_log_folder):
+	def __init__(self, agent_module_name):
+		agent_module = sys.modules[agent_module_name]
+		agent_cfg_path = agent_module.__file__
+		# check if running from .pyc file and change path to .py
+		if agent_cfg_path.endswith("pyc"):
+			agent_cfg_path = agent_cfg_path[:-1]
+		exp_log_folder = agent_module.world.world_logger.get_exp_log_path()
 		super(AgentLogger, self).__init__()
 		# default names of the files and folders
 		self.file_suffix_model = ".h5"
@@ -16,7 +24,7 @@ class AgentLogger(BaseLogger):
 		self.name_file_results = "results" + self.FILE_SUFFIX_LOGS
 		self.name_file_actions_taken = "actions" + self.FILE_SUFFIX_LOGS
 		self.name_file_model = "model"
-		self.name_setup = agent_name.split(".")[-1]
+		self.name_setup = agent_module_name.split(".")[-1]
 
 		self.file_results = None  # file for log the results
 		self.file_actions_taken = None  # file for log the actions taken

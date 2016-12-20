@@ -5,12 +5,11 @@ from sft import sample_point_within, Point, Size, Rectangle
 class Expansive(Sampler):
 
 	def __init__(self, logger, epochs_until_max, min_sample_size):
-		# self.logger = logger
+		self.logger = logger
 		self.epoch = 0  # used to store current epoch
 		# number of epochs at which we sample from max distance
 		self.epochs_until_max = epochs_until_max
 		self.min_sample_size = min_sample_size
-		self.logger = logger
 
 	def sample_init_pos(self, bbox, target_pos):
 		"""samples the initial position based on a bounding box and the targets position"""
