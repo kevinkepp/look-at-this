@@ -1,16 +1,15 @@
 import keras.optimizers
 from keras.layers import Dense, Activation
 
+import sft.EpsilonUpdate
 import sft.agent.DeepQAgentReplayCloning
 import sft.agent.model.KerasMlpModel
 import sft.reward.TargetMiddleReward
-import sft.EpsilonUpdate
-from Logger import Logger
-
+from sft.log.AgentLogger import AgentLogger
 from .. import world
 from ..world import *
 
-logger = Logger(__name__)
+logger = AgentLogger(__file__, __name__, world.world_logger.get_exp_log_path())
 
 epsilon_update = sft.EpsilonUpdate.Linear(
 	start=1,
@@ -50,3 +49,5 @@ reward = sft.reward.TargetMiddleReward.TargetMiddleReward(
 	reward_target=100,
 	reward_not_target=0
 )
+
+# reward = sft.reward.SimpleReward.RewardAtTheEndForOneInTheMiddle()

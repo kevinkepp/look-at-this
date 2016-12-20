@@ -20,13 +20,14 @@ class PathWorldGenerator(ScenarioGenerator):
 	TARGET_COLOR = int(Simulator.TARGET_VALUE * 255)
 	TARGET_RADIUS = 1
 
-	def __init__(self, view_size, world_size, sampler, path_in_init_view=False):
+	def __init__(self, logger, view_size, world_size, sampler, path_in_init_view=False):
 		self.view_size = view_size
 		self.world_size = world_size
 		self.bbox = get_bbox(world_size, view_size)
 		self.sampler = sampler
 		self.path_in_init_view = path_in_init_view
 		self.generator = PathGenerator(view_size, self.bbox)
+		self.logger = logger
 
 	def get_next(self):
 		world, target_pos = self.init_world()

@@ -36,13 +36,13 @@ class Trainer(object):
 				agent_configs.append(agent_config)
 		return world_config, agent_configs
 
-	# TODO find a way to log world
 	def init_scenarios(self, config):
 		scenarios = []
 		for n in range(config.epochs):
-			scenarios.append(config.world_gen.get_next())
-			# config.logger.next_epoch()
-		# config.logger.reset_epoch()
+			scenario = config.world_gen.get_next()
+			scenarios.append(scenario)
+			config.world_logger.log_init_state_and_world(scenario.world, scenario.pos)
+			config.world_logger.next_epoch()
 		return scenarios
 
 	def run_agent(self, config, scenarios):
@@ -50,7 +50,6 @@ class Trainer(object):
 		logger.log_message("{0} - Start training over {1} epochs".format(config.__name__, config.epochs))
 		for n in range(config.epochs):
 			scenario = scenarios[n]
-			logger.log_init_state_and_world(scenario.world, scenario.pos)
 			success, action_hist = self.run_epoch(config, n, scenario)
 			logger.log_results(action_hist, success)
 			# if n % (epochs / 100) == 0:
