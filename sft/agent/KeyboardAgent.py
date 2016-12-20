@@ -1,12 +1,15 @@
 from sft.agent.RobotAgent import RobotAgent
 from sft.Actions import Actions
+import matplotlib.pyplot as plt
+
+import sys
 
 
 class KeyboardAgent(RobotAgent):
 
 	def __init__(self):
-		# default the agent starts in trainingmode
-		self.trainingmode = True
+		plt.ion()
+		plt.figure()
 
 	@staticmethod
 	def key_to_action(k):
@@ -18,25 +21,22 @@ class KeyboardAgent(RobotAgent):
 			return Actions.RIGHT
 		elif k == 'a':
 			return Actions.LEFT
+		elif k == 'q':
+			sys.exit(0)
 		else:
 			return None
 
-	# overwrite
 	def choose_action(self, curr_state, eps):
-		#print(curr_state)
-		key = raw_input("w:up, s:down, d:right, a:left, input your choice and press enter: ")
+		# show view
+		plt.imshow(curr_state.view)
+		plt.draw()
+		print("Action history:\n{0}".format(curr_state.actions))
+		key = None
+		while key is None:
+			key = raw_input("Choose action - w:up, s:down, d:right, a:left, q:quit - ")
+			if key is None:
+				print("Invalid key - choose again")
 		return self.key_to_action(key)
 
 	def incorporate_reward(self, old_state, action, new_state, value):
-		pass
-
-	# return if the agent currently is in training mode or not
-	def is_in_training_mode(self):
-		return self.trainingmode
-
-	# change the training mode
-	def set_training_mode(self, in_training):
-		self.trainingmode = in_training
-
-	def new_epoch(self, n):
-		pass
+		print("Reward: {0}".format(value))

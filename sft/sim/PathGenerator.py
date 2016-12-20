@@ -1,5 +1,6 @@
-from sft import Point
-from sft import sample_normal, sample_point_within, sample_uniform
+from Actions import Actions
+from sft import Point, sample_int_normal_bounded
+from sft import sample_point_within, sample_int_uniform
 
 
 class PathNode:
@@ -9,10 +10,13 @@ class PathNode:
 		self.pos = pos
 
 
-class PathGenerator:
-	def __init__(self, view_size, bbox):
+class PathGenerator(object):
+
+	def __init__(self, view_size, bbox, step_size_min=-1, step_size_max=-1):
 		self.view_size = view_size
 		self.bbox = bbox
+		self.step_size_min = step_size_min
+		self.step_size_max = step_size_max
 
 	def generate_path(self, length, graph, path_id):
 		self._generate_path(length, graph, path_id, [])
@@ -25,11 +29,11 @@ class PathGenerator:
 		else:
 			# sample next node based on previous one
 			id_ = len(graph.nodes())
-			# sample node and only accept it if new edge does not intersect existing edges, maximally sample 20 times
-			for i in range(20):
-				# try to sample step, maximally 10 times
-				for j in range(10):
-					pos = self.sample_step_from(nodes[-1])
+			# sample node and only accept it if new edge does not intersect existing edges
+			for i in range(50):
+				# try to sample new step
+				for j in range(25):
+					pos = self.sample_step_from(self.view_size, self.bbox, nodes[-1])
 					if pos is not None:
 						break
 				else:  # when loop ended normally we stop building path because we can't sample new steps anymore
@@ -50,30 +54,29 @@ class PathGenerator:
 			self._generate_path(length - 1, graph, path_id, nodes)
 
 	# samples a location for a new node based on a given previous node
-	def sample_step_from(self, prev_node, step_size_min=-1):
-		direction = sample_uniform(4)
+	def sample_step_from(self, view_size, bbox, prev_node):
+		direction = sample_int_uniform(4)
 		step = Point(0, 0)
-		if step_size_min == -1:
-			step_size_min = max(min(self.view_size.tuple()) / 2., 2)
-		if direction == 0:  # up
-			step_size_max = prev_node.pos.y - self.bbox.y
+		step_size_min = max(min(view_size.tuple()) / 2., 2) if self.step_size_min == -1 else self.step_size_min
+		if direction == Actions.UP:
+			step_size_max = prev_node.pos.y - bbox.y
 			step.y = -1
-		elif direction == 1:  # down
-			step_size_max = self.bbox.y + self.bbox.h - prev_node.pos.y
+		elif direction == Actions.DOWN:
+			step_size_max = bbox.y + bbox.h - prev_node.pos.y
 			step.y = 1
-		elif direction == 2:  # left
-			step_size_max = prev_node.pos.x - self.bbox.x
+		elif direction == Actions.LEFT:
+			step_size_max = prev_node.pos.x - bbox.x
 			step.x = -1
-		else:  # right
-			step_size_max = self.bbox.x + self.bbox.w - prev_node.pos.x
+		else:  # Actions.RIGHT
+			step_size_max = bbox.x + bbox.w - prev_node.pos.x
 			step.x = 1
+		if self.step_size_max != -1:
+			step_size_max = min(step_size_max, self.step_size_max)
 		step_size_diff = step_size_max - step_size_min
 		# check if step not possible
 		if step_size_diff <= 1:
 			return None
-		step_size_mean = step_size_diff / 2 + step_size_min
-		step_size_std = max(step_size_diff / 5., 1)
-		step_size = sample_normal(step_size_mean, step_size_std, step_size_min, step_size_max)
+		step_size = sample_int_normal_bounded(step_size_min, step_size_max)
 		step *= step_size
 		return prev_node.pos + step
 

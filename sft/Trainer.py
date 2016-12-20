@@ -48,47 +48,56 @@ class Trainer(object):
 	def run_agent(self, config, scenarios):
 		logger = config.logger
 		logger.log_message("{0} - Start training over {1} epochs".format(config.__name__, config.epochs))
+		sim = Simulator(config.view_size)
 		for n in range(config.epochs):
 			scenario = scenarios[n]
-			success, action_hist = self.run_epoch(config, n, scenario)
-			logger.log_results(action_hist, success)
+			success, hist = self.run_epoch(config, sim, n, scenario)
+			logger.log_results(hist, success)
 			# if n % (epochs / 100) == 0:
 			print("{0} - Epoch {1} - Success: {2}".format(config.__name__, n, success))
 			logger.next_epoch()
 		logger.log_model(config.model)
 
-	def run_epoch(self, config, epoch, scenario):
-		sim = Simulator(config.view_size)
+	def run_epoch(self, config, sim, epoch, scenario):
+		"""Run training episode with given initial scenario"""
 		sim.initialize(scenario.world, scenario.pos)
-		agent = config.agent
-		reward = config.reward
 		eps = config.epsilon_update.get_value(epoch)
 		config.logger.log_parameter("epsilon", eps)
-		action_hist = []
-		while len(action_hist) < config.max_steps:
-			view = sim.get_current_view()
-			state = self.get_state(config, view, action_hist)
-			action = agent.choose_action(state, eps)
-			action_hist.append(action)
-			view2 = sim.update_view(action)
-			reward_value = reward.get_reward(view, view2)
-			oob = sim.is_oob()
-			at_target = sim.is_at_target()
-			# epoch ends when agent runs out of bounds or hits the target
-			terminal = oob or at_target
-			# if new state is terminal None will be given to agent
-			state2 = self.get_state(config, view2, action_hist) if not terminal else None
-			agent.incorporate_reward(state, action, state2, reward_value)
-			if terminal:
-				success = 1 if at_target else 0
-				return success, action_hist
-		# if max steps are exceeded epoch was not successful
-		return 0, action_hist
+		hist = []
+		while len(hist) < config.max_steps:
+			# result is 1 for on target, 0 for oob and -1 for non-terminal
+			res = self.run_step(hist, sim, config.action_hist_len, config.agent, config.reward, eps)
+			if res != -1:
+				return res, hist
+		# if max steps are exceeded episode was not successful
+		return 0, hist
 
-	def get_state(self, config, view, action_hist):
-		actions = np.zeros([config.action_hist_len, len(Actions.all)])
+	def run_step(self, hist, sim, state_action_len, agent, reward, eps):
+		"""Conducts training step and returns 1 for success, 0 for loss and -1 for non-terminal"""
+		view = sim.get_current_view()
+		state = self.get_state(view, hist, state_action_len)
+		action = agent.choose_action(state, eps)
+		hist.append(action)
+		view2 = sim.update_view(action)
+		reward_value = reward.get_reward(view, view2)
+		oob = sim.is_oob()
+		at_target = sim.is_at_target()
+		# epoch ends when agent runs out of bounds or hits the target
+		terminal = oob or at_target
+		# if new state is terminal None will be given to agent
+		state2 = self.get_state(view2, hist, state_action_len) if not terminal else None
+		agent.incorporate_reward(state, action, state2, reward_value)
+		if at_target:
+			return 1
+		elif oob:
+			return 0
+		else:
+			return -1
+
+	def get_state(self, view, action_hist, state_action_hist_len):
+		actions = np.zeros([state_action_hist_len, len(Actions.all)])
 		# take last n actions, this will be smaller or empty if there are not enough actions
-		last_actions = action_hist[-config.action_hist_len:]
+		last_actions = action_hist[-state_action_hist_len:]
 		for i in range(len(last_actions)):
 			action = last_actions[i]
 			actions[i] = Actions.get_one_hot(action)

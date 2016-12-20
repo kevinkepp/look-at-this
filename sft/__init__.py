@@ -137,18 +137,29 @@ def get_bbox(world_size, view_size):
 	return Rectangle(border, size)
 
 
-def sample_uniform(low, high=None):
+def sample_int_uniform(low, high=None):
 	return np.random.randint(low, high)
 
 
-def sample_normal(mean, std, low=float("-inf"), high=float("inf")):
+def sample_int_normal(mean, std):
+	return int(np.random.normal(mean, std, 1))
+
+
+def sample_int_normal_bounded(low, high, mean=-1, std=-1):
+	diff = high - low
+	if mean == -1:
+		mean = low + diff / 2.
+	if std == -1:
+		std = mean - low
+	if std <= 0:
+		return mean
 	while True:
-		idx = int(np.random.normal(mean, std, 1))
-		if low <= idx <= high:
-			return idx
+		rnd = sample_int_normal(mean, std)
+		if low <= rnd <= high:
+			return rnd
 
 
 def sample_point_within(rect):
-	x = sample_uniform(rect.x, rect.x + rect.w)
-	y = sample_uniform(rect.y, rect.y + rect.h)
+	x = sample_int_uniform(rect.x, rect.x + rect.w)
+	y = sample_int_uniform(rect.y, rect.y + rect.h)
 	return Point(x, y)

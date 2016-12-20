@@ -2,7 +2,7 @@ from sft.sampler.Sampler import Sampler
 from sft import sample_point_within, Point, Size, Rectangle
 
 
-class SamplerExpansive(Sampler):
+class Expansive(Sampler):
 
 	def __init__(self, logger, epochs_until_max, min_sample_size):
 		# self.logger = logger
