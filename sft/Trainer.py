@@ -97,7 +97,7 @@ class Trainer(object):
 	def get_state(self, view, action_hist, state_action_hist_len):
 		actions = np.zeros([state_action_hist_len, len(Actions.all)])
 		# take last n actions, this will be smaller or empty if there are not enough actions
-		last_actions = action_hist[-state_action_hist_len:]
+		last_actions = action_hist[-state_action_hist_len:] if state_action_hist_len > 0 else []
 		for i in range(len(last_actions)):
 			action = last_actions[i]
 			actions[i] = Actions.get_one_hot(action)
