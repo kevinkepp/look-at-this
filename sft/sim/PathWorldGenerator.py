@@ -2,7 +2,7 @@ import cv2
 import networkx as nx
 import numpy as np
 
-from sft import Rectangle, normalize, get_bbox, sample_normal
+from sft import Rectangle, normalize, get_bbox, sample_int_normal_bounded
 from sft.Scenario import Scenario
 from sft.sim.PathGenerator import PathGenerator
 from sft.sim.ScenarioGenerator import ScenarioGenerator
@@ -12,22 +12,23 @@ from sft.sim.Simulator import Simulator
 class PathWorldGenerator(ScenarioGenerator):
 	PATH_LENGTH_MIN = 5
 	PATH_LENGTH_MAX = 20
-	PATH_LENGTH_MEAN = 12
-	PATH_LENGTH_STD = 5
 	PATH_THICKNESS = 1
 	PATH_COLOR = 150
 
 	TARGET_COLOR = int(Simulator.TARGET_VALUE * 255)
 	TARGET_RADIUS = 1
 
-	def __init__(self, logger, view_size, world_size, sampler, path_in_init_view=False):
+	def __init__(self, logger, view_size, world_size, sampler, path_length_min=-1, path_length_max=-1,
+				 path_step_length_min=-1, path_step_length_max=-1, path_in_init_view=False):
+		self.logger = logger
 		self.view_size = view_size
 		self.world_size = world_size
 		self.bbox = get_bbox(world_size, view_size)
 		self.sampler = sampler
+		self.path_length_min = path_length_min
+		self.path_length_max = path_length_max
+		self.generator = PathGenerator(self.view_size, self.bbox, path_step_length_min, path_step_length_max)
 		self.path_in_init_view = path_in_init_view
-		self.generator = PathGenerator(view_size, self.bbox)
-		self.logger = logger
 
 	def get_next(self):
 		world, target_pos = self.init_world()
@@ -47,10 +48,14 @@ class PathWorldGenerator(ScenarioGenerator):
 	def init_path(self, world, graph):
 		# only add one path for now
 		# sample length for path
-		path_length = sample_normal(self.PATH_LENGTH_MEAN, self.PATH_LENGTH_STD, self.PATH_LENGTH_MIN,
-									self.PATH_LENGTH_MAX)
-		self.generator.generate_path(path_length, graph, path_id=0)
+		self.generator.generate_path(self.sample_path_length(), graph, path_id=0)
 		self.render_paths(world, graph)
+
+	def sample_path_length(self):
+		l_min = self.path_length_min if self.path_length_min != -1 else self.PATH_LENGTH_MIN
+		l_max = self.path_length_max if self.path_length_max != -1 else self.PATH_LENGTH_MAX
+		l_max = max(l_min, l_max)
+		return sample_int_normal_bounded(l_min, l_max)
 
 	def render_paths(self, image, graph):
 		for u, v in graph.edges():

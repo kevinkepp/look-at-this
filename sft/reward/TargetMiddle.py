@@ -1,10 +1,10 @@
-from reward.Reward import Reward
+from sft.reward.Reward import Reward
 from sft import Rectangle
 from sft import Size
-from sim.Simulator import Simulator
+from sft.sim.Simulator import Simulator
 
 
-class TargetMiddleReward(Reward):
+class TargetMiddle(Reward):
 	TARGET_VALUE = Simulator.TARGET_VALUE
 
 	def __init__(self, reward_not_target, reward_target):

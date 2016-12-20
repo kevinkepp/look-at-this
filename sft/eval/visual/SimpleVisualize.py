@@ -38,12 +38,12 @@ class PathAndResultsPlotter(Visualizer):
 			plt.draw()
 			plt.pause(0.001)
 
-	def visualize_course_of_action(self, world_state, first_i, first_j, grid_n, grid_m, actions, title=None,
+	def visualize_course_of_action(self, world_state, first_x, first_y, grid_w, grid_h, actions, title=None,
 								   image_name="agent_path"):
 		""" plots a course of actions beginning from a certain first state """
-		n, m = grid_n, grid_m
-		x = first_j + m // 2
-		y = first_i + n // 2
+		w, h = grid_w, grid_h
+		x = first_x + w / 2
+		y = first_y + h / 2
 		xx = np.array(x)
 		yy = np.array(y)
 		for ac in actions:
@@ -53,14 +53,14 @@ class PathAndResultsPlotter(Visualizer):
 		# fig = plt.figure()
 		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
 		# plotting starting view window
-		first_win_x = np.array([first_j, first_j, first_j + m, first_j + m, first_j])
-		first_win_y = np.array([first_i, first_i + n, first_i + n, first_i, first_i])
+		first_win_x = np.array([first_x, first_x + w, first_x + w, first_x, first_x])
+		first_win_y = np.array([first_y, first_y, first_y + h, first_y + h, first_y])
 		plt.plot(first_win_x, first_win_y, 'r:')
 		# plotting final view window
-		mid_m = m // 2
-		mid_n = n // 2
-		final_win_x = np.array([xx[-1] - mid_m, xx[-1] - mid_m, xx[-1] + mid_m, xx[-1] + mid_m, xx[-1] - mid_m])
-		final_win_y = np.array([yy[-1] - mid_n, yy[-1] + mid_n, yy[-1] + mid_n, yy[-1] - mid_n, yy[-1] - mid_n])
+		mid_x = w / 2
+		mid_y = h / 2
+		final_win_x = np.array([xx[-1] - mid_x, xx[-1] - mid_x, xx[-1] + mid_x, xx[-1] + mid_x, xx[-1] - mid_x])
+		final_win_y = np.array([yy[-1] - mid_y, yy[-1] + mid_y, yy[-1] + mid_y, yy[-1] - mid_y, yy[-1] - mid_y])
 		plt.plot(final_win_x, final_win_y, 'r:')
 		# plot world-frame
 		plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
@@ -72,8 +72,8 @@ class PathAndResultsPlotter(Visualizer):
 		# save and clear figure
 		image_save_path = "tmp/paths/" + image_name + ".png"
 		plt.savefig(image_save_path)
-		# plt.clf()
-		plt.close()
+		plt.clf()
+		# plt.close()
 
 	def _get_new_xy(self, x, y, ac):
 		""" calculates the new position of the goal after a action """

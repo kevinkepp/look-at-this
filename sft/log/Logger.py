@@ -19,11 +19,6 @@ class BaseLogger(object):
 		self.files_params = {}  # dictionary with all parameter files in it
 		self.file_messages = None  # file for log the general messages
 
-	def __del__(self):
-		# make sure all files are closed when object is destructed
-		if len(self.open_files) > 0:
-			self.close_files()
-
 	def open_file(self, path):
 		_file = open(path, 'w')
 		self.open_files[path] = _file
