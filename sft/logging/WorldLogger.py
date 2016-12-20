@@ -1,9 +1,8 @@
 import os
 import cv2
 import numpy as np
-import datetime as dt
-from shutil import copyfile
-from sft.BaseLogger import BaseLogger
+
+from sft.logging.BaseLogger import BaseLogger
 
 
 class WorldLogger(BaseLogger):
@@ -24,7 +23,6 @@ class WorldLogger(BaseLogger):
 		self.curr_exp_log_dir = self.log_dir
 		self._create_folders()
 		self._copy_config_file(world_cfg_path, self.name_file_cfg_world)
-
 
 	def _get_exp_name(self, agent_name):
 		"""extract the name of the experiment for naming a folder later"""

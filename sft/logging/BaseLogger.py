@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from shutil import copyfile
 
+
 class BaseLogger(object):
 	TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S"
 	FILE_SUFFIX_LOGS = ".tsv"
@@ -24,14 +25,15 @@ class BaseLogger(object):
 			self.close_files()
 
 	def open_file(self, path):
-		buffering = 1  # 1 means line buffering
-		_file = open(path, 'w', buffering)
+		_file = open(path, 'w')
 		self.open_files[path] = _file
 		return _file
 
 	def next_epoch(self):
 		""" increases epoch, which is used for logging """
 		self.epoch += 1
+		# flush files after each epoch
+		self.flush_files()
 
 	def _get_timestamp(self):
 		""" creates a timestamp that can be used to log """
@@ -61,6 +63,10 @@ class BaseLogger(object):
 	def _create_line_for_msg_logfile(self, message):
 		""" adds timestamp, tab and succeeding newline operator"""
 		return self._get_timestamp() + "\t" + message + "\n"
+
+	def flush_files(self):
+		for _, _file in self.open_files.items():
+			_file.flush()
 
 	def close_files(self):
 		for _, _file in self.open_files.items():

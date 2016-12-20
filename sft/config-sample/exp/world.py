@@ -1,3 +1,4 @@
+import sft.logging.WorldLogger
 import sft.sampler.SamplerExpansive
 import sft.sim.PathWorldGenerator
 from sft.Actions import Actions
@@ -12,7 +13,7 @@ nb_actions = len(actions)
 max_steps = 500
 action_hist_len = 4
 
-world_logger = sft.WorldLogger.WorldLogger(__file__, __name__)
+world_logger = sft.logging.WorldLogger.WorldLogger(__file__, __name__)
 
 sampler = sft.sampler.SamplerExpansive.SamplerExpansive(
 	logger=world_logger,

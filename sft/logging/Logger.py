@@ -1,5 +1,6 @@
 import os
-from sft.BaseLogger import BaseLogger
+
+from sft.logging.BaseLogger import BaseLogger
 
 
 class Logger(BaseLogger):

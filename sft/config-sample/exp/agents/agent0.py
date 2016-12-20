@@ -4,9 +4,7 @@ from keras.layers import Dense, Activation
 import sft.agent.DeepQAgentReplayCloning
 import sft.agent.model.KerasMlpModel
 import sft.reward.TargetMiddleReward
-import sft.EpsilonUpdate as EpsilonUpdate
-from sft.Logger import Logger
-
+from sft.logging.Logger import Logger
 from .. import world
 from ..world import *
 
@@ -50,3 +48,5 @@ reward = sft.reward.TargetMiddleReward.TargetMiddleReward(
 	reward_target=100,
 	reward_not_target=0
 )
+
+# reward = sft.reward.SimpleReward.RewardAtTheEndForOneInTheMiddle()
