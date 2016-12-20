@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sft.Actions import Actions
-from sft.eval.Visualizer import Visualizer
+from sft.eval.visual.Visualizer import Visualizer
 
 
 class PathAndResultsPlotter(Visualizer):

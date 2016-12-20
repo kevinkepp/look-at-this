@@ -1,54 +1,66 @@
 import os
 from datetime import datetime
-
+from shutil import copyfile
 
 class BaseLogger(object):
 	TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S"
+	FILE_SUFFIX_LOGS = ".tsv"
+	FILE_SUFFIX_CFG = ".py"
+	OVERALL_LOG_FOLDER = "tmp/logs"
+	NAME_FOLDER_PARAMETERS = "parameter_logs"
+	NAME_FILE_MESSAGES = "messages" + FILE_SUFFIX_LOGS
 
 	def __init__(self):
 		# dictionary storing currently opened files based
 		self.open_files = {}
+		self.log_dir = self.OVERALL_LOG_FOLDER
+		self.epoch = 0
+		self.files_params = {}  # dictionary with all parameter files in it
+		self.file_messages = None  # file for logging the general messages
 
 	def __del__(self):
 		# make sure all files are closed when object is destructed
 		if len(self.open_files) > 0:
 			self.close_files()
 
-	def get_dir_path(self, *dirs):
-		"""Returns OS-independent path to directories given and creates resulting directory if not existing"""
-		assert len(dirs) > 0
-		# append all directory names
-		path = os.path.join(dirs[0], *dirs[1:]) if len(dirs) > 1 else dirs[0]
-		# make sure directory exists
-		if not os.path.exists(path):
-			os.makedirs(path)
-		return path
-
-	def get_file_path(self, dir_path, file_name):
-		return os.path.join(dir_path, file_name)
-
 	def open_file(self, path):
-		_file = open(path, 'w')
+		buffering = 1  # 1 means line buffering
+		_file = open(path, 'w', buffering)
 		self.open_files[path] = _file
 		return _file
 
-	def get_file(self, path):
-		if path in self.open_files:
-			return self.open_files[path]
-		else:
-			return self.open_file(path)
+	def next_epoch(self):
+		""" increases epoch, which is used for logging """
+		self.epoch += 1
 
-	def log_line(self, message, _file, with_timestamp=False):
-		line = ""
-		if with_timestamp:
-			timestamp = datetime.now().strftime(self.TIMESTAMP_FORMAT)
-			line += timestamp + " - "
-		line += message + "\n"
-		_file.write(line)
+	def _get_timestamp(self):
+		""" creates a timestamp that can be used to log """
+		return datetime.now().strftime(self.TIMESTAMP_FORMAT)
 
-	def flush_files(self):
-		for _, _file in self.open_files.items():
-			_file.flush()
+	def _copy_config_file(self, cfg_file_path, file_name):
+		""" makes a copy of the configfiles to the logging folder """
+		copyfile(cfg_file_path, self.log_dir + "/" + file_name)
+
+	def log_parameter(self, para_name, para_val):
+		""" logs a parameter value to a file """
+		if para_name not in self.files_params:
+			path = self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS + "/" + para_name + self.FILE_SUFFIX_LOGS
+			self.files_params[para_name] = self.open_file(path)
+			self.log_message("created parameter logfile for '{}'".format(para_name))
+			self.files_params[para_name].write("epoch\tparameter-value\n")
+		self.files_params[para_name].write("{}\t{}\n".format(self.epoch, para_val))
+
+	def log_message(self, message):
+		""" logs a message (e.g. cloned network) to a general logfile """
+		if self.file_messages is None:
+			path = self.log_dir + "/" + self.NAME_FILE_MESSAGES
+			self.file_messages = self.open_file(path)
+			self.file_messages.write(self._create_line_for_msg_logfile("created this logfile"))
+		self.file_messages.write(self._create_line_for_msg_logfile(message))
+
+	def _create_line_for_msg_logfile(self, message):
+		""" adds timestamp, tab and succeeding newline operator"""
+		return self._get_timestamp() + "\t" + message + "\n"
 
 	def close_files(self):
 		for _, _file in self.open_files.items():
