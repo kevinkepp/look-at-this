@@ -9,7 +9,7 @@ from sft.log.AgentLogger import AgentLogger
 from .. import world
 from ..world import *
 
-logger = AgentLogger(__file__, __name__, world.world_logger.get_exp_log_path())
+logger = AgentLogger(__name__)
 
 epsilon_update = sft.eps.Linear.Linear(
 	start=1,

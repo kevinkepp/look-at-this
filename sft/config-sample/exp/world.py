@@ -3,7 +3,7 @@ import sft.sampler.Expansive
 import sft.sim.PathWorldGenerator
 from sft.Actions import Actions
 from sft import Size
-import sft.log.WorldLogger as WorldLogger
+from sft.log.WorldLogger import WorldLogger
 
 epochs = 2000
 world_size = Size(49, 49)
@@ -13,13 +13,13 @@ nb_actions = len(actions)
 max_steps = max(world_size.tuple()) * 15
 action_hist_len = 4
 
-world_logger = WorldLogger.WorldLogger(__file__, __name__)
+world_logger = WorldLogger(__name__)
 
 # sampler = sft.sampler.Simple.Simple()
 
 sampler = sft.sampler.Expansive.Expansive(
-	logger=None,
-	epochs_until_max=750,
+	logger=world_logger,
+	epochs_until_max=epochs / 2,
 	min_sample_size=view_size
 )
 

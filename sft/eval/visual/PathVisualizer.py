@@ -20,7 +20,7 @@ class PathVisualizer(object):
 		worlds = self.get_world_images(results_dir)
 		poss = self.get_init_poss(results_dir)
 		actionss = self.get_actionss(results_dir, agent_name)
-		_dir = results_dir.split("/")[-1]
+		_dir = os.path.join(results_dir.split("/")[-1], agent_name)
 		if not os.path.exists(self.RESULTS_DIR + _dir):
 			os.makedirs(self.RESULTS_DIR + _dir)
 		# print 100 paths
