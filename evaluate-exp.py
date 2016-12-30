@@ -15,9 +15,18 @@ NUM_PLOT_PATHS_IN_ROW = 5
 
 # parameters
 
-################################## NOCH NICHT FERTIG ########################################
+evaluator = Evaluator(EXPERIMENT_PATH, WORLD_DIR, AGENTS_DICT)
 
-evaluate = Evaluator(EXPERIMENT_PATH, WORLD_DIR, AGENTS_DICT)
+# TODO: das herausfinden der View Size aus dem File funktioniert noch nicht (import geht nicht wegen problemen mit Logger - evtl probieren einfach als Datei zeilenweise einzulesen und dann nach Keyword View-size zu suchen
+from sft import Size
+evaluator.view_size = Size(7,7)
 
-# evaluate.plot_results(AGENTS_DICT.keys(), SLIDING_MEAN_WINDOW)
-# evaluate.plot_paths(AGENTS_DICT.keys()[:], PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW)
+evaluator.plot_paths(PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW)
+
+evaluator.plot_results(AGENTS_DICT.keys(), SLIDING_MEAN_WINDOW)
+
+evaluator.load_epsilon()
+evaluator.load_expansive_spl_radius()
+evaluator.plot_parameters()
+
+evaluator.load_qs(SLIDING_MEAN_WINDOW)
