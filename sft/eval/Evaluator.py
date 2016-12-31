@@ -17,6 +17,7 @@ class Evaluator(object):
 	WORLD_CONFIG_NAME = "world.py"
 	RESULTS_FILE_NAME = "results.tsv"
 	PARAMETER_LOG_FOLDER = "parameter_logs"
+	RESULTS_PLOT_FILE_NAME = "results.png"
 
 	def __init__(self, exp_path, world_dir_name, agent_dict):
 		self.agents_dict = agent_dict
@@ -82,6 +83,34 @@ class Evaluator(object):
 			if line is not "":
 				vals.append(line.split("\t"))
 		return headline, vals
+
+	def plot_qs(self, agent_keys, q_file):
+		for agent_key in agent_keys:
+			agent_qs_path = os.path.join(self.exp_path, self.agents_dict[agent_key], self.PARAMETER_LOG_FOLDER, q_file)
+			_, vals = self._load_tsv_file_with_headline(agent_qs_path)
+			qs = np.zeros([len(vals), 4])
+			for i in range(len(vals)):
+				v = vals[i][1]
+				v = v.strip("[[").strip("]]\n").split(" ")
+				v = filter(None, v)  # deletes empty strings, which are in there due to split
+				for j in range(4):
+					qs[i, j] = float(v[j])
+			# plot
+			qs_max = np.max(qs, axis=1)
+			qs_avg = np.average(qs, axis=1)
+			plt.figure(figsize=(30, 5), dpi=80)
+			plt.plot(qs_max, 'b-', alpha=0.8, label="q-max")
+			plt.plot(qs_avg, 'r-', alpha=0.8, label="q-avg")
+			plt.plot(qs_max - qs_avg, 'g-', alpha=0.8, label="q-max - q-avg")
+			plt.legend(loc="best")
+			plt.ylabel("q for each step")
+			plt.xlabel("step counter over all epochs")
+			name = agent_key + "_q_all.png"
+			save_path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, name)
+			plt.savefig(save_path)
+			plt.close()
+
+
 
 	def plot_paths(self, PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW):
 		path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.PATHS_OUTPUT_DIR_NAME)
@@ -174,8 +203,7 @@ class Evaluator(object):
 		for name, success, steps in zip(names, successes, stepss):
 			self._plot_res_one_agent(ax_success, ax_steps, success, steps, name, epochs, sliding_window_mean)
 		ax_success.legend(loc='upper right')
-		filename = "results.png"
-		filepath = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, filename)
+		filepath = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.RESULTS_PLOT_FILE_NAME)
 		plt.savefig(filepath, bbox_inches='tight')
 
 		# save figure

@@ -21,9 +21,6 @@ evaluator.plot_paths(PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW)
 
 evaluator.plot_results(AGENTS_DICT.keys(), SLIDING_MEAN_WINDOW)
 
-evaluator.load_epsilon()
-evaluator.load_expansive_spl_radius()
-evaluator.plot_parameters()
-
-evaluator.load_qs()
+#evaluator.plot_epsilon()
+#evaluator.plot_expansive_spl_radius()
 evaluator.plot_qs()
