@@ -224,7 +224,7 @@ class Evaluator(object):
 		ax_success.legend(loc='upper right')
 		filepath = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.RESULTS_PLOT_FILE_NAME)
 		plt.savefig(filepath, bbox_inches='tight')
-
+		plt.close()
 		# save figure
 
 	def _load_results(self, res_path):

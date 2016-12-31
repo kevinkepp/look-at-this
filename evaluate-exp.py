@@ -1,17 +1,19 @@
 from sft.eval.Evaluator import Evaluator
 import os
 
-LOG_PATH = "/home/philibb/Dropbox/Uni/Robotics Project/github-repo/tmp/logs"
-EXPERIMENT = "20161231-094648_exp1"
+LOG_PATH = "tmp/logs"
+EXPERIMENT = "20161229-174200_exp_cloning_vs_no-cloning_2000_samples"
 WORLD_DIR = "world"
 AGENTS_DICT = {
-	"Deep[16]": "agent0"}
+	"Cloning" : "cloning",
+	"No cloning": "no-cloning"
+}
 
 # results
 SLIDING_MEAN_WINDOW = 100
 
 # paths
-PLOT_EVERY_KTH_EPOCH = 3
+PLOT_EVERY_KTH_EPOCH = 10
 NUM_PLOT_PATHS_IN_ROW = 1
 
 EXPERIMENT_PATH = os.path.join(LOG_PATH, EXPERIMENT)
