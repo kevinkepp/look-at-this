@@ -18,6 +18,7 @@ class Evaluator(object):
 	RESULTS_FILE_NAME = "results.tsv"
 	PARAMETER_LOG_FOLDER = "parameter_logs"
 	RESULTS_PLOT_FILE_NAME = "results.png"
+	PARAMETER_FILE_SUFFIX = ".tsv"
 
 	def __init__(self, exp_path, world_dir_name, agent_dict):
 		self.agents_dict = agent_dict
@@ -110,6 +111,24 @@ class Evaluator(object):
 			plt.savefig(save_path)
 			plt.close()
 
+	def plot_one_value_parameter(self, agent_keys, parameter_file_name):
+		parameter = parameter_file_name.strip(self.PARAMETER_FILE_SUFFIX)
+		for agent_key in agent_keys:
+			agent_qs_path = os.path.join(self.exp_path, self.agents_dict[agent_key], self.PARAMETER_LOG_FOLDER, parameter_file_name)
+			_, valss = self._load_tsv_file_with_headline(agent_qs_path)
+			epochs = []
+			p = []
+			for i in range(len(valss)):
+				epochs.append(int(valss[i][0]))
+				p.append(float(valss[i][1]))
+			# plot
+			plt.plot(epochs, p, 'b-')
+			plt.ylabel(parameter)
+			plt.xlabel("epochs")
+			name = agent_key + "_" + parameter + ".png"
+			save_path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, name)
+			plt.savefig(save_path)
+			plt.close()
 
 
 	def plot_paths(self, PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW):

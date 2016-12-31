@@ -22,5 +22,5 @@ evaluator.plot_paths(PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW)
 evaluator.plot_results(AGENTS_DICT.keys(), SLIDING_MEAN_WINDOW)
 evaluator.plot_qs(AGENTS_DICT.keys(), "q.tsv")
 
-#evaluator.plot_epsilon()
+evaluator.plot_one_value_parameter(AGENTS_DICT.keys(), "epsilon.tsv")
 #evaluator.plot_expansive_spl_radius()
