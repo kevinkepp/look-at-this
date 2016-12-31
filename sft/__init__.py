@@ -12,36 +12,32 @@ class Point:
 			self.y = y
 
 	def __add__(self, other):
-		if isinstance(other, Point):
+		if isinstance(other, self.__class__):
 			return Point(self.x + other.x, self.y + other.y)
-		elif isinstance(other, (float, int, long)):
+		if isinstance(other, (float, int, long)):
 			return Point(self.x + other, self.y + other)
-		else:
-			return NotImplemented
+		return NotImplemented
 
 	def __sub__(self, other):
-		if isinstance(other, Point):
+		if isinstance(other, self.__class__):
 			return Point(self.x - other.x, self.y - other.y)
-		elif isinstance(other, (float, int, long)):
+		if isinstance(other, (float, int, long)):
 			return Point(self.x - other, self.y - other)
-		else:
-			return NotImplemented
+		return NotImplemented
 
 	def __mul__(self, other):
-		if isinstance(other, Point):
+		if isinstance(other, self.__class__):
 			return Point(self.x * other.x, self.y * other.y)
-		elif isinstance(other, (float, int, long)):
+		if isinstance(other, (float, int, long)):
 			return Point(self.x * other, self.y * other)
-		else:
-			return NotImplemented
+		return NotImplemented
 
 	def __div__(self, other):
-		if isinstance(other, Point):
+		if isinstance(other, self.__class__):
 			return Point(self.x / other.x, self.y / other.y)
-		elif isinstance(other, (float, int, long)):
+		if isinstance(other, (float, int, long)):
 			return Point(self.x / other, self.y / other)
-		else:
-			return NotImplemented
+		return NotImplemented
 
 	def tuple(self):
 		return self.x, self.y
@@ -49,6 +45,11 @@ class Point:
 	def at_matrix(self, mat):
 		"""Returns the value in a given matrix at the position represented by this point"""
 		return mat[self.y, self.x]
+
+	def dist(self, other):
+		if isinstance(other, self.__class__):
+			return np.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+		return NotImplemented
 
 	def __str__(self):
 		return "Point(x={0},y={1})".format(self.x, self.y)
@@ -77,11 +78,52 @@ class Size:
 			self.w = w
 			self.h = h
 
+	def __add__(self, other):
+		if isinstance(other, self.__class__):
+			return Size(self.w + other.w, self.h + other.h)
+		if isinstance(other, (float, int, long)):
+			return Size(self.w + other, self.h + other)
+		return NotImplemented
+
+	def __sub__(self, other):
+		if isinstance(other, self.__class__):
+			return Size(self.w - other.w, self.h - other.h)
+		if isinstance(other, (float, int, long)):
+			return Size(self.w - other, self.h - other)
+		return NotImplemented
+
+	def __mul__(self, other):
+		if isinstance(other, self.__class__):
+			return Size(self.w * other.w, self.h * other.h)
+		if isinstance(other, (float, int, long)):
+			return Size(self.w * other, self.h * other)
+		return NotImplemented
+
+	def __div__(self, other):
+		if isinstance(other, self.__class__):
+			return Size(self.w / other.w, self.h / other.h)
+		if isinstance(other, (float, int, long)):
+			return Size(self.w / other, self.h / other)
+		return NotImplemented
+
 	def tuple(self):
 		return self.w, self.h
 
 	def __str__(self):
 		return "Size(w={0},h={1})".format(self.w, self.h)
+
+	def __eq__(self, other):
+		if isinstance(other, self.__class__):
+			return self.__dict__ == other.__dict__
+		return NotImplemented
+
+	def __ne__(self, other):
+		if isinstance(other, self.__class__):
+			return not self.__eq__(other)
+		return NotImplemented
+
+	def __hash__(self):
+		return hash(tuple(sorted(self.__dict__.items())))
 
 
 class Rectangle:

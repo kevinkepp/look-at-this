@@ -1,4 +1,5 @@
-from eval.SimpleVisualize import PathAndResultsPlotter
+import shutil
+from sft.eval.visual.SimpleVisualize import PathAndResultsPlotter
 import os
 import cv2
 
@@ -17,6 +18,8 @@ class PathVisualizer(object):
 
 	def visualize_paths(self, results_dir, exp_module_name, agent_name):
 		world_config = self.get_world_config(results_dir, exp_module_name)
+		# delete log folder we just created by re-importing the world config
+		shutil.rmtree(world_config.world_logger.curr_exp_log_dir)
 		worlds = self.get_world_images(results_dir)
 		poss = self.get_init_poss(results_dir)
 		actionss = self.get_actionss(results_dir, agent_name)
@@ -24,7 +27,7 @@ class PathVisualizer(object):
 		if not os.path.exists(self.RESULTS_DIR + _dir):
 			os.makedirs(self.RESULTS_DIR + _dir)
 		# print 100 paths
-		for i in range(0, len(actionss), len(actionss) / 20):
+		for i in range(0, len(actionss), len(actionss) / 100):
 			world = worlds[i]
 			pos = poss[i]
 			actions = actionss[i]

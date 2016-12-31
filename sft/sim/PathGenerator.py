@@ -19,7 +19,11 @@ class PathGenerator(object):
 		self.step_size_max = step_size_max
 
 	def generate_path(self, length, graph, path_id):
-		self._generate_path(length, graph, path_id, [])
+		nodes = []
+		# if we failed to build a path with given length we try again
+		while len(nodes) < length + 1:
+			nodes = []
+			self._generate_path(length, graph, path_id, nodes)
 
 	def _generate_path(self, length, graph, path_id, nodes):
 		if len(nodes) == 0:
@@ -32,7 +36,7 @@ class PathGenerator(object):
 			# sample node and only accept it if new edge does not intersect existing edges
 			for i in range(50):
 				# try to sample new step
-				for j in range(25):
+				for j in range(50):
 					pos = self.sample_step_from(self.view_size, self.bbox, nodes[-1])
 					if pos is not None:
 						break
