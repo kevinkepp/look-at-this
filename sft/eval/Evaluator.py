@@ -3,7 +3,7 @@ import os, time, cv2, ast, imp
 from matplotlib import pyplot as plt
 import numpy as np
 from sft.Actions import Actions
-from sft import Point
+from sft import Point, Size
 
 
 class Evaluator(object):
@@ -22,12 +22,16 @@ class Evaluator(object):
 		self.world_dir_name = world_dir_name
 		self._create_folder(os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME))
 
-		results_dir = os.path.join(self.exp_path, self.world_dir_name)
-		self.view_size = self._get_view_size()
+		world_config_path = os.path.join(self.exp_path, self.world_dir_name, self.WORLD_CONFIG_NAME)
+		self.view_size = self._get_view_size(world_config_path)
 
-	def _get_view_size(self):
-		# TODO: das herausfinden der View Size aus dem File funktioniert noch nicht (import geht nicht wegen problemen mit Logger - evtl probieren einfach als Datei zeilenweise einzulesen und dann nach Keyword View-size zu suchen
-		return self.view_size
+	def _get_view_size(self, path):
+		_file = open(path, 'r')
+		for line in _file:
+			if line.startswith("view_size"):
+				view_size_str = line.split("=")[1].strip().strip("Size(").strip(")").split(",")
+				w, h = int(view_size_str[0]), int(view_size_str[1])
+		return Size(w, h)
 
 	def _create_folder(self, path):
 		if not os.path.exists(path):
