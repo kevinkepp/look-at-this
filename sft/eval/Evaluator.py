@@ -15,6 +15,8 @@ class Evaluator(object):
 	EVAL_OUTPUT_DIR_NAME = "evaluation"
 	PATHS_OUTPUT_DIR_NAME = "paths"
 	WORLD_CONFIG_NAME = "world.py"
+	RESULTS_FILE_NAME = "results.tsv"
+	PARAMETER_LOG_FOLDER = "parameter_logs"
 
 	def __init__(self, exp_path, world_dir_name, agent_dict):
 		self.agents_dict = agent_dict
@@ -26,6 +28,7 @@ class Evaluator(object):
 		self.view_size = self._get_view_size(world_config_path)
 
 	def _get_view_size(self, path):
+		# hacky way to access the view size from the python config file
 		_file = open(path, 'r')
 		for line in _file:
 			if line.startswith("view_size"):
@@ -64,14 +67,21 @@ class Evaluator(object):
 	def _get_actions(self, agent_path):
 		actionss = {}
 		actions_path = os.path.join(agent_path, self.ACTIONS_FILE_NAME)
-		_file = open(actions_path)
-		_file.next()  # skip header line
-		for line in _file:
-			vals = line.split("\t")
+		_, valss = self._load_tsv_file_with_headline(actions_path)
+		for vals in valss:
 			epoch = int(vals[0])
 			actions = ast.literal_eval(vals[1])
 			actionss[epoch] = actions
 		return actionss
+
+	def _load_tsv_file_with_headline(self, path):
+		_file = open(path)
+		headline = _file.readline().split("\t")
+		vals = []
+		for line in _file:
+			if line is not "":
+				vals.append(line.split("\t"))
+		return headline, vals
 
 	def plot_paths(self, PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW):
 		path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.PATHS_OUTPUT_DIR_NAME)
@@ -91,28 +101,19 @@ class Evaluator(object):
 					self._visualize_course_of_action(worlds[epoch], init_poses[epoch], w, h, actionss[epoch], img_save_path)
 
 
-	def plot_results(self, agent_keys, sliding_mean_window_size):
-		for agent_key in agent_keys:
-			pass
-
 	def _visualize_course_of_action(self, world_state, init_pos, width, height, actions, image_save_path):
 		""" plots a course of actions beginning from a certain first state """
 		x = init_pos.x
 		y = init_pos.y
-		first_i = y - int(height/2)
-		first_j = x - int(width/2)
 		xx = np.array(x)
 		yy = np.array(y)
-
-		mid_m = int(width/2)
-		mid_n = int(height/2)
-
+		mid_m = width/2.
+		mid_n = height/2.
+		# actions to x and y coordinates
 		for ac in actions:
 			(x, y) = self._get_new_xy(x, y, ac)
 			xx = np.append(xx, x)
 			yy = np.append(yy, y)
-
-		# fig = plt.figure()
 		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
 		# plotting starting view window
 		first_win_x = np.array([xx[0] - mid_m, xx[0] - mid_m, xx[0] + mid_m, xx[0] + mid_m, xx[0] - mid_m])
@@ -128,7 +129,7 @@ class Evaluator(object):
 		plt.xticks([])
 		plt.yticks([])
 		# save and clear figure
-		plt.savefig(image_save_path)
+		plt.savefig(image_save_path, bbox_inches='tight')
 		# plt.clf()
 		plt.close()
 
@@ -144,42 +145,56 @@ class Evaluator(object):
 			x -= 1
 		return x, y
 
-	# TODO: ALTER KREMPEL VON HIERAUS, NEU MACHEN/ EINARBEITEN
-
-	def plot_results(self, names, results, epochs, window_size, params):
-		""" plot the results in a plot with two y axis, one the success-rate and the second
-		the difference between steps-taken and min-necessary steps"""
+	def plot_results(self, agent_keys, sliding_window_mean):
+		successes = []
+		stepss = []
+		names = []
+		epochs = 0
+		for agent_key in agent_keys:
+			# load results
+			agent_res_path = os.path.join(self.exp_path, self.agents_dict[agent_key], self.RESULTS_FILE_NAME)
+			epoch, success, amt_act_taken = self._load_results(agent_res_path)
+			# append results and name for later plotting
+			successes.append(success)
+			stepss.append(amt_act_taken)
+			names.append(agent_key)
+			epochs = epoch[-1]
+		# plot the results
 		fig, ax_success = plt.subplots()
 		ax_steps = ax_success.twinx()
-		title = "Training over {0} epochs (steps avg over last {1} epochs)".format(epochs, window_size)
+		title = "Training over {0} epochs (steps avg over last {1} epochs)".format(epochs, sliding_window_mean)
 		plt.title(title)
 		ax_steps.set_xlabel("epochs")
-		ax_steps.set_ylabel("steps taken - min steps")
+		ax_steps.set_ylabel("# steps taken")
 		ax_success.set_ylabel("success-rate")
 		ax_success.grid(True)
 		ax_steps.grid(True, alpha=0.3)
-		ax_success.set_xlim((window_size - 1, epochs + 1))
+		ax_success.set_xlim((sliding_window_mean - 2, epochs + 1))
 		ax_success.set_ylim((-0.02, 1.02))
+		for name, success, steps in zip(names, successes, stepss):
+			self._plot_res_one_agent(ax_success, ax_steps, success, steps, name, epochs, sliding_window_mean)
+		ax_success.legend(loc='upper right')
+		filename = "results.png"
+		filepath = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, filename)
+		plt.savefig(filepath, bbox_inches='tight')
 
-		for name, result in zip(names, results):
-			self._plot_res_one_agent(ax_success, ax_steps, result, name, window_size)
+		# save figure
 
-		ax_success.legend(loc='center right')
-		timestamp = time.strftime("%Y%m%d_%H%M%S")
-		para = "_epochs=%d" % epochs
-		for n, v in sorted(params.items()):
-			para += "_{0}={1}".format(n, v)
-		filename = "tmp/plots/" + timestamp + para + ".png"
-		plt.savefig(filename, bbox_inches='tight')
-		plt.show()
+	def _load_results(self, res_path):
+		headline, valss = self._load_tsv_file_with_headline(res_path)
+		epochs, successes, amt_act_taken = [], [], []
+		for vals in valss:
+			epochs.append(int(vals[0]))
+			successes.append(int(vals[1]))
+			amt_act_taken.append(int(vals[2]))
+		return epochs, successes, amt_act_taken
 
-	def _plot_res_one_agent(self, ax_success, ax_steps, results, name, window_size):
-		results = np.array(results)
-		step_diff = self._movingaverage(results[:, 1] - results[:, 2], window_size)
-		success = self._movingaverage(results[:, 0], window_size)
-		x = np.arange(window_size, len(results) + 1)
-		ax_success.plot(x, success, '-', label=name)
-		ax_steps.plot(x, step_diff, '--')
+	def _plot_res_one_agent(self, ax_success, ax_steps, success, steps, name, epochs, window_size):
+		np_success = self._movingaverage(np.array(success), window_size)
+		np_steps = self._movingaverage(np.array(steps), window_size)
+		x = np.arange(window_size - 1, epochs + 1)
+		ax_success.plot(x, np_success, '-', label=name)
+		ax_steps.plot(x, np_steps, ':')
 
 	def _movingaverage(self, values, window):
 		weights = np.repeat(1.0, window) / window

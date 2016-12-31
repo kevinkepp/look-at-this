@@ -9,7 +9,8 @@ from sft.log.AgentLogger import AgentLogger
 from .. import world
 from ..world import *
 
-logger = AgentLogger(__name__)
+logger = AgentLogger(__file__, __name__, world.world_logger.get_exp_log_path())
+# logger = AgentLogger(__name__)
 
 epsilon_update = sft.eps.Linear.Linear(
 	start=1,
@@ -45,8 +46,8 @@ agent = sft.agent.DeepQAgentReplayCloning.DeepQAgentReplayCloning(
 	steps_clone=25
 )
 
-reward = sft.reward.TargetMiddle.TargetMiddle(
-	reward_target=100,
+reward = sft.reward.TargetMiddleReward.TargetMiddleReward(
+	reward_target=1,
 	reward_not_target=0
 )
 

@@ -25,4 +25,5 @@ evaluator.load_epsilon()
 evaluator.load_expansive_spl_radius()
 evaluator.plot_parameters()
 
-evaluator.load_qs(SLIDING_MEAN_WINDOW)
+evaluator.load_qs()
+evaluator.plot_qs()
