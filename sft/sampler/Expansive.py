@@ -20,8 +20,9 @@ class Expansive(Sampler):
 	# TODO: talk about splbox only as big as bbox and if target at edge of bbox, then intersect is only half of bbox
 	def _get_sample_bbox(self, bbox, target_pos):
 		"""returns a new bbox from which to sample afterwards based on the current bounds and the target position"""
-		h_spl_box = self._get_side_length(self.min_sample_size.h, bbox.h)
-		w_spl_box = self._get_side_length(self.min_sample_size.w, bbox.w)
+		# sampling box is doubled to cover the whole world because we sample around target
+		h_spl_box = self._get_side_length(self.min_sample_size.h, bbox.h) * 2
+		w_spl_box = self._get_side_length(self.min_sample_size.w, bbox.w) * 2
 		# log h and w
 		self.logger.log_parameter("expansive_w_h", [w_spl_box, h_spl_box])
 		x = target_pos.x - int(w_spl_box * 0.5)
