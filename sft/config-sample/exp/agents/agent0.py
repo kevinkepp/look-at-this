@@ -49,5 +49,3 @@ reward = sft.reward.TargetMiddle.TargetMiddle(
 	reward_target=1,
 	reward_not_target=0
 )
-
-# reward = sft.reward.Simple.RewardAtTheEndForOneInTheMiddle()

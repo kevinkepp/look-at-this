@@ -1,6 +1,7 @@
 import sft.sampler.Simple
 import sft.sampler.Expansive
-import sft.sim.PathWorldGenerator
+# import sft.sim.PathWorldGenerator
+import sft.sim.SimplePathWorldGenerator
 from sft.Actions import Actions
 from sft import Size
 from sft.log.WorldLogger import WorldLogger
@@ -23,15 +24,13 @@ sampler = sft.sampler.Expansive.Expansive(
 	min_sample_size=view_size
 )
 
-world_gen = sft.sim.PathWorldGenerator.PathWorldGenerator(
+# world_gen = sft.sim.PathWorldGenerator.PathWorldGenerator(...)
+
+world_gen = sft.sim.SimplePathWorldGenerator.SimplePathWorldGenerator(
 	logger=world_logger,
 	view_size=view_size,
 	world_size=world_size,
 	sampler=sampler,
 	path_in_init_view=True,  # True: enforce path in initial view
 	target_not_in_init_view=False,  # True: enforce target not in initial view
-	# enforce simple paths consisting of one step, i.e. straight lines
-	path_length_min=1,
-	path_length_max=1,
-	path_step_length_min=max(world_size.tuple()) / 3
 )
