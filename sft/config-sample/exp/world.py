@@ -5,7 +5,7 @@ from sft.Actions import Actions
 from sft import Size
 from sft.log.WorldLogger import WorldLogger
 
-epochs = 2000
+epochs = 5000
 world_size = Size(49, 49)
 view_size = Size(7, 7)
 actions = Actions.all
@@ -28,7 +28,8 @@ world_gen = sft.sim.PathWorldGenerator.PathWorldGenerator(
 	view_size=view_size,
 	world_size=world_size,
 	sampler=sampler,
-	path_in_init_view=True,
+	path_in_init_view=True,  # True: enforce path in initial view
+	target_not_in_init_view=False,  # True: enforce target not in initial view
 	# enforce simple paths consisting of one step, i.e. straight lines
 	path_length_min=1,
 	path_length_max=1,

@@ -9,13 +9,12 @@ from sft.log.AgentLogger import AgentLogger
 from .. import world
 from ..world import *
 
-logger = AgentLogger(__file__, __name__, world.world_logger.get_exp_log_path())
-# logger = AgentLogger(__name__)
+logger = AgentLogger(__name__)
 
 epsilon_update = sft.eps.Linear.Linear(
 	start=1,
 	end=0.1,
-	steps=epochs  # anneal epsilon over all epochs
+	steps=epochs * 4/5
 )
 
 optimizer = keras.optimizers.RMSprop(
@@ -39,16 +38,16 @@ agent = sft.agent.DeepQAgentReplayCloning.DeepQAgentReplayCloning(
 	logger=logger,
 	actions=actions,
 	model=model,
-	discount=0.99,
+	discount=0.9,
 	batch_size=16,
-	buffer_size=100000,
+	buffer_size=10000,
 	start_learn=50,
 	steps_clone=25
 )
 
-reward = sft.reward.TargetMiddleReward.TargetMiddleReward(
+reward = sft.reward.TargetMiddle.TargetMiddle(
 	reward_target=1,
 	reward_not_target=0
 )
 
-# reward = sft.reward.SimpleReward.RewardAtTheEndForOneInTheMiddle()
+# reward = sft.reward.Simple.RewardAtTheEndForOneInTheMiddle()

@@ -21,6 +21,8 @@ class Evaluator(object):
 	PARAMETER_FILE_SUFFIX = ".tsv"
 
 	def __init__(self, exp_path, world_dir_name, agent_dict):
+		if not os.path.exists(exp_path):
+			raise AttributeError("Experiment path %s does not exist" % exp_path)
 		self.agents_dict = agent_dict
 		self.exp_path = exp_path
 		self.world_dir_name = world_dir_name
