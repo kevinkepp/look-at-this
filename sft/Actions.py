@@ -7,6 +7,17 @@ class Actions(object):
 	all = [UP, DOWN, LEFT, RIGHT]
 
 	@staticmethod
+	def get_opposite(action):
+		if action == Actions.UP:
+			return Actions.DOWN
+		elif action == Actions.DOWN:
+			return Actions.UP
+		elif action == Actions.LEFT:
+			return Actions.RIGHT
+		elif action == Actions.RIGHT:
+			return Actions.LEFT
+
+	@staticmethod
 	def get_one_hot(action):
 		if action == Actions.UP:
 			return [0, 1, 0, 0]

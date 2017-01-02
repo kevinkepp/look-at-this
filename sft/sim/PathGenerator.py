@@ -4,10 +4,11 @@ from sft import sample_point_within, sample_int_uniform
 
 
 class PathNode:
-	def __init__(self, id_, pos, path_id=-1):
+	def __init__(self, id_, pos, prev_dir, path_id=-1):
 		self.id = id_
 		self.path_id = path_id
 		self.pos = pos
+		self.prev_dir = prev_dir
 
 
 class PathGenerator(object):
@@ -20,16 +21,22 @@ class PathGenerator(object):
 
 	def generate_path(self, length, graph, path_id):
 		nodes = []
+		edges = []
 		# if we failed to build a path with given length we try again
 		while len(nodes) < length + 1:
 			nodes = []
-			self._generate_path(length, graph, path_id, nodes)
+			edges = []
+			self._generate_path(length, graph, path_id, nodes, edges)
+		for n in nodes:
+			graph.add_node(n)
+		for n1, n2 in edges:
+			graph.add_edge(n1, n2)
 
-	def _generate_path(self, length, graph, path_id, nodes):
+	def _generate_path(self, length, graph, path_id, nodes, edges):
 		if len(nodes) == 0:
 			# sample starting node uniformly
 			pos = sample_point_within(self.bbox)
-			node_new = PathNode(0, pos, path_id)
+			node_new = PathNode(0, pos, -1, path_id)
 		else:
 			# sample next node based on previous one
 			id_ = len(graph.nodes())
@@ -37,29 +44,31 @@ class PathGenerator(object):
 			for i in range(50):
 				# try to sample new step
 				for j in range(50):
-					pos = self.sample_step_from(self.view_size, self.bbox, nodes[-1])
+					direction, pos = self.sample_step_from(self.view_size, self.bbox, nodes[-1])
+					# if we successfully sampled new node we can exit the loop
 					if pos is not None:
 						break
 				else:  # when loop ended normally we stop building path because we can't sample new steps anymore
 					return
-				node_new = PathNode(id_, pos, path_id)
+				node_new = PathNode(id_, pos, direction, path_id)
+				# if edge to new node is not intersection other edges we can exit the loop
 				if not self.is_intersecting_any((nodes[-1], node_new), graph.edges()):
 					break
 			else:  # when loop ended normally we stop building path because we can't find node with non-intersecting edge anymore
 				return
-		# add new node to the graph
-		graph.add_node(node_new)
 		# add edge from previous node to new node
 		if len(nodes) > 0:
-			graph.add_edge(nodes[-1], node_new)
-		# recurse if length not reached
+			edges.append((nodes[-1], node_new))
 		nodes.append(node_new)
+		# recurse if length not reached
 		if length > 0:
-			self._generate_path(length - 1, graph, path_id, nodes)
+			self._generate_path(length - 1, graph, path_id, nodes, edges)
 
 	# samples a location for a new node based on a given previous node
-	def sample_step_from(self, view_size, bbox, prev_node):
-		direction = sample_int_uniform(4)
+	def sample_step_from(self, view_size, bbox, prev_node, allow_opp_dir=False):
+		direction = -1
+		while direction == -1 or (not allow_opp_dir and direction == Actions.get_opposite(prev_node.prev_dir)):
+			direction = sample_int_uniform(4)
 		step = Point(0, 0)
 		step_size_min = max(min(view_size.tuple()) / 2., 2) if self.step_size_min == -1 else self.step_size_min
 		if direction == Actions.UP:
@@ -79,10 +88,10 @@ class PathGenerator(object):
 		step_size_diff = step_size_max - step_size_min
 		# check if step not possible
 		if step_size_diff <= 1:
-			return None
+			return None, None
 		step_size = sample_int_normal_bounded(step_size_min, step_size_max)
 		step *= step_size
-		return prev_node.pos + step
+		return direction, prev_node.pos + step
 
 	def is_intersecting_any(self, edge_new, edges):
 		for e in edges:
