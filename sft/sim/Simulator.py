@@ -1,4 +1,4 @@
-from sft import Point, Size, Rectangle, normalize, get_bbox
+from sft import Point, Size, Rectangle, normalize, get_agent_bbox
 from sft.Actions import Actions
 
 
@@ -17,7 +17,7 @@ class Simulator(object):
 	def initialize(self, world, pos):
 		normalize(world)
 		self.world_size = Size(world.shape)
-		self.bbox = get_bbox(self.world_size, self.view_size)
+		self.bbox = get_agent_bbox(self.world_size, self.view_size)
 		self.world_image = world
 		self.view_pos = pos
 		self.update_view_image()

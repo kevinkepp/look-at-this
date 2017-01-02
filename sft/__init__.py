@@ -52,7 +52,7 @@ class Point:
 		return NotImplemented
 
 	def __str__(self):
-		return "Point(x={0},y={1})".format(self.x, self.y)
+		return "({0},{1})".format(self.x, self.y)
 
 	def __eq__(self, other):
 		if isinstance(other, self.__class__):
@@ -110,7 +110,7 @@ class Size:
 		return self.w, self.h
 
 	def __str__(self):
-		return "Size(w={0},h={1})".format(self.w, self.h)
+		return "({0},{1})".format(self.w, self.h)
 
 	def __eq__(self, other):
 		if isinstance(other, self.__class__):
@@ -173,10 +173,20 @@ def normalize(arr):
 		arr /= diff
 
 
-def get_bbox(world_size, view_size):
-	border = Point(view_size.w + 1, view_size.h + 1)
+def _get_bbox(world_size, view_size, factor):
+	x = int(view_size.w * factor + 1)
+	y = int(view_size.h * factor + 1)
+	border = Point(x, y)
 	size = Size(world_size.w - 2 * border.x, world_size.h - 2 * border.y)
 	return Rectangle(border, size)
+
+
+def get_path_bbox(world_size, view_size):
+	return _get_bbox(world_size, view_size, 2)
+
+
+def get_agent_bbox(world_size, view_size):
+	return _get_bbox(world_size, view_size, 0.5)
 
 
 def sample_int_uniform(low, high=None):
@@ -196,9 +206,9 @@ def sample_int_normal_bounded(low, high, mean=-1, std=-1):
 	if std <= 0:
 		return mean
 	while True:
-		rnd = sample_int_normal(mean, std)
-		if low <= rnd <= high:
-			return rnd
+		res = sample_int_normal(mean, std)
+		if low <= res <= high:
+			return res
 
 
 def sample_point_within(rect):
