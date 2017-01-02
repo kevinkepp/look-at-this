@@ -1,4 +1,4 @@
-from Actions import Actions
+from sft.Actions import Actions
 from sft import Point, sample_int_normal_bounded
 from sft import sample_point_within, sample_int_uniform
 
