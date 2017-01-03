@@ -28,7 +28,7 @@ class DeepQAgentReplayCloning(DeepQAgentReplay):
 		# increment step count for model cloning
 		self.steps_clone_count += 1
 		if self.steps_clone_count == self.steps_clone:
-			self.logger.log_message("Clone model")
+			# self.logger.log_message("Clone model")
 			# transfer weights from current model to cloned one
 			self.model_cloned.copy_from(self.model)
 			self.steps_clone_count = 0
