@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+## This project
+.idea
+tmp/
+*.cprof
+testarea.py
+config/
