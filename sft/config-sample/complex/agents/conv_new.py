@@ -1,6 +1,6 @@
 import keras.optimizers
 from keras.engine import Merge
-from keras.layers import Dense, Activation, Flatten, Convolution2D
+from keras.layers import Dense, Flatten, Convolution2D
 from keras.models import Sequential
 
 import sft.eps.Linear
@@ -8,8 +8,8 @@ import sft.agent.DeepQAgentReplayCloning
 import sft.agent.model.KerasMlpModelNew
 import sft.reward.TargetMiddle
 from sft.log.AgentLogger import AgentLogger
-from sft.config.complex import world
-from sft.config.complex.world import *
+from .. import world
+from ..world import *
 
 logger = AgentLogger(__name__)
 

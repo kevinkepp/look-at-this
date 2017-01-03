@@ -1,6 +1,6 @@
 import keras.optimizers
 from keras.engine import Merge
-from keras.layers import Dense, Activation, Flatten
+from keras.layers import Dense, Flatten
 from keras.models import Sequential
 
 import sft.eps.Linear
@@ -8,8 +8,8 @@ import sft.agent.DeepQAgentReplayCloning
 import sft.agent.model.KerasMlpModelNew
 import sft.reward.TargetMiddle
 from sft.log.AgentLogger import AgentLogger
-from sft.config.complex import world
-from sft.config.complex.world import *
+from .. import world
+from ..world import *
 
 logger = AgentLogger(__name__)
 
@@ -32,7 +32,7 @@ model = sft.agent.model.KerasMlpModelNew.KerasMlpModelNew(
 	logger=logger,
 	layers=[
 		Merge([model_view, model_actions], mode='concat', concat_axis=1),
-		Dense(16, init= 'lecun_uniform', activation='relu'),
+		Dense(16, init='lecun_uniform', activation='relu'),
 		Dense(nb_actions, init='lecun_uniform', activation='linear')
 	],
 	loss='mse',

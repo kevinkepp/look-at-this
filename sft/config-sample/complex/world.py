@@ -1,4 +1,3 @@
-import sft.sampler.Simple
 import sft.sampler.Expansive
 import sft.sim.PathWorldGenerator
 from sft.Actions import Actions

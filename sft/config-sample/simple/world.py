@@ -1,6 +1,4 @@
-import sft.sampler.Simple
 import sft.sampler.Expansive
-# import sft.sim.PathWorldGenerator
 import sft.sim.SimplePathWorldGenerator
 from sft.Actions import Actions
 from sft import Size
@@ -16,15 +14,11 @@ action_hist_len = 4
 
 world_logger = WorldLogger(__name__)
 
-# sampler = sft.sampler.Simple.Simple()
-
 sampler = sft.sampler.Expansive.Expansive(
 	logger=world_logger,
 	epochs_until_max=epochs / 2,
 	min_sample_size=view_size
 )
-
-# world_gen = sft.sim.PathWorldGenerator.PathWorldGenerator(...)
 
 world_gen = sft.sim.SimplePathWorldGenerator.SimplePathWorldGenerator(
 	logger=world_logger,

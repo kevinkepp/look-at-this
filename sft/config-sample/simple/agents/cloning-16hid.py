@@ -1,5 +1,5 @@
 import keras.optimizers
-from keras.layers import Dense, Activation
+from keras.layers import Dense
 
 import sft.eps.Linear
 import sft.agent.DeepQAgentReplayCloning
@@ -25,10 +25,8 @@ _model_input_size = view_size.w * view_size.h + action_hist_len * nb_actions
 model = sft.agent.model.KerasMlpModel.KerasMlpModel(
 	logger=logger,
 	layers=[
-		Dense(input_shape=(_model_input_size,), output_dim=16, init='lecun_uniform'),
-		Activation('relu'),
-		Dense(output_dim=nb_actions, init='lecun_uniform'),
-		Activation('linear')
+		Dense(input_shape=(_model_input_size,), output_dim=16, init='lecun_uniform', activation='relu'),
+		Dense(output_dim=nb_actions, init='lecun_uniform', activation='linear')
 	],
 	loss='mse',
 	optimizer=optimizer
