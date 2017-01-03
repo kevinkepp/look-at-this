@@ -58,10 +58,10 @@ class Trainer(object):
 			scenario = scenarios[n]
 			success, hist = self.run_epoch(config, sim, n, scenario)
 			logger.log_results(hist, success)
-			# if n % (epochs / 100) == 0:
-			print("{0} - Epoch {1} - Success: {2}".format(config.__name__, n, success))
+			logger.log_message("{0} - Epoch {1} - Success: {2}".format(config.__name__, n, success))
 			logger.next_epoch()
 		logger.log_model(config.model)
+		logger.log_message("{0} - Finished training".format(config.__name__))
 
 	def run_epoch(self, config, sim, epoch, scenario):
 		"""Run training episode with given initial scenario"""

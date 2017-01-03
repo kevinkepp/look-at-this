@@ -54,6 +54,7 @@ class BaseLogger(object):
 			self.file_messages = self.open_file(path)
 			self.file_messages.write(self._create_line_for_msg_logfile("created this logfile"))
 		self.file_messages.write(self._create_line_for_msg_logfile(message))
+		print(message)
 
 	def _create_line_for_msg_logfile(self, message):
 		""" adds timestamp, tab and succeeding newline operator"""

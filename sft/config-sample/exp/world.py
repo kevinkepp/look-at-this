@@ -32,5 +32,5 @@ world_gen = sft.sim.SimplePathWorldGenerator.SimplePathWorldGenerator(
 	world_size=world_size,
 	sampler=sampler,
 	path_in_init_view=True,  # True: enforce path in initial view
-	target_not_in_init_view=False,  # True: enforce target not in initial view
+	target_not_in_init_view=False  # True: enforce target not in initial view
 )
