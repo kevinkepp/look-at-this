@@ -20,3 +20,6 @@ class State:
 		states = [s.flatten() for s in states]
 		states = [s.reshape(s.size) for s in states]
 		return np.matrix(states)
+
+	def to_list(self):
+		return [self.view, self.actions]

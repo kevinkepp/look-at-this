@@ -2,11 +2,10 @@ from sft.eval.Evaluator import Evaluator
 import os
 
 LOG_PATH = "tmp/logs"
-EXPERIMENT = "20161229-174200_exp_cloning_vs_no-cloning_2000_samples"
+EXPERIMENT = "20170103-120628_exp_conv_5000"
 WORLD_DIR = "world"
 AGENTS_DICT = {
-	"Cloning" : "cloning",
-	"No cloning": "no-cloning"
+	"ConvAgent": "conv",
 }
 
 # results
