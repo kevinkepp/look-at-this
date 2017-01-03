@@ -1,4 +1,4 @@
-from sim.PathWorldGenerator import PathWorldGenerator
+from sft.sim.PathWorldGenerator import PathWorldGenerator
 
 
 class SimplePathWorldGenerator(PathWorldGenerator):
