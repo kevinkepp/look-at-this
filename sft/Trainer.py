@@ -58,7 +58,7 @@ class Trainer(object):
 			scenario = scenarios[n]
 			success, hist = self.run_epoch(config, sim, n, scenario)
 			logger.log_results(hist, success)
-			logger.log_message("{0} - Epoch {1} - Success: {2}".format(config.__name__, n, success))
+			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(hist)))
 			logger.next_epoch()
 		logger.log_model(config.model)
 		logger.log_message("{0} - Finished training".format(config.__name__))
