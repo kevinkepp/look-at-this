@@ -33,6 +33,17 @@ class DeepQAgentReplayCloning(DeepQAgentReplay):
 			# transfer weights from current model to cloned one
 			self.model_cloned.copy_from(self.model)
 			self.steps_clone_count = 0
+		""" check if weights of model and model_cloned are actually different (they are)
+		if self.steps_clone_count == self.steps_clone - 1:
+			w_cloned = self.model_cloned._model.get_weights()
+			w_org = self.model._model.get_weights()
+			d = np.zeros(4)
+			for i in range(len(w_cloned)):
+				w = w_cloned[i] - w_org[i]
+				d[i] = np.sum(w)
+			d = np.sum(np.abs(d))
+			print(d)
+		"""
 
 	def _get_target(self, old_state, action, new_state, reward):
 		# re-predict qs values for old state from current model
