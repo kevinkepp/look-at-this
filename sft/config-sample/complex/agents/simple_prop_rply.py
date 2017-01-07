@@ -2,6 +2,7 @@ import keras.optimizers
 from keras.engine import Merge
 from keras.layers import Dense, Flatten
 from keras.models import Sequential
+from keras.regularizers import l2
 
 import sft.eps.Linear
 import sft.agent.DeepQAgentPosPathReplay
@@ -23,6 +24,8 @@ optimizer = keras.optimizers.RMSprop(
 	lr=0.00025  # learning rate
 )
 
+regularization = 0.01
+
 # just flatten view and action and then merge
 model_view = Sequential()
 model_view.add(Flatten(input_shape=(1, view_size.w, view_size.h)))
@@ -32,8 +35,8 @@ model = sft.agent.model.KerasMlpModelNew.KerasMlpModelNew(
 	logger=logger,
 	layers=[
 		Merge([model_view, model_actions], mode='concat', concat_axis=1),
-		Dense(16, init='lecun_uniform', activation='relu'),
-		Dense(nb_actions, init='lecun_uniform', activation='linear')
+		Dense(16, init='lecun_uniform', activation='relu', W_regularizer=l2(regularization)),
+		Dense(nb_actions, init='lecun_uniform', activation='linear', W_regularizer=l2(regularization))
 	],
 	loss='mse',
 	optimizer=optimizer

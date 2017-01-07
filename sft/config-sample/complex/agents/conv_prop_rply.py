@@ -2,6 +2,7 @@ import keras.optimizers
 from keras.engine import Merge
 from keras.layers import Dense, Flatten, Convolution2D
 from keras.models import Sequential
+from keras.regularizers import l2
 
 import sft.eps.Linear
 import sft.agent.DeepQAgentPosPathReplay
@@ -23,9 +24,11 @@ optimizer = keras.optimizers.RMSprop(
 	lr=0.00025  # learning rate
 )
 
+regularization = 0.01
+
 # convolution on view and flatten actions
 model_view = Sequential()
-model_view.add(Convolution2D(16, 3, 3, activation='relu', border_mode='same', input_shape=(1, view_size.w, view_size.h)))
+model_view.add(Convolution2D(16, 3, 3, W_regularizer=l2(regularization), activation='relu', border_mode='same', input_shape=(1, view_size.w, view_size.h)))
 model_view.add(Flatten())
 model_actions = Sequential()
 model_actions.add(Flatten(input_shape=(1, action_hist_len, nb_actions)))
@@ -33,8 +36,8 @@ model = sft.agent.model.KerasMlpModelNew.KerasMlpModelNew(
 	logger=logger,
 	layers=[
 		Merge([model_view, model_actions], mode='concat', concat_axis=1),
-		Dense(32, activation='relu'),
-		Dense(nb_actions, activation='linear')
+		Dense(32, activation='relu', W_regularizer=l2(regularization)),
+		Dense(nb_actions, activation='linear', W_regularizer=l2(regularization))
 	],
 	loss='mse',
 	optimizer=optimizer
