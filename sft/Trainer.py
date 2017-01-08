@@ -54,6 +54,7 @@ class Trainer(object):
 			config.sampler.next_epoch()
 			config.world_logger.log_init_state_and_world(scenario.world, scenario.pos)
 			config.world_logger.next_epoch()
+			config.sampler.next_epoch()
 		return scenarios
 
 	def run_agent(self, config, scenarios):

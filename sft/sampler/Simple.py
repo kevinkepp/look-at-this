@@ -6,3 +6,6 @@ class Simple(Sampler):
 
 	def sample_init_pos(self, bbox, target_pos):
 		return sample_point_within(bbox)
+
+	def next_epoch(self):
+		pass
