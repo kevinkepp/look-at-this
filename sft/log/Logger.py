@@ -20,7 +20,7 @@ class BaseLogger(object):
 		self.file_messages = None  # file for log the general messages
 
 	def open_file(self, path):
-		_file = open(path, 'w')
+		_file = open(path, 'w', buffering=1024*1024)
 		self.open_files[path] = _file
 		return _file
 
