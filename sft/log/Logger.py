@@ -65,6 +65,7 @@ class BaseLogger(object):
 			_file.flush()
 
 	def close_files(self):
+		self.flush_files()
 		for _, _file in self.open_files.items():
 			_file.close()
 		self.open_files.clear()

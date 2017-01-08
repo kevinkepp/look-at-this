@@ -29,6 +29,7 @@ class Trainer(object):
 		else:
 			for agent in agent_configs:
 				self.run_agent(agent, scenarios)
+		world_config.world_logger.close_files()
 
 	def get_configs(self, experiment):
 		world_config = import_module("." + self.WORLD_CONFIG_NAME, experiment.__name__)
@@ -62,6 +63,7 @@ class Trainer(object):
 			logger.next_epoch()
 		logger.log_model(config.model)
 		logger.log_message("{0} - Finished training".format(config.__name__))
+		logger.close_files()
 
 	def run_epoch(self, config, sim, epoch, scenario):
 		"""Run training episode with given initial scenario"""
