@@ -35,8 +35,8 @@ model = sft.agent.model.KerasMlpModelNew.KerasMlpModelNew(
 	logger=logger,
 	layers=[
 		Merge([model_view, model_actions], mode='concat', concat_axis=1),
-		Dense(16, init='lecun_uniform', activation='relu', W_regularizer=l2(regularization)),
-		Dense(nb_actions, init='lecun_uniform', activation='linear', W_regularizer=l2(regularization))
+		Dense(16, init='lecun_uniform', activation='relu'),
+		Dense(nb_actions, init='lecun_uniform', activation='linear')
 	],
 	loss='mse',
 	optimizer=optimizer
