@@ -42,7 +42,7 @@ class PathWorldGenerator(ScenarioGenerator):
 		graph = nx.Graph()
 		self.init_path(world, graph)
 		target_pos = self.init_target(world, graph)
-		world = np.array(world, np.float32)
+		world = np.array(world, np.float)
 		# normalize world image to [0, 1]
 		normalize(world)
 		return world, target_pos
