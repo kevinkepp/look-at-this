@@ -17,11 +17,12 @@ class DeepQAgentReplayCloning(DeepQAgentReplay):
 	# buffer size: size of experience pool from which minibatches are randomly sampled
 	# start_learn: after how many experiences (buffer size) we start learning based on experiences
 	# steps_clone: number of steps we clone the network after
-	def __init__(self, logger, actions, discount, model, batch_size, buffer_size, start_learn, steps_clone):
-		super(DeepQAgentReplayCloning, self).__init__(logger, actions, discount, model, batch_size, buffer_size, start_learn)
+	def __init__(self, logger, actions, discount, model, batch_size, buffer_size, start_learn, steps_clone, learn_steps):
+		super(DeepQAgentReplayCloning, self).__init__(logger, actions, discount, model, batch_size, buffer_size, start_learn,
+													  learn_steps)
 		self.steps_clone = steps_clone
 		self.steps_clone_count = 0
-		self.model_cloned = copy.deepcopy(model)
+		self.model_cloned = model.clone()
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
 		super(DeepQAgentReplayCloning, self).incorporate_reward(old_state, action, new_state, reward)
@@ -32,9 +33,6 @@ class DeepQAgentReplayCloning(DeepQAgentReplay):
 			# transfer weights from current model to cloned one
 			self.model_cloned.copy_from(self.model)
 			self.steps_clone_count = 0
-		if self.steps_clone_count == 1:
-			# TODO check if weights of model and model_cloned are actually different
-			pass
 
 	def _get_target(self, old_state, action, new_state, reward):
 		# re-predict qs values for old state from current model

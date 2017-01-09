@@ -15,11 +15,13 @@ class DeepQAgentReplay(DeepQAgent):
 	# model: estimator for q values
 	# batch size: size of minibatches for experience replay (see doi:10.1038/nature14236)
 	# buffer size: size of experience pool from which minibatches are randomly sampled
-	def __init__(self, logger, actions, discount, model, batch_size, buffer_size, start_learn):
+	def __init__(self, logger, actions, discount, model, batch_size, buffer_size, start_learn, learn_steps):
 		super(DeepQAgentReplay, self).__init__(logger, actions, discount, model)
 		self.batch_size = batch_size
 		self.buffer = max(buffer_size, batch_size)  # buffer has to be at least batch_size
 		self.start_learn = start_learn
+		self.learn_steps = learn_steps
+		self.steps = 0
 		self.replay = []
 		self.h = 0
 
@@ -28,9 +30,12 @@ class DeepQAgentReplay(DeepQAgent):
 		# self.logger.log_parameter("reward", reward)
 		exp_new = (old_state, action, new_state, reward)
 		self._update_replay_list(exp_new)
-		if len(self.replay) >= self.start_learn:
+		if len(self.replay) >= self.start_learn and self.steps % self.learn_steps == 0:
 			mini_batch = random.sample(self.replay, self.batch_size)
 			self._update_model(mini_batch)
+			self.steps = 1
+		else:
+			self.steps += 1
 
 	def _update_replay_list(self, exp_new):
 		""" used to update the replay list with new experiences """
