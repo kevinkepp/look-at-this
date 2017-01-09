@@ -38,7 +38,7 @@ class PathWorldGenerator(ScenarioGenerator):
 		return Scenario(world, view_pos)
 
 	def init_world(self):
-		world = np.full(self.world_size.tuple(), 0., dtype=np.float)
+		world = np.full(self.world_size.tuple(), 0., dtype=np.float32)
 		graph = nx.Graph()
 		self.init_path(world, graph)
 		target_pos = self.init_target(world, graph)

@@ -103,7 +103,7 @@ class Trainer(object):
 			return -1
 
 	def get_state(self, view, action_hist, state_action_hist_len):
-		actions = np.zeros([state_action_hist_len, len(Actions.all)])
+		actions = np.zeros([state_action_hist_len, len(Actions.all)], dtype=np.float32)
 		# take last n actions, this will be smaller or empty if there are not enough actions
 		last_actions = action_hist[-state_action_hist_len:] if state_action_hist_len > 0 else []
 		for i in range(len(last_actions)):
