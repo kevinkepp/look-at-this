@@ -14,7 +14,6 @@ class Expansive(Sampler):
 	def sample_init_pos(self, bbox, target_pos):
 		"""samples the initial position based on a bounding box and the targets position"""
 		spl_box = self._get_sample_bbox(bbox, target_pos)
-		self.epoch += 1
 		return sample_point_within(spl_box)
 
 	# TODO: talk about splbox only as big as bbox and if target at edge of bbox, then intersect is only half of bbox
@@ -42,3 +41,6 @@ class Expansive(Sampler):
 			return int(l + side_length_min)
 		else:
 			return int(side_length_max)
+
+	def next_epoch(self):
+		self.epoch += 1
