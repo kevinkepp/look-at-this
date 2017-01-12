@@ -16,7 +16,7 @@ logger = AgentLogger(__name__)
 epsilon_update = sft.eps.Linear.Linear(
 	start=1,
 	end=0.1,
-	steps=epochs * 3/5
+	steps=epochs * 4/5
 )
 
 optimizer = keras.optimizers.RMSprop(
@@ -45,7 +45,7 @@ agent = sft.agent.DeepQAgentReplayCloning.DeepQAgentReplayCloning(
 	model=model,
 	discount=0.9,
 	batch_size=16,
-	buffer_size=100000,
+	buffer_size=10000,
 	start_learn=50,
 	steps_clone=25
 )
