@@ -4,6 +4,9 @@ from importlib import import_module
 
 import numpy as np
 import threading
+import time
+import random
+import sys
 
 from sft.Actions import Actions
 from sft.State import State
@@ -15,6 +18,7 @@ class Trainer(object):
 	AGENT_CONFIG_NAME_DIR = "agents"
 
 	def run(self, experiment, threaded=False):
+		self.set_seed()
 		world_config, agent_configs = self.get_configs(experiment)
 		scenarios = self.init_scenarios(world_config)
 		if threaded:
@@ -56,14 +60,16 @@ class Trainer(object):
 		logger = config.logger
 		logger.log_message("{0} - Start training over {1} epochs".format(config.__name__, config.epochs))
 		sim = Simulator(config.view_size)
+		time_start = time.time()
 		for n in range(config.epochs):
 			scenario = scenarios[n]
 			success, hist = self.run_epoch(config, sim, n, scenario)
 			logger.log_results(hist, success)
 			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(hist)))
 			logger.next_epoch()
+		time_diff = time.time() - time_start
 		logger.log_model(config.model)
-		logger.log_message("{0} - Finished training".format(config.__name__))
+		logger.log_message("{0} - Finished training, took {1} seconds".format(config.__name__, time_diff))
 		logger.close_files()
 
 	def run_epoch(self, config, sim, epoch, scenario):
@@ -110,3 +116,9 @@ class Trainer(object):
 			action = last_actions[i]
 			actions[i] = Actions.get_one_hot(action)
 		return State(view, actions)
+
+	def set_seed(self):
+		# set randomly generated random seed for comparability of agents run in this execution
+		# while maintain the generation of different paths and agent behaviour for different executions
+		seed = random.randint(0, sys.maxint)
+		random.seed(seed)
