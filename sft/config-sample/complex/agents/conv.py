@@ -1,11 +1,9 @@
 import keras.optimizers
-from keras.engine import Merge
 from keras.layers import Dense, Flatten, Convolution2D
-from keras.models import Sequential
 
 import sft.eps.Linear
 import sft.agent.DeepQAgentReplayCloning
-import sft.agent.model.KerasMlpModelNew
+import sft.agent.model.KerasConvModel
 import sft.reward.TargetMiddle
 from sft.log.AgentLogger import AgentLogger
 from .. import world
@@ -23,16 +21,13 @@ optimizer = keras.optimizers.RMSprop(
 	lr=0.00025  # learning rate
 )
 
-# convolution on view and flatten actions
-model_view = Sequential()
-model_view.add(Convolution2D(16, 3, 3, activation='relu', border_mode='same', input_shape=(1, view_size.w, view_size.h)))
-model_view.add(Flatten())
-model_actions = Sequential()
-model_actions.add(Flatten(input_shape=(1, action_hist_len, nb_actions)))
-model = sft.agent.model.KerasMlpModelNew.KerasMlpModelNew(
+_model_input_size = view_size.w * view_size.h + action_hist_len * nb_actions
+model = sft.agent.model.KerasConvModel.KerasConvModel(
 	logger=logger,
 	layers=[
-		Merge([model_view, model_actions], mode='concat', concat_axis=1),
+		# ignore action history for now
+		Convolution2D(16, 3, 3, activation='relu', border_mode='same', input_shape=(1, view_size.w, view_size.h)),
+		Flatten(),
 		Dense(32, activation='relu'),
 		Dense(nb_actions, activation='linear')
 	],
