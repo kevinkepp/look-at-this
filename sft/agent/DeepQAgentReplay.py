@@ -31,11 +31,15 @@ class DeepQAgentReplay(DeepQAgent):
 		exp_new = (old_state, action, new_state, reward)
 		self._update_replay_list(exp_new)
 		if len(self.replay) >= self.start_learn and self.steps % self.learn_steps == 0:
-			mini_batch = random.sample(self.replay, self.batch_size)
+			mini_batch = self._get_mini_batch()
 			self._update_model(mini_batch)
 			self.steps = 1
 		else:
 			self.steps += 1
+
+	def _get_mini_batch(self):
+		""" used to sample a mini-batch from the replay list """
+		return random.sample(self.replay, self.batch_size)
 
 	def _update_replay_list(self, exp_new):
 		""" used to update the replay list with new experiences """

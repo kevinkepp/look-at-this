@@ -7,3 +7,7 @@ class Sampler(object):
 	@abstractmethod
 	def sample_init_pos(self, bbox, target_pos):
 		pass
+
+	@abstractmethod
+	def next_epoch(self):
+		pass

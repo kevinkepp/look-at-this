@@ -54,6 +54,7 @@ class Trainer(object):
 			config.sampler.next_epoch()
 			config.world_logger.log_init_state_and_world(scenario.world, scenario.pos)
 			config.world_logger.next_epoch()
+			config.sampler.next_epoch()
 		return scenarios
 
 	def run_agent(self, config, scenarios):
@@ -78,6 +79,7 @@ class Trainer(object):
 		eps = config.epsilon_update.get_value(epoch)
 		config.logger.log_parameter("epsilon", eps)
 		hist = []
+		config.agent.new_episode()
 		while len(hist) < config.max_steps:
 			# result is 1 for on target, 0 for oob and -1 for non-terminal
 			res = self.run_step(hist, sim, config.action_hist_len, config.agent, config.reward, eps)
@@ -109,7 +111,7 @@ class Trainer(object):
 			return -1
 
 	def get_state(self, view, action_hist, state_action_hist_len):
-		actions = np.zeros([state_action_hist_len, len(Actions.all)], dtype=np.float32)
+		actions = np.zeros([state_action_hist_len, len(Actions.all)])
 		# take last n actions, this will be smaller or empty if there are not enough actions
 		last_actions = action_hist[-state_action_hist_len:] if state_action_hist_len > 0 else []
 		for i in range(len(last_actions)):
