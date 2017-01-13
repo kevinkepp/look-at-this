@@ -39,7 +39,6 @@ model = sft.agent.model.LasagneMlpModel.LasagneMlpModel(
 	batch_size=batch_size,
 	discount=0.9,
 	actions=actions,
-	learning_rate=0.001,
 	view_size=world.view_size,
 	action_hist_size=action_hist_size,
 	network_input_view=net_views_in,

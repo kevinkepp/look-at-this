@@ -56,12 +56,11 @@ class SharedState(object):
 
 
 class LasagneMlpModel(object):
-	def __init__(self, logger, batch_size, discount, actions, learning_rate, view_size, action_hist_size,
+	def __init__(self, logger, batch_size, discount, actions, view_size, action_hist_size,
 				 network_input_view, network_input_actions, network_output, optimizer):
 		self.logger = logger
 		self.discount = discount
 		self.actions = actions
-		self.learning_rate = learning_rate
 		self.view_size = view_size
 		self.action_hist_size = action_hist_size
 		self.net_in_view = network_input_view
