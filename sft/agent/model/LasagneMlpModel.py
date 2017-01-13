@@ -92,8 +92,8 @@ class LasagneMlpModel(object):
 				 self.discount * T.max(next_q_vals, axis=1, keepdims=True)
 		output = (q_vals * actionmask).sum(axis=1).reshape((-1, 1))
 		diff = target - output
-		loss = 0.5 * diff ** 2  # no clipping
-		loss = T.sum(loss)  # batch accumulator == 'sum'
+		loss = diff ** 2  # TODO error clipping
+		loss = T.mean(loss)  # batch accumulator sum or mean
 
 		# build train function
 		params = lasagne.layers.helper.get_all_params(self.net_out)
