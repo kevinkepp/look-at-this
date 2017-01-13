@@ -141,6 +141,9 @@ class Evaluator(object):
 		for agent_key in agent_keys:
 			agent_dir = self.agents_dict[agent_key]
 			plot_path = os.path.join(path, agent_dir)
+			if not os.path.exists(plot_path):
+				print("Agent directory {0} not found".format(agent_dir))
+				continue
 			self._create_folder(plot_path)  # create path plot folder for each agent
 			action_path = os.path.join(self.exp_path, agent_dir)
 			actionss = self._get_actions(action_path)
