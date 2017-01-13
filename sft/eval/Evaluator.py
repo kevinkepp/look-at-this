@@ -140,12 +140,12 @@ class Evaluator(object):
 		agent_keys = self.agents_dict.keys()
 		for agent_key in agent_keys:
 			agent_dir = self.agents_dict[agent_key]
-			plot_path = os.path.join(path, agent_dir)
-			if not os.path.exists(plot_path):
+			action_path = os.path.join(self.exp_path, agent_dir)
+			if not os.path.exists(action_path):
 				print("Agent directory {0} not found".format(agent_dir))
 				continue
+			plot_path = os.path.join(path, agent_dir)
 			self._create_folder(plot_path)  # create path plot folder for each agent
-			action_path = os.path.join(self.exp_path, agent_dir)
 			actionss = self._get_actions(action_path)
 			for epoch in actionss.keys():
 				if epoch % PLOT_EVERY_KTH_EPOCH < NUM_PLOT_PATHS_IN_ROW:
