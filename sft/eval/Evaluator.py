@@ -1,10 +1,12 @@
 from __future__ import division
 import os, time, cv2, ast, imp
-from matplotlib import pyplot as plt
 import numpy as np
 from sft.Actions import Actions
 from sft import Point, Size
 
+from matplotlib import gridspec
+from matplotlib.ticker import MultipleLocator
+from matplotlib import pyplot as plt
 
 class Evaluator(object):
 	"""visualizes the results, paths and parameters"""
@@ -87,17 +89,35 @@ class Evaluator(object):
 				vals.append(line.split("\t"))
 		return headline, vals
 
+	def _get_q_values(self, path):
+		_, vals = self._load_tsv_file_with_headline(path)
+		qs = self._extract_qs_from_tsv_format(vals)
+		epochs = np.array(vals)[:, 0]
+		cur_epoch = 0
+		i_last_epoch = 0
+		q_dict = {}
+		for i in range(len(epochs)):
+			if epochs[i] != cur_epoch or i == len(epochs) - 1 :
+				q_dict[int(cur_epoch)] = qs[i_last_epoch:i, :]
+				cur_epoch = epochs[i]
+				i_last_epoch = i
+		return q_dict
+
+	def _extract_qs_from_tsv_format(self, vals):
+		qs = np.zeros([len(vals), 4])
+		for i in range(len(vals)):
+			v = vals[i][1]
+			v = v.strip("[[").strip("]]\n").split(" ")
+			v = filter(None, v)  # deletes empty strings, which are in there due to split
+			for j in range(4):
+				qs[i, j] = float(v[j])
+		return qs
+
 	def plot_qs(self, agent_keys, q_file):
 		for agent_key in agent_keys:
 			agent_qs_path = os.path.join(self.exp_path, self.agents_dict[agent_key], self.PARAMETER_LOG_FOLDER, q_file)
 			_, vals = self._load_tsv_file_with_headline(agent_qs_path)
-			qs = np.zeros([len(vals), 4])
-			for i in range(len(vals)):
-				v = vals[i][1]
-				v = v.strip("[[").strip("]]\n").split(" ")
-				v = filter(None, v)  # deletes empty strings, which are in there due to split
-				for j in range(4):
-					qs[i, j] = float(v[j])
+			qs = self._extract_qs_from_tsv_format(vals)
 			# plot
 			qs_max = np.max(qs, axis=1)
 			qs_min = np.min(qs, axis=1)
@@ -133,28 +153,33 @@ class Evaluator(object):
 			plt.close()
 
 
-	def plot_paths(self, PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW):
+	def plot_paths(self, PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW, q_file_name, text_every_kth):
 		path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.PATHS_OUTPUT_DIR_NAME)
 		self._create_folder(path)  # create overall path-plot-folder
 		worlds, init_poses = self._get_all_worlds_and_init_states()
 		agent_keys = self.agents_dict.keys()
 		for agent_key in agent_keys:
 			agent_dir = self.agents_dict[agent_key]
-			action_path = os.path.join(self.exp_path, agent_dir)
-			if not os.path.exists(action_path):
+			agent_log_path = os.path.join(self.exp_path, agent_dir)
+			if not os.path.exists(agent_log_path):
 				print("Agent directory {0} not found".format(agent_dir))
 				continue
+			# get corresponding q-values
+			q_file_path = os.path.join(agent_log_path, self.PARAMETER_LOG_FOLDER, q_file_name)
+			qs_dict = self._get_q_values(q_file_path)
+			# plotting
 			plot_path = os.path.join(path, agent_dir)
 			self._create_folder(plot_path)  # create path plot folder for each agent
-			actionss = self._get_actions(action_path)
+			actionss = self._get_actions(agent_log_path)
 			for epoch in actionss.keys():
 				if epoch % PLOT_EVERY_KTH_EPOCH < NUM_PLOT_PATHS_IN_ROW:
+					qs_of_epoch = qs_dict[epoch]
 					w, h = self.view_size.w, self.view_size.h
 					img_save_path = os.path.join(plot_path, str(epoch).zfill(5) + ".png")
-					self._visualize_course_of_action(worlds[epoch], init_poses[epoch], w, h, actionss[epoch], img_save_path)
+					self._visualize_course_of_action(worlds[epoch], init_poses[epoch], w, h, actionss[epoch], img_save_path, qs_of_epoch, text_every_kth)
 
 
-	def _visualize_course_of_action(self, world_state, init_pos, width, height, actions, image_save_path):
+	def _visualize_course_of_action(self, world_state, init_pos, width, height, actions, image_save_path, qs, text_every_kth):
 		""" plots a course of actions beginning from a certain first state """
 		x = init_pos.x
 		y = init_pos.y
@@ -167,7 +192,13 @@ class Evaluator(object):
 			(x, y) = self._get_new_xy(x, y, ac)
 			xx = np.append(xx, x)
 			yy = np.append(yy, y)
-		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
+		# ratio stuff
+		plt.figure(figsize=(16, 12))
+		gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1], width_ratios=[1,1])
+		# path plot
+		plt.subplot(gs[0])
+		plt.plot(xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')  # plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
+		self._plot_actions(xx, yy, text_every_kth)
 		# plotting starting view window
 		first_win_x = np.array([xx[0] - mid_m, xx[0] - mid_m, xx[0] + mid_m, xx[0] + mid_m, xx[0] - mid_m])
 		first_win_y = np.array([yy[0] - mid_n, yy[0] + mid_n, yy[0] + mid_n, yy[0] - mid_n, yy[0] - mid_n])
@@ -181,10 +212,45 @@ class Evaluator(object):
 		# remove x & y axis ticks
 		plt.xticks([])
 		plt.yticks([])
+		# q-plot
+		plt.subplot(gs[1])
+		q_colors = ["r", "g", "b", "k"]
+		for i_ac in range(len(Actions.all)):
+			plt.plot(qs[:, i_ac], q_colors[i_ac]+".", label=Actions.name_dict[i_ac])
+			plt.xlim([-1, len(qs)])
+		plt.gca().xaxis.grid(b=True, which='major', linestyle='--', alpha=0.6)
+		plt.gca().xaxis.grid(b=True, which='minor', linestyle='--', alpha=0.3)
+		xticks_major = MultipleLocator(text_every_kth)
+		xticks_minor = MultipleLocator(2)
+		plt.gca().xaxis.set_major_locator(xticks_major)
+		plt.gca().xaxis.set_minor_locator(xticks_minor)
+		plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='center', ncol=len(Actions.all))
+		# formating
+		plt.tight_layout()
 		# save and clear figure
 		plt.savefig(image_save_path, bbox_inches='tight')
 		# plt.clf()
 		plt.close()
+
+	def _plot_actions(self, xx, yy, text_every_kth):
+		col_flag = 0
+		col_list = ['r', 'g', 'y', 'm', 'c']
+		# plot color order for orientation
+		x = 0
+		for c in col_list:
+			plt.plot([x, x+1], [0, 0], c + '-')
+			x += 1
+		# plot actions
+		for i in range(len(xx)-1):
+			plt.plot(xx[i:i+2], yy[i:i+2], col_list[col_flag] + '-')
+			if col_flag != 4:
+				col_flag += 1
+			else:
+				col_flag = 0
+			# text
+			if i % text_every_kth == 0:
+				plt.text(xx[i], yy[i], str(i), color="white")
+
 
 	def _get_new_xy(self, x, y, ac):
 		""" calculates the new position of the goal after a action """
