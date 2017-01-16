@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from theano import *
 import theano.tensor as T
@@ -57,21 +58,31 @@ class SharedState(object):
 
 class LasagneMlpModel(object):
 	def __init__(self, logger, batch_size, discount, actions, view_size, action_hist_size,
-				 network_input_view, network_input_actions, network_output, optimizer):
+				 network_builder, optimizer, clone_interval=0):
 		self.logger = logger
+		self.batch_size = batch_size
 		self.discount = discount
 		self.actions = actions
 		self.view_size = view_size
 		self.action_hist_size = action_hist_size
-		self.net_in_view = network_input_view
-		self.net_in_actions = network_input_actions
-		self.net_out = network_output
+		self.network_builder = network_builder
 		self.optimizer = optimizer
+		self.clone_interval = clone_interval
 		self.shared_batch = SharedBatch(batch_size, view_size, action_hist_size)
 		self.shared_state = SharedState(view_size, action_hist_size)
+		self.net_out = None
+		self.net_out_next = None
 		self.train_fn = None
 		self.predict_fn = None
 		self.build_model()
+		self.steps_clone = 0
+
+	def build_network(self, network_builder, view_size, action_hist_size):
+		net_in_views = lasagne.layers.InputLayer(name='views', shape=(None, 1, view_size.w, view_size.h))
+		net_in_actions = lasagne.layers.InputLayer(name='action_hists',
+											shape=(None, 1, action_hist_size.w, action_hist_size.h))
+		net_out = network_builder(net_in_views, net_in_actions)
+		return net_in_views, net_in_actions, net_out
 
 	def build_model(self):
 		views = T.tensor4('views')
@@ -82,9 +93,20 @@ class LasagneMlpModel(object):
 		rewards = T.col('rewards')
 		terminals = T.icol('terminals')
 
-		# build loss function based on q value predictions
-		q_vals = lasagne.layers.get_output(self.net_out, {self.net_in_view: views, self.net_in_actions: action_hists})
-		next_q_vals = lasagne.layers.get_output(self.net_out, {self.net_in_view: next_views, self.net_in_actions: next_action_hists})
+		# initialize network(s) for computing q-values
+		net_in_view, net_in_actions, self.net_out = self.build_network(self.network_builder, self.view_size,
+																	   self.action_hist_size)
+		q_vals = lasagne.layers.get_output(self.net_out, {net_in_view: views, net_in_actions: action_hists})
+		if self.clone_interval > 0:
+			net_in_view_next, net_in_actions_next, self.net_out_next = self.build_network(self.network_builder,
+																		self.view_size, self.action_hist_size)
+			next_q_vals = lasagne.layers.get_output(self.net_out_next,
+													{net_in_view_next: next_views, net_in_actions_next: next_action_hists})
+			self._clone()
+		else:
+			next_q_vals = lasagne.layers.get_output(self.net_out,
+													{net_in_view: next_views, net_in_actions: next_action_hists})
+		# define loss computation
 		actionmask = T.eq(T.arange(4).reshape((1, -1)), actions.reshape((-1, 1))).astype(theano.config.floatX)
 		terminals_float = terminals.astype(theano.config.floatX)
 		target = rewards + \
@@ -95,15 +117,19 @@ class LasagneMlpModel(object):
 		loss = diff ** 2  # TODO error clipping
 		loss = T.mean(loss)  # batch accumulator sum or mean
 
-		# build train function
+		# define network update for training
 		params = lasagne.layers.helper.get_all_params(self.net_out)
 		updates = self.optimizer(loss, params)
 		train_givens = self.shared_batch.givens(views, action_hists, actions, next_views, next_action_hists, rewards, terminals)
 		self.train_fn = theano.function([], [loss], updates=updates, givens=train_givens)
 
-		# build predict function
+		# define output prediction
 		predict_givens = self.shared_state.givens(views, action_hists)
 		self.predict_fn = theano.function([], q_vals[0], givens=predict_givens)
+
+	def _clone(self):
+		param_values = lasagne.layers.get_all_param_values(self.net_out)
+		lasagne.layers.set_all_param_values(self.net_out_next, param_values)
 
 	def predict_qs(self, views, action_hists):
 		self.shared_state.set(views, action_hists)
@@ -112,7 +138,28 @@ class LasagneMlpModel(object):
 	def update_qs(self, views, action_hists, actions, next_views, next_action_hists, rewards, terminals):
 		self.shared_batch.set(views, action_hists, actions, next_views, next_action_hists, rewards, terminals)
 		loss = self.train_fn()
-		return np.sqrt(loss)
+		self.steps_clone += 1
+		if self.steps_clone == self.clone_interval:
+			self._clone()
+			self.steps_clone = 0
+		""" check if weights of model and model_cloned are actually different one step before cloning
+		if self.steps_clone == self.clone_interval - 1:
+			param_values_next = lasagne.layers.get_all_param_values(self.net_out_next)
+			param_values_org = lasagne.layers.get_all_param_values(self.net_out)
+			diffs = np.zeros(len(param_values_org))
+			for i in range(len(param_values_org)):
+				diffs[i] = np.sum(param_values_next[i] - param_values_org[i])
+			diff = np.sum(diffs)
+			print(diff)
+			assert diff != 0 """
+		return loss
 
-	def save(self, path):
-		print("{0}.save not implemented".format(self.__class__.__name__))
+	def save(self, file_path):
+		self.logger.log_message("Save model to {0}".format(file_path))
+		np.savez(file_path, *lasagne.layers.get_all_param_values(self.net_out))
+
+	def load(self, file_path):
+		self.logger.log_message("Load model from {0}".format(file_path))
+		with np.load(file_path) as f:
+			param_values = [f['arr_%d' % i] for i in range(len(f.files))]
+		lasagne.layers.set_all_param_values(self.net_out, param_values)
