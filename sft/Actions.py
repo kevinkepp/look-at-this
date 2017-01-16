@@ -4,6 +4,9 @@ class Actions(object):
 	LEFT = 2
 	RIGHT = 3
 
+	name_dict = {UP: "up", DOWN: "down", LEFT: "left", RIGHT: "right"}
+	names = ["up", "down", "left", "right"]
+
 	all = [UP, DOWN, LEFT, RIGHT]
 
 	@staticmethod
