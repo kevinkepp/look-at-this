@@ -200,16 +200,20 @@ class Evaluator(object):
 		agent_log_path = os.path.join(self.exp_path, agent_dir)
 		actionss = self._get_actions(agent_log_path)
 		actions = actionss[epoch]
-		fig = plt.figure(figsize=(12, 12))
+		# get corresponding q-values
+		q_file_path = os.path.join(agent_log_path, self.PARAMETER_LOG_FOLDER, q_file_name)
+		qs_dict = self._get_q_values(q_file_path)
+		qs = qs_dict[epoch]
 		path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.PATHS_OUTPUT_DIR_NAME, agent_dir)
 		movie_path = os.path.join(path, str(epoch).zfill(5) + "_" + agent_key + ".mp4")
+		fig = plt.figure(figsize=(16, 16))
 		with writer.saving(fig, movie_path, len(actions)):
 			# here the frame is create with matplotlib
 			w, h = self.view_size.w, self.view_size.h
-			self._visualize_course_of_action(self.worlds[epoch], self.init_poses[epoch], w, h, actions, movie_writer=writer)
+			self._visualize_course_of_action(self.worlds[epoch], self.init_poses[epoch], w, h, actions, movie_writer=writer, q_for_movie=qs)
 		plt.close()
 
-	def _visualize_course_of_action(self, world_state, init_pos, width, height, actions, text_every_kth=10, movie_writer=None):
+	def _visualize_course_of_action(self, world_state, init_pos, width, height, actions, text_every_kth=10, movie_writer=None, q_for_movie=None):
 		""" plots a course of actions beginning from a certain first state """
 		x = init_pos.x
 		y = init_pos.y
@@ -222,11 +226,6 @@ class Evaluator(object):
 			(x, y) = self._get_new_xy(x, y, ac)
 			xx = np.append(xx, x)
 			yy = np.append(yy, y)
-		# plot world-frame
-		plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
-		# remove x & y axis ticks
-		plt.xticks([])
-		plt.yticks([])
 		# path plot
 		if movie_writer is None:
 			# ration for plots
@@ -242,13 +241,30 @@ class Evaluator(object):
 			final_win_x = np.array([xx[-1] - mid_m, xx[-1] - mid_m, xx[-1] + mid_m, xx[-1] + mid_m, xx[-1] - mid_m])
 			final_win_y = np.array([yy[-1] - mid_n, yy[-1] + mid_n, yy[-1] + mid_n, yy[-1] - mid_n, yy[-1] - mid_n])
 			plt.plot(final_win_x, final_win_y, 'r:')
+			# plot world-frame
+			plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
+			# remove x & y axis ticks
+			plt.xticks([])
+			plt.yticks([])
 		else:
+			#gs = gridspec.GridSpec(2, 1, height_ratios=[3, 12], width_ratios=[1, 1])
+			# path
+			#plt.subplot(gs[1])
 			plt.plot(xx, yy, 'b-')  # entire path
 			p_d, = plt.plot(xx[:2], yy[:2], 'r-', linewidth=3)  # direction
 			p_a, = plt.plot(xx[0], yy[0], 'go')  # agent
 			win_x = np.array([xx[0] - mid_m, xx[0] - mid_m, xx[0] + mid_m, xx[0] + mid_m, xx[0] - mid_m])
 			win_y = np.array([yy[0] - mid_n, yy[0] + mid_n, yy[0] + mid_n, yy[0] - mid_n, yy[0] - mid_n])
 			p_v, = plt.plot(win_x, win_y, 'g-', linewidth=3)  # view
+			# plot world-frame
+			plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
+			# remove x & y axis ticks
+			plt.xticks([])
+			plt.yticks([])
+			# qs
+			#plt.subplot(gs[0])
+			#p_q = self._animate_q_plotting(q_for_movie, 0)
+			#plt.tight_layout()
 			movie_writer.grab_frame()
 			for i_ac in range(1,len(actions)):
 				p_d.set_data(xx[i_ac:i_ac + 2], yy[i_ac:i_ac + 2])  # direction
@@ -258,7 +274,30 @@ class Evaluator(object):
 				win_y = np.array(
 					[yy[i_ac] - mid_n, yy[i_ac] + mid_n, yy[i_ac] + mid_n, yy[i_ac] - mid_n, yy[i_ac] - mid_n])
 				p_v.set_data(win_x, win_y)  # view
+				#self._animate_q_plotting(q_for_movie, i_ac, p_q)
 				movie_writer.grab_frame()
+
+	def _animate_q_plotting(self, qs, step, p_q=None):
+		if p_q is None:
+			p_q = []
+			x = Actions.all
+			for i_x in x:
+				q = qs[step, i_x]
+				p, = plt.plot([i_x,i_x], [q, q], 'b-', linewidth=5)
+				p_q.append(p)
+			q_sorted = np.sort(qs[step, :])
+			d = q_sorted[-1] - q_sorted[-2]
+			l = len(Actions.all)
+			p, = plt.plot([l,l], [d, d], 'r-', linewidth=5)
+			p_q.append(p)
+			labels = Actions.names + ["diff_1.-2."]
+			x += [l]
+			plt.xticks(x, labels)
+			plt.ylim(np.min(qs), np.max(qs))
+			plt.margins(0.2)
+			return p_q
+		else:
+			pass
 
 	def _plot_actions_as_path(self, xx, yy, text_every_kth):
 		col_flag = 0
