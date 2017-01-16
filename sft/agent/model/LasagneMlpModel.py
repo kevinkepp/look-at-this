@@ -146,7 +146,7 @@ class LasagneMlpModel(object):
 		if self.steps_clone == self.clone_interval - 1:
 			param_values_next = lasagne.layers.get_all_param_values(self.net_out_next)
 			param_values_org = lasagne.layers.get_all_param_values(self.net_out)
-			diffs = np.zeros(len(param_values_org))
+			diffs = np.zeros(len(param_values_org), dtype=theano.config.floatX)
 			for i in range(len(param_values_org)):
 				diffs[i] = np.sum(param_values_next[i] - param_values_org[i])
 			diff = np.sum(diffs)

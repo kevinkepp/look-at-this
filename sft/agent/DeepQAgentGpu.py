@@ -77,8 +77,8 @@ class DeepQAgentGpu(RobotAgent):
 		old_action_hist = old_state.actions
 		is_terminal = new_state is None
 		terminal = 1 if is_terminal else 0
-		new_view = new_state.view if not is_terminal else np.zeros(old_view.shape)
-		new_action_hist = new_state.actions if not is_terminal else np.zeros(old_action_hist.shape)
+		new_view = new_state.view if not is_terminal else np.zeros(old_view.shape, dtype=theano.config.floatX)
+		new_action_hist = new_state.actions if not is_terminal else np.zeros(old_action_hist.shape, dtype=theano.config.floatX)
 		exp_new = (old_view, old_action_hist, action, new_view, new_action_hist, reward, terminal)
 		self.replay_buffer.add(*exp_new)
 		if self.replay_buffer.len >= self.start_learn and self.learn_steps % self.learn_at_steps == 0:
