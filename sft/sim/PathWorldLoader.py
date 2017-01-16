@@ -1,5 +1,6 @@
 import cv2, os, random
 import numpy as np
+import theano
 
 from sft import Point, Rectangle, get_path_bbox
 from sft.Scenario import Scenario
@@ -40,7 +41,8 @@ class PathWorldLoader(ScenarioGenerator):
 				f = path + "/" + f
 				img = cv2.imread(f)
 				img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-				img = img / float(np.max(img))  # renorm to 1 as max
+				img = np.asarray(img, dtype=theano.config.floatX)
+				img /= np.max(img)  # renorm to 1 as max
 				self.worlds.append(img)
 
 	def _get_init_pos(self, world):
