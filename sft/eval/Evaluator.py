@@ -206,7 +206,7 @@ class Evaluator(object):
 		qs = qs_dict[epoch]
 		path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.PATHS_OUTPUT_DIR_NAME, agent_dir)
 		movie_path = os.path.join(path, str(epoch).zfill(5) + "_" + agent_key + ".mp4")
-		fig = plt.figure(figsize=(16, 16))
+		fig = plt.figure(figsize=(48, 48))
 		with writer.saving(fig, movie_path, len(actions)):
 			# here the frame is create with matplotlib
 			w, h = self.view_size.w, self.view_size.h
@@ -250,18 +250,24 @@ class Evaluator(object):
 			#gs = gridspec.GridSpec(2, 1, height_ratios=[3, 12], width_ratios=[1, 1])
 			# path
 			#plt.subplot(gs[1])
-			plt.plot(xx, yy, 'b-')  # entire path
-			p_d, = plt.plot(xx[:2], yy[:2], 'r-', linewidth=3)  # direction
-			p_a, = plt.plot(xx[0], yy[0], 'go')  # agent
+			plt.plot(xx, yy, 'b-', linewidth=20)  # entire path
+			p_d, = plt.plot(xx[:2], yy[:2], 'r-', linewidth=20)  # direction
+			p_a, = plt.plot(xx[0], yy[0], 'go', markeredgecolor='green', mew=25, ms=25)  # agent
 			win_x = np.array([xx[0] - mid_m, xx[0] - mid_m, xx[0] + mid_m, xx[0] + mid_m, xx[0] - mid_m])
 			win_y = np.array([yy[0] - mid_n, yy[0] + mid_n, yy[0] + mid_n, yy[0] - mid_n, yy[0] - mid_n])
-			p_v, = plt.plot(win_x, win_y, 'g-', linewidth=3)  # view
+			p_v, = plt.plot(win_x, win_y, 'g-', linewidth=20)  # view
 			# plot world-frame
 			plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
 			# remove x & y axis ticks
 			plt.xticks([])
 			plt.yticks([])
+			# epoch count
+			ep_txt = plt.text(0, 1, "epoch = {}".format(0), color="white", size=60)
 			# qs
+			qs = np.round(q_for_movie[0, :], 3)
+			ac_names = Actions.names
+			q_str = "{1: .3f} {0}\n{3: .3f} {2}\n{5: .3f} {4}\n{7: .3f} {6}".format(ac_names[0], qs[0], ac_names[1], qs[1], ac_names[2], qs[2], ac_names[3], qs[3])
+			q_txt = plt.text(0, 7, q_str, color="white", size=60)
 			#plt.subplot(gs[0])
 			#p_q = self._animate_q_plotting(q_for_movie, 0)
 			#plt.tight_layout()
@@ -274,6 +280,11 @@ class Evaluator(object):
 				win_y = np.array(
 					[yy[i_ac] - mid_n, yy[i_ac] + mid_n, yy[i_ac] + mid_n, yy[i_ac] - mid_n, yy[i_ac] - mid_n])
 				p_v.set_data(win_x, win_y)  # view
+				ep_txt.set_text("epoch = {}".format(i_ac))
+				qs = np.round(q_for_movie[i_ac, :], 3)
+				q_str = "{1: .3f} {0}\n{3: .3f} {2}\n{5: .3f} {4}\n{7: .3f} {6}".format(ac_names[0], qs[0], ac_names[1], qs[1], ac_names[2],
+															   qs[2], ac_names[3], qs[3])
+				q_txt.set_text(q_str)
 				#self._animate_q_plotting(q_for_movie, i_ac, p_q)
 				movie_writer.grab_frame()
 
