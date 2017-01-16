@@ -131,8 +131,8 @@ class LasagneMlpModel(object):
 		param_values = lasagne.layers.get_all_param_values(self.net_out)
 		lasagne.layers.set_all_param_values(self.net_out_next, param_values)
 
-	def predict_qs(self, views, action_hists):
-		self.shared_state.set(views, action_hists)
+	def predict_qs(self, view, action_hist):
+		self.shared_state.set(view, action_hist)
 		return self.predict_fn()
 
 	def update_qs(self, views, action_hists, actions, next_views, next_action_hists, rewards, terminals):

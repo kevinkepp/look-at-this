@@ -48,7 +48,7 @@ class DeepQAgentGpu(RobotAgent):
 	# buffer size: size of experience pool from which minibatches are randomly sampled
 	# start_learn: after how many experiences (buffer size) we start learning based on experiences
 	# learn_steps: every learn_steps steps the model gets updated
-	def __init__(self, logger, actions, batch_size, buffer_size, start_learn, learn_at_steps, view_size,
+	def __init__(self, logger, actions, batch_size, buffer_size, start_learn, learn_interval, view_size,
 				 action_hist_size, model):
 		self.logger = logger
 		self.actions = actions
@@ -56,7 +56,7 @@ class DeepQAgentGpu(RobotAgent):
 		buffer_size = max(buffer_size, batch_size)  # buffer has to be at least batch_size
 		self.replay_buffer = ReplayBuffer(buffer_size, view_size, action_hist_size)
 		self.start_learn = start_learn
-		self.learn_at_steps = learn_at_steps
+		self.learn_interval = learn_interval if learn_interval > 0 else 1
 		self.learn_steps = 0
 		self.model = model
 
@@ -81,7 +81,7 @@ class DeepQAgentGpu(RobotAgent):
 		new_action_hist = new_state.actions if not is_terminal else np.zeros(old_action_hist.shape, dtype=theano.config.floatX)
 		exp_new = (old_view, old_action_hist, action, new_view, new_action_hist, reward, terminal)
 		self.replay_buffer.add(*exp_new)
-		if self.replay_buffer.len >= self.start_learn and self.learn_steps % self.learn_at_steps == 0:
+		if self.replay_buffer.len >= self.start_learn and self.learn_steps % self.learn_interval == 0:
 			minibatch = self.replay_buffer.draw_batch(self.batch_size)
 			self.model.update_qs(*minibatch)
 			self.learn_steps = 1
