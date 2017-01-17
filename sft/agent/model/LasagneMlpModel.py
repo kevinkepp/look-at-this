@@ -7,22 +7,27 @@ import lasagne.layers
 
 
 class SharedBatch(object):
-	def __init__(self, size, view_size, action_history_size):
+	def __init__(self, size, view_size, action_hist_size):
 		self.size = size
+		self.has_action_hist = action_hist_size.w > 0
 		self.v = shared(np.zeros((self.size, 1, view_size.w, view_size.h), dtype=theano.config.floatX))
-		self.ah = shared(np.zeros((self.size, 1, action_history_size.w, action_history_size.h), dtype=theano.config.floatX))
+		if self.has_action_hist:
+			self.ah = shared(np.zeros((self.size, 1, action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
 		self.a = shared(np.zeros((self.size, 1), dtype=np.int32), broadcastable=(False, True))
 		self.v2 = shared(np.zeros((self.size, 1, view_size.w, view_size.h), dtype=theano.config.floatX))
-		self.ah2 = shared(np.zeros((self.size, 1, action_history_size.w, action_history_size.h), dtype=theano.config.floatX))
+		if self.has_action_hist:
+			self.ah2 = shared(np.zeros((self.size, 1, action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
 		self.r = shared(np.zeros((self.size, 1), dtype=theano.config.floatX), broadcastable=(False, True))
 		self.t = shared(np.zeros((self.size, 1), dtype=np.int32), broadcastable=(False, True))
 
 	def set(self, v, ah, a, v2, ah2, r, t):
 		self.v.set_value(v)
-		self.ah.set_value(ah)
+		if self.has_action_hist:
+			self.ah.set_value(ah)
 		self.a.set_value(a)
 		self.v2.set_value(v2)
-		self.ah2.set_value(ah2)
+		if self.has_action_hist:
+			self.ah2.set_value(ah2)
 		self.r.set_value(r)
 		self.t.set_value(t)
 
@@ -35,6 +40,12 @@ class SharedBatch(object):
 			next_action_hists: self.ah2,
 			rewards: self.r,
 			terminals: self.t
+		} if self.has_action_hist else {
+			views: self.v,
+			actions: self.a,
+			next_states: self.v2,
+			rewards: self.r,
+			terminals: self.t
 		}
 
 
@@ -42,17 +53,22 @@ class SharedState(object):
 	def __init__(self, view_size, action_hist_size):
 		self.view_size = view_size
 		self.action_hist_size = action_hist_size
+		self.has_action_hist = self.action_hist_size.w > 0
 		self.v = theano.shared(np.zeros((view_size.w, view_size.h), dtype=theano.config.floatX))
-		self.ah = theano.shared(np.zeros((action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
+		if self.has_action_hist:
+			self.ah = theano.shared(np.zeros((action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
 
 	def set(self, v, ah):
 		self.v.set_value(v)
-		self.ah.set_value(ah)
+		if self.has_action_hist:
+			self.ah.set_value(ah)
 
 	def givens(self, views, action_hists):
 		return {
 			views: self.v.reshape((1, 1, self.view_size.w, self.view_size.h)),
 			action_hists: self.ah.reshape((1, 1, self.action_hist_size.w, self.action_hist_size.h))
+		} if self.has_action_hist else {
+			views: self.v.reshape((1, 1, self.view_size.w, self.view_size.h))
 		}
 
 
@@ -94,18 +110,21 @@ class LasagneMlpModel(object):
 		terminals = T.icol('terminals')
 
 		# initialize network(s) for computing q-values
-		net_in_view, net_in_actions, self.net_out = self.build_network(self.network_builder, self.view_size,
+		net_in_view, net_in_action_hist, self.net_out = self.build_network(self.network_builder, self.view_size,
 																	   self.action_hist_size)
-		q_vals = lasagne.layers.get_output(self.net_out, {net_in_view: views, net_in_actions: action_hists})
+		inputs = {net_in_view: views, net_in_action_hist: action_hists} if self.action_hist_size.w > 0 else {net_in_view: views}
+		q_vals = lasagne.layers.get_output(self.net_out, inputs)
 		if self.clone_interval > 0:
-			net_in_view_next, net_in_actions_next, self.net_out_next = self.build_network(self.network_builder,
+			net_in_view_next, net_in_action_hist_next, self.net_out_next = self.build_network(self.network_builder,
 																		self.view_size, self.action_hist_size)
-			next_q_vals = lasagne.layers.get_output(self.net_out_next,
-													{net_in_view_next: next_views, net_in_actions_next: next_action_hists})
+			next_inputs = {net_in_view_next: next_views, net_in_action_hist_next: next_action_hists} \
+				if self.action_hist_size.w > 0 else {net_in_view_next: next_views}
+			next_q_vals = lasagne.layers.get_output(self.net_out_next, next_inputs)
 			self._clone()
 		else:
-			next_q_vals = lasagne.layers.get_output(self.net_out,
-													{net_in_view: next_views, net_in_actions: next_action_hists})
+			next_inputs = {net_in_view: next_views, net_in_action_hist: next_action_hists} \
+				if self.action_hist_size.w > 0 else {net_in_view: next_views}
+			next_q_vals = lasagne.layers.get_output(self.net_out, next_inputs)
 		# define loss computation
 		actionmask = T.eq(T.arange(4).reshape((1, -1)), actions.reshape((-1, 1))).astype(theano.config.floatX)
 		terminals_float = terminals.astype(theano.config.floatX)
