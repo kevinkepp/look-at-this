@@ -2,6 +2,8 @@ import os
 import pkgutil
 from importlib import import_module
 
+from abc import abstractmethod
+
 import numpy as np
 import threading
 import time
@@ -11,10 +13,10 @@ import theano
 
 from sft.Actions import Actions
 from sft.State import State
-from sim.Simulator import Simulator
+from sft.sim.Simulator import Simulator
 
 
-class Trainer(object):
+class Runner(object):
 	WORLD_CONFIG_NAME = "world"
 	AGENT_CONFIG_NAME_DIR = "agents"
 	PERSIST_MODEL_EVERY = 100
@@ -81,7 +83,7 @@ class Trainer(object):
 	def run_epoch(self, config, sim, epoch, scenario):
 		"""Run training episode with given initial scenario"""
 		sim.initialize(scenario.world, scenario.pos)
-		eps = config.epsilon_update.get_value(epoch)
+		eps = self._get_eps(config, epoch)
 		config.logger.log_parameter("epsilon", eps)
 		hist = []
 		while len(hist) < config.max_steps:
@@ -106,7 +108,7 @@ class Trainer(object):
 		terminal = oob or at_target
 		# if new state is terminal None will be given to agent
 		state2 = self.get_state(view2, hist, state_action_len) if not terminal else None
-		agent.incorporate_reward(state, action, state2, reward_value)
+		self._incorp_agent_reward(agent, state, action, state2, reward_value)
 		if at_target:
 			return 1
 		elif oob:
@@ -128,3 +130,12 @@ class Trainer(object):
 		# while maintain the generation of different paths and agent behaviour for different executions
 		seed = random.randint(0, sys.maxint)
 		random.seed(seed)
+
+	"""later used by Trainer to run epsilon update and by Tester to set epsilon to wished value"""
+	@abstractmethod
+	def _get_eps(self, config, epoch):
+		pass
+
+	"""passed if just running agent on scenarios (only trainer implements this)"""
+	def _incorp_agent_reward(self, agent, state, action, state2, reward_value):
+		pass
