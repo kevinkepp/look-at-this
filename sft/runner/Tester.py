@@ -1,6 +1,8 @@
 import os, shutil
 import pkgutil
 from importlib import import_module
+
+from sft import replace_in_file
 from sft.sim.PathWorldLoader import PathWorldLoader
 
 from sft.runner.Runner import Runner
@@ -18,6 +20,9 @@ class Trainer(Runner):
 	SYMBOL_EMPTY = 0
 	TEST_WORLD_PATH = "sft/config-test/world.py"
 	TEST_AGENT_PATH = "sft/config-test/agents"
+	AGENT_LOGGER_NAME = "AgentLogger"
+	AGENT_TESTER_LOGGER_NAME = "AgentTesterLogger"
+	WORLD_LOGGER_INIT = "WorldLogger(__name__)"
 	"""
 	00100
 	00100
@@ -99,3 +104,14 @@ class Trainer(Runner):
 				agent_config = import_module("." + module, experiment.__name__ + "." + self.AGENT_CONFIG_NAME_DIR)
 				agent_configs.append(agent_config)
 		return world_config, agent_configs
+
+	def replace_loggers(self, exp_path):
+		self.replace_world_logger(exp_path + "/world.py")
+		for agent_file in os.listdir(exp_path + "/agents"):
+			self.replace_agent_logger(exp_path + "/agents/" + agent_file)
+
+	def replace_world_logger(self, file_path):
+		replace_in_file(file_path, self.WORLD_LOGGER_INIT, "None")
+
+	def replace_agent_logger(self, file_path):
+		replace_in_file(file_path, self.AGENT_LOGGER_NAME, self.AGENT_TESTER_LOGGER_NAME)

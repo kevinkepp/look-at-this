@@ -215,3 +215,13 @@ def sample_point_within(rect):
 	x = sample_int_uniform(rect.x, rect.x + rect.w)
 	y = sample_int_uniform(rect.y, rect.y + rect.h)
 	return Point(x, y)
+
+
+def replace_in_file(file_path, str_search, str_replace):
+	lines = []
+	with open(file_path, "r") as f:
+		for line in f:
+			lines.append(line.replace(str_search, str_replace))
+	with open(file_path, "w") as f:
+		for line in lines:
+			f.write(line)
