@@ -12,11 +12,13 @@ class SharedBatch(object):
 		self.has_action_hist = action_hist_size.w > 0
 		self.v = shared(np.zeros((self.size, 1, view_size.w, view_size.h), dtype=theano.config.floatX))
 		if self.has_action_hist:
-			self.ah = shared(np.zeros((self.size, 1, action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
+			self.ah = shared(
+				np.zeros((self.size, 1, action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
 		self.a = shared(np.zeros((self.size, 1), dtype=np.int32), broadcastable=(False, True))
 		self.v2 = shared(np.zeros((self.size, 1, view_size.w, view_size.h), dtype=theano.config.floatX))
 		if self.has_action_hist:
-			self.ah2 = shared(np.zeros((self.size, 1, action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
+			self.ah2 = shared(
+				np.zeros((self.size, 1, action_hist_size.w, action_hist_size.h), dtype=theano.config.floatX))
 		self.r = shared(np.zeros((self.size, 1), dtype=theano.config.floatX), broadcastable=(False, True))
 		self.t = shared(np.zeros((self.size, 1), dtype=np.int32), broadcastable=(False, True))
 
@@ -73,6 +75,8 @@ class SharedState(object):
 
 
 class LasagneMlpModel(object):
+	"""clone_interval: 0 or negative disables cloning"""
+
 	def __init__(self, logger, batch_size, discount, actions, view_size, action_hist_size,
 				 network_builder, optimizer, clone_interval=0):
 		self.logger = logger
@@ -96,7 +100,7 @@ class LasagneMlpModel(object):
 	def build_network(self, network_builder, view_size, action_hist_size):
 		net_in_views = lasagne.layers.InputLayer(name='views', shape=(None, 1, view_size.w, view_size.h))
 		net_in_actions = lasagne.layers.InputLayer(name='action_hists',
-											shape=(None, 1, action_hist_size.w, action_hist_size.h))
+												   shape=(None, 1, action_hist_size.w, action_hist_size.h))
 		net_out = network_builder(net_in_views, net_in_actions)
 		return net_in_views, net_in_actions, net_out
 
@@ -111,12 +115,14 @@ class LasagneMlpModel(object):
 
 		# initialize network(s) for computing q-values
 		net_in_view, net_in_action_hist, self.net_out = self.build_network(self.network_builder, self.view_size,
-																	   self.action_hist_size)
-		inputs = {net_in_view: views, net_in_action_hist: action_hists} if self.action_hist_size.w > 0 else {net_in_view: views}
+																		   self.action_hist_size)
+		inputs = {net_in_view: views, net_in_action_hist: action_hists} if self.action_hist_size.w > 0 else {
+			net_in_view: views}
 		q_vals = lasagne.layers.get_output(self.net_out, inputs)
 		if self.clone_interval > 0:
 			net_in_view_next, net_in_action_hist_next, self.net_out_next = self.build_network(self.network_builder,
-																		self.view_size, self.action_hist_size)
+																							  self.view_size,
+																							  self.action_hist_size)
 			next_inputs = {net_in_view_next: next_views, net_in_action_hist_next: next_action_hists} \
 				if self.action_hist_size.w > 0 else {net_in_view_next: next_views}
 			next_q_vals = lasagne.layers.get_output(self.net_out_next, next_inputs)
@@ -139,7 +145,8 @@ class LasagneMlpModel(object):
 		# define network update for training
 		params = lasagne.layers.helper.get_all_params(self.net_out)
 		updates = self.optimizer(loss, params)
-		train_givens = self.shared_batch.givens(views, action_hists, actions, next_views, next_action_hists, rewards, terminals)
+		train_givens = self.shared_batch.givens(views, action_hists, actions, next_views, next_action_hists, rewards,
+												terminals)
 		self.train_fn = theano.function([], [loss], updates=updates, givens=train_givens)
 
 		# define output prediction
@@ -157,20 +164,13 @@ class LasagneMlpModel(object):
 	def update_qs(self, views, action_hists, actions, next_views, next_action_hists, rewards, terminals):
 		self.shared_batch.set(views, action_hists, actions, next_views, next_action_hists, rewards, terminals)
 		loss = self.train_fn()
+		self.logger.log_parameter("loss", loss)
 		self.steps_clone += 1
 		if self.steps_clone == self.clone_interval:
 			self._clone()
 			self.steps_clone = 0
-		""" check if weights of model and model_cloned are actually different one step before cloning
-		if self.steps_clone == self.clone_interval - 1:
-			param_values_next = lasagne.layers.get_all_param_values(self.net_out_next)
-			param_values_org = lasagne.layers.get_all_param_values(self.net_out)
-			diffs = np.zeros(len(param_values_org), dtype=theano.config.floatX)
-			for i in range(len(param_values_org)):
-				diffs[i] = np.sum(param_values_next[i] - param_values_org[i])
-			diff = np.sum(diffs)
-			print(diff)
-			assert diff != 0 """
+		# self.log_weights_diffs()
+		self.log_weights()
 		return loss
 
 	def save(self, file_path):
@@ -182,3 +182,24 @@ class LasagneMlpModel(object):
 		with np.load(file_path) as f:
 			param_values = [f['arr_%d' % i] for i in range(len(f.files))]
 		lasagne.layers.set_all_param_values(self.net_out, param_values)
+
+	def log_weights_diff(self):
+		""" check if weights of model and model_cloned are actually different one step before cloning"""
+		if self.steps_clone == self.clone_interval - 1:
+			param_values_next = lasagne.layers.get_all_param_values(self.net_out_next)
+			param_values_org = lasagne.layers.get_all_param_values(self.net_out)
+			diffs = np.zeros(len(param_values_org), dtype=theano.config.floatX)
+			for i in range(len(param_values_org)):
+				diffs[i] = np.sum(param_values_next[i] - param_values_org[i])
+			diff = np.sum(diffs)
+			self.logger.log_parameter("weights_diff", diff)
+			assert diff != 0
+
+	def log_weights(self):
+		layers = lasagne.layers.get_all_param_values(self.net_out)
+		# calculate min, max, mean, std per layer
+		for layer in range(len(layers)):
+			weights = layers[layer]
+			self.logger.log_parameter("weights",
+									  [layer, np.min(weights), np.max(weights), np.mean(weights), np.std(weights)],
+									  headers=["layer", "min", "max", "mean", "std"])
