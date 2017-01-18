@@ -43,7 +43,6 @@ class Trainer(Runner):
 		for n in range(config.epochs):
 			scenario = config.world_gen.get_next()
 			scenarios.append(scenario)
-			config.sampler.next_epoch()
 			config.world_logger.log_init_state_and_world(scenario.world, scenario.pos)
 			config.world_logger.next_epoch()
 			config.sampler.next_epoch()
