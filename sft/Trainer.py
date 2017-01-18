@@ -17,6 +17,7 @@ from sim.Simulator import Simulator
 class Trainer(object):
 	WORLD_CONFIG_NAME = "world"
 	AGENT_CONFIG_NAME_DIR = "agents"
+	PERSIST_MODEL_EVERY = 100
 
 	def run(self, experiment, threaded=False):
 		self.set_seed()
@@ -68,7 +69,10 @@ class Trainer(object):
 			success, hist = self.run_epoch(config, sim, n, scenario)
 			logger.log_results(hist, success)
 			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(hist)))
+			if n % self.PERSIST_MODEL_EVERY == 0:
+				logger.log_model(config.model, "epoch" + str(n))
 			logger.next_epoch()
+			config.agent.new_episode()
 		time_diff = time.time() - time_start
 		logger.log_model(config.model)
 		logger.log_message("{0} - Finished training, took {1} seconds".format(config.__name__, time_diff))
@@ -80,7 +84,6 @@ class Trainer(object):
 		eps = config.epsilon_update.get_value(epoch)
 		config.logger.log_parameter("epsilon", eps)
 		hist = []
-		config.agent.new_episode()
 		while len(hist) < config.max_steps:
 			# result is 1 for on target, 0 for oob and -1 for non-terminal
 			res = self.run_step(hist, sim, config.action_hist_len, config.agent, config.reward, eps)

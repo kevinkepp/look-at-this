@@ -61,11 +61,14 @@ class AgentLogger(BaseLogger):
 		self.file_actions_taken.write("{}\t{}\n".format(self.epoch, actions_taken))
 		self.file_results.write("{}\t{}\t{}\n".format(self.epoch, success, len(actions_taken)))
 
-	def log_model(self, model):
+	def log_model(self, model, name=None):
 		""" log model for later analysis """
 		# create directory for saving the models
 		path = self.log_dir + "/" + self.name_folder_models
 		if not os.path.exists(path):
 			os.makedirs(path)
-		path = path + "/" + self.name_file_model + self.file_suffix_model
+		path = path + "/" + self.name_file_model
+		if name is not None:
+			path += "_" + name
+		path += self.file_suffix_model
 		model.save(path)
