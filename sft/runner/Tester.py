@@ -16,6 +16,8 @@ class Trainer(Runner):
 	SYMBOL_PATH = 1
 	SYMBOL_TARGET = 2
 	SYMBOL_EMPTY = 0
+	TEST_WORLD_PATH = "sft/config-test/world.py"
+	TEST_AGENT_PATH = "sft/config-test/agents"
 	"""
 	00100
 	00100
@@ -43,8 +45,22 @@ class Trainer(Runner):
 	def run_on_exp(self, exp_path, agent_dict, testset_worlds_path):
 		pass
 
-	def run_one_model(self, model_path, agent_config_path, testset_worlds_path):
+	def run_one_model(self, model_path, agent_config_path, world_config_path, testset_worlds_path):
 		pass
+
+	def _copy_config_files(self, world_config_path, agent_config_path_arr):
+		self._delete_old_config_files()
+		shutil.copy(world_config_path, self.TEST_WORLD_PATH)
+		for agent in agent_config_path_arr:
+			agent_name = agent.split("/")[-1]
+			shutil.copy(agent, self.TEST_AGENT_PATH + "/" + agent_name)
+
+	def _delete_old_config_files(self):
+		if os.path.isfile(self.TEST_WORLD_PATH):
+			os.remove(self.TEST_WORLD_PATH)
+		for f in os.listdir(self.TEST_AGENT_PATH):
+			if f != "__init__.py":
+				os.remove(self.TEST_AGENT_PATH + "/" + f)
 
 	def _get_eps(self, config, epoch):
 		return self.EPSILON
