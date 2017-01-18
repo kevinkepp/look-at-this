@@ -267,7 +267,7 @@ class Evaluator(object):
 			qs = np.round(q_for_movie[0, :], 3)
 			ac_names = Actions.names
 			q_str = "{1: .3f} {0}\n{3: .3f} {2}\n{5: .3f} {4}\n{7: .3f} {6}".format(ac_names[0], qs[0], ac_names[1], qs[1], ac_names[2], qs[2], ac_names[3], qs[3])
-			q_txt = plt.text(0, 7, q_str, color="white", size=60)
+			q_txt = plt.text(0, 9, q_str, color="white", size=60)
 			#plt.subplot(gs[0])
 			#p_q = self._animate_q_plotting(q_for_movie, 0)
 			#plt.tight_layout()

@@ -100,7 +100,8 @@ class LasagneMlpModel(object):
 	def build_network(self, network_builder, view_size, action_hist_size):
 		net_in_views = lasagne.layers.InputLayer(name='views', shape=(None, 1, view_size.w, view_size.h))
 		net_in_actions = lasagne.layers.InputLayer(name='action_hists',
-												   shape=(None, 1, action_hist_size.w, action_hist_size.h))
+												   shape=(None, 1, action_hist_size.w, action_hist_size.h)) \
+			if action_hist_size.w > 0 else None
 		net_out = network_builder(net_in_views, net_in_actions)
 		return net_in_views, net_in_actions, net_out
 
