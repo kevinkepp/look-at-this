@@ -78,7 +78,7 @@ class LasagneMlpModel(object):
 	"""clone_interval: 0 or negative disables cloning"""
 
 	def __init__(self, logger, batch_size, discount, actions, view_size, action_hist_size,
-				 network_builder, optimizer, clone_interval=0):
+				 network_builder, optimizer, clone_interval=0, clip_delta=0):
 		self.logger = logger
 		self.batch_size = batch_size
 		self.discount = discount
@@ -88,6 +88,7 @@ class LasagneMlpModel(object):
 		self.network_builder = network_builder
 		self.optimizer = optimizer
 		self.clone_interval = clone_interval
+		self.clip_delta = clip_delta
 		self.shared_batch = SharedBatch(batch_size, view_size, action_hist_size)
 		self.shared_state = SharedState(view_size, action_hist_size)
 		self.net_out = None
@@ -140,7 +141,13 @@ class LasagneMlpModel(object):
 				 self.discount * T.max(next_q_vals, axis=1, keepdims=True)
 		output = (q_vals * actionmask).sum(axis=1).reshape((-1, 1))
 		diff = target - output
-		loss = diff ** 2  # TODO error clipping
+		if self.clip_delta > 0:
+			# see https://github.com/spragunr/deep_q_rl/blob/master/deep_q_rl/q_network.py
+			quadratic_part = T.minimum(abs(diff), self.clip_delta)
+			linear_part = abs(diff) - quadratic_part
+			loss = 0.5 * quadratic_part ** 2 + self.clip_delta * linear_part
+		else:
+			loss = diff ** 2  # TODO error clipping
 		loss = T.mean(loss)  # batch accumulator sum or mean
 
 		# define network update for training
@@ -204,3 +211,24 @@ class LasagneMlpModel(object):
 			self.logger.log_parameter("weights",
 									  [layer, np.min(weights), np.max(weights), np.mean(weights), np.std(weights)],
 									  headers=["layer", "min", "max", "mean", "std"])
+
+
+def deepmind_rmsprop(loss_or_grads, params, learning_rate, rho, epsilon):
+	from lasagne.updates import get_or_compute_grads
+	from collections import OrderedDict
+
+	grads = get_or_compute_grads(loss_or_grads, params)
+	updates = OrderedDict()
+	for param, grad in zip(params, grads):
+		value = param.get_value(borrow=True)
+		acc_grad = theano.shared(np.zeros(value.shape, dtype=value.dtype),
+								 broadcastable=param.broadcastable)
+		acc_grad_new = rho * acc_grad + (1 - rho) * grad
+		acc_rms = theano.shared(np.zeros(value.shape, dtype=value.dtype),
+								broadcastable=param.broadcastable)
+		acc_rms_new = rho * acc_rms + (1 - rho) * grad ** 2
+		updates[acc_grad] = acc_grad_new
+		updates[acc_rms] = acc_rms_new
+		updates[param] = (param - learning_rate * (grad /
+						   T.sqrt(acc_rms_new - acc_grad_new ** 2 + epsilon)))
+	return updates
