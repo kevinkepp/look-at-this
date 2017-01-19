@@ -10,7 +10,6 @@ view_size = Size(5, 5)
 actions = Actions.all
 nb_actions = len(actions)
 max_steps = max(world_size.tuple()) * 15
-action_hist_len = 4
 
 world_logger = WorldLogger(__name__)
 
