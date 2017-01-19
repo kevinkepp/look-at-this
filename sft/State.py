@@ -1,4 +1,5 @@
 import numpy as np
+import theano
 
 
 class State:
@@ -19,7 +20,7 @@ class State:
 		n being number of states and m being number of features"""
 		states = [s.flatten() for s in states]
 		states = [s.reshape(s.size) for s in states]
-		return np.matrix(states)
+		return np.matrix(states, dtype=theano.config.floatX)
 
 	def to_list(self):
 		return [self.view, self.actions]
