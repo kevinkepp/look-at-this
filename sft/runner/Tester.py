@@ -112,13 +112,18 @@ class Tester(Runner):
 	SYMBOL_PATH = 1
 	SYMBOL_TARGET = 2
 	SYMBOL_EMPTY = 0
-	"""
+	""" vorgeschlagenes Format einer Textdatei fuer 5x5 view input und 4 action history. Eine solche Datei muesste nur
+	eingelesen werden, uebersetzt werden in ein View [mit den Werten oben] und eine Actionshistory (dazu ist die Action
+	Klasse auch schon erweitert .names usw) und dann nur noch aehnlich wie oben laden des Agenten+Modells und draufschieben des Inputs,
+	Q Werte erstmal einfach ausgeben oder halt gleich als Bild mit dem Input speichern.
 	00100
 	00100
 	00200
 	02220
 	00200
+	down, down, up, left
 	"""
+
 
 	def _create_state_from_file(self, state_file_path):
 		pass
