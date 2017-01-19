@@ -127,14 +127,14 @@ class Runner(object):
 				agent_configs.append(agent_config)
 		return world_config, agent_configs
 
-	def get_state(self, view, action_hist, state_action_hist_len):
-		actions = np.zeros([state_action_hist_len, len(Actions.all)], dtype=theano.config.floatX)
+	def get_state(self, view, all_actions, action_hist_len):
+		action_hist = np.zeros([action_hist_len, len(Actions.all)], dtype=theano.config.floatX)
 		# take last n actions, this will be smaller or empty if there are not enough actions
-		last_actions = action_hist[-state_action_hist_len:] if state_action_hist_len > 0 else []
-		for i in range(len(last_actions)):
-			action = last_actions[i]
-			actions[i] = Actions.get_one_hot(action)
-		return State(view, actions)
+		last_n_actions = list(reversed(all_actions[-action_hist_len:])) if action_hist_len > 0 else []
+		for i in range(len(last_n_actions)):
+			action = last_n_actions[i]
+			action_hist[i] = Actions.get_one_hot(action)
+		return State(view, action_hist)
 
 	def set_seed(self, seed=None):
 		if seed is None:

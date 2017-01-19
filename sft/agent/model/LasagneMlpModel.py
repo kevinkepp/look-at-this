@@ -209,8 +209,8 @@ class LasagneMlpModel(object):
 		for layer in range(len(layers)):
 			weights = layers[layer]
 			self.logger.log_parameter("weights",
-									  [layer, np.min(weights), np.max(weights), np.mean(weights), np.std(weights)],
-									  headers=["layer", "min", "max", "mean", "std"])
+									  [layer, weights.shape, np.min(weights), np.max(weights), np.mean(weights), np.std(weights)],
+									  headers=["shape", "layer", "min", "max", "mean", "std"])
 
 
 def deepmind_rmsprop(loss_or_grads, params, learning_rate, rho, epsilon):

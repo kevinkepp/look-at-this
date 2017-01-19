@@ -175,7 +175,7 @@ class Evaluator(object):
 			plot_path = os.path.join(path, agent_dir)
 			self._create_folder(plot_path)  # create path plot folder for each agent
 			actionss = self._get_actions(agent_log_path)
-			for epoch in actionss.keys():
+			for epoch in reversed(actionss.keys()):
 				if epoch % PLOT_EVERY_KTH_EPOCH < NUM_PLOT_PATHS_IN_ROW:
 					qs_of_epoch = qs_dict[epoch]
 					w, h = self.view_size.w, self.view_size.h
