@@ -12,9 +12,9 @@ class AgentTesterLogger(AgentLogger):
 		self.model_epoch = model_epoch
 		super(AgentTesterLogger, self).__init__(agent_module_name)
 
-	"""copy agent config file once and model file as well"""
+	"""copy agent config file once"""
 	def _copy_config_file(self, cfg_file_path, file_name):
-		""" makes a copy of the configfiles to the log folder and a copy of the model"""
+		""" makes a copy of the configfiles to the log folder"""
 		file_path = self.agent_dir_path + "/" + file_name
 		if not os.path.isfile(file_path):
 			copyfile(cfg_file_path, file_path)
@@ -24,7 +24,7 @@ class AgentTesterLogger(AgentLogger):
 		if not os.path.exists(self.tester_path):
 			os.makedirs(self.tester_path)
 		# create folder for current agent
-		agent_folder_name = self.name_setup
+		agent_folder_name = "".join((self.name_setup).split("_")[:-1])
 		agent_dir_path = self.tester_path + "/" + agent_folder_name
 		if not os.path.exists(agent_dir_path):
 			os.makedirs(agent_dir_path)
@@ -37,10 +37,12 @@ class AgentTesterLogger(AgentLogger):
 		# set log dir to this location, so every stuff gets logged there
 		self.log_dir = model_dir_path
 		# create folder for saving the parameter files
-		os.makedirs(self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS)
+		param_path = self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS
+		if not os.path.exists(param_path):
+			os.makedirs(param_path)
 
 	def log_model(self, model):
 		"""stores model if it was not already copied to path"""
-		file_path = self.log_dir + "/" + self.name_file_model + self.file_suffix_model
+		file_path = self.log_dir + "/" + self.name_file_model + str(self.model_epoch) + self.file_suffix_model
 		if not os.path.isfile(file_path):
 			model.save(file_path)

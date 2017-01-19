@@ -27,17 +27,6 @@ class Trainer(Runner):
 				self.run_agent(agent, scenarios)
 		world_config.world_logger.close_files()
 
-	def get_configs(self, experiment):
-		world_config = import_module("." + self.WORLD_CONFIG_NAME, experiment.__name__)
-		agent_configs = []
-		experiment_dir = os.path.dirname(experiment.__file__)
-		agents_dir = os.path.join(experiment_dir, self.AGENT_CONFIG_NAME_DIR)
-		for loader, module, is_pkg in pkgutil.iter_modules([agents_dir]):
-			if not is_pkg and module != "__init__":
-				agent_config = import_module("." + module, experiment.__name__ + "." + self.AGENT_CONFIG_NAME_DIR)
-				agent_configs.append(agent_config)
-		return world_config, agent_configs
-
 	def init_scenarios(self, config):
 		scenarios = []
 		for n in range(config.epochs):

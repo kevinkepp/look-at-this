@@ -8,6 +8,7 @@ from sft.log.Logger import BaseLogger
 
 class WorldLogger(BaseLogger):
 	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
+	NAME_FOLDER_WORLD = "world"
 
 	def __init__(self, config_module_name):
 		config_module = sys.modules[config_module_name]
@@ -17,10 +18,10 @@ class WorldLogger(BaseLogger):
 			world_cfg_path = world_cfg_path[:-1]
 		super(WorldLogger, self).__init__()
 		# default names of the files and folders
-		self.name_folder_world = "world"
+		self.name_folder_world = self.NAME_FOLDER_WORLD
 		self.name_folder_world_init = "world_init_logs"
 		self.name_file_init = "init_states" + self.FILE_SUFFIX_LOGS
-		self.name_file_cfg_world = "world" + self.FILE_SUFFIX_CFG
+		self.name_file_cfg_world = self.NAME_FOLDER_WORLD + self.FILE_SUFFIX_CFG
 		self.name_setup = self._get_exp_name(config_module_name)
 
 		self.file_init_states = None  # file for log the init states

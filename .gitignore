@@ -94,4 +94,4 @@ tmp/
 *.cprof
 testarea.py
 config/
-config-test/
+config_test/

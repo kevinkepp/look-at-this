@@ -7,6 +7,10 @@ from sft.log.Logger import BaseLogger
 
 class AgentLogger(BaseLogger):
 	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
+	LOG_AGENT_PREFIX = "agent"
+	NAME_MODELS_FOLDER = "models"
+	NAME_MODEL_PREFIX = "model_"
+	FILE_SUFFIX_MODEL = ".h5"
 
 	def __init__(self, agent_module_name):
 		agent_module = sys.modules[agent_module_name]
@@ -14,16 +18,17 @@ class AgentLogger(BaseLogger):
 		# check if running from .pyc file and change path to .py
 		if agent_cfg_path.endswith("pyc"):
 			agent_cfg_path = agent_cfg_path[:-1]
-		exp_log_folder = agent_module.world.world_logger.get_exp_log_path()
+		if not agent_module.world.world_logger is None:
+			exp_log_folder = agent_module.world.world_logger.get_exp_log_path()
+			self.log_dir = exp_log_folder  # later is replaced with dir of current experiment
 		super(AgentLogger, self).__init__()
 		# default names of the files and folders
-		self.file_suffix_model = ".h5"
-		self.log_dir = exp_log_folder  # later is replaced with dir of current experiment
-		self.name_folder_models = "models"
-		self.name_file_cfg_agent = "agent" + self.FILE_SUFFIX_CFG
+		self.file_suffix_model = self.FILE_SUFFIX_MODEL
+		self.name_folder_models = self.NAME_MODELS_FOLDER
+		self.name_file_cfg_agent = self.LOG_AGENT_PREFIX + self.FILE_SUFFIX_CFG
 		self.name_file_results = "results" + self.FILE_SUFFIX_LOGS
 		self.name_file_actions_taken = "actions" + self.FILE_SUFFIX_LOGS
-		self.name_file_model = "model"
+		self.name_file_model = self.NAME_MODEL_PREFIX
 		self.name_setup = agent_module_name.split(".")[-1]
 
 		self.file_results = None  # file for log the results
@@ -39,11 +44,13 @@ class AgentLogger(BaseLogger):
 			os.makedirs(self.log_dir)
 		# create folder for current experiment
 		folder_name = self.name_setup
-		dir_path = self.log_dir + "/" + folder_name
+		dir_path = self.log_dir + "/" + self.LOG_AGENT_PREFIX + "_" + folder_name
 		os.makedirs(dir_path)
 		self.log_dir = dir_path
 		# create folder for saving the parameter files
-		os.makedirs(self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS)
+		param_path = self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS
+		if not os.path.exists(param_path):
+			os.makedirs(self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS)
 
 	def log_results(self, actions_taken, success):
 		""" log the results (actions taken and success-bool) and close the files of this experiment"""
