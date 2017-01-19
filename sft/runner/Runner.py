@@ -136,10 +136,11 @@ class Runner(object):
 			actions[i] = Actions.get_one_hot(action)
 		return State(view, actions)
 
-	def set_seed(self):
-		# set randomly generated random seed for comparability of agents run in this execution
-		# while maintain the generation of different paths and agent behaviour for different executions
-		seed = random.randint(0, sys.maxint)
+	def set_seed(self, seed=None):
+		if seed is None:
+			# set randomly generated random seed for comparability of agents run in this execution
+			# while maintain the generation of different paths and agent behaviour for different executions
+			seed = random.randint(0, sys.maxint)
 		random.seed(seed)
 
 	"""later used by Trainer to run epsilon update and by Tester to set epsilon to wished value"""

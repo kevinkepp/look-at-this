@@ -26,7 +26,7 @@ class Tester(Runner):
 	TESTER_OUTPUT_FOLDER_NAME = "tester"
 
 	# TODO
-	def run_one_model(self, model_path, agent_config_path, world_config_path, testset_worlds_path):
+	def run_model(self, model_path, agent_config_path, world_config_path, testset_worlds_path):
 		pass
 
 	def _load_worlds(self, testset_worlds_path, world_size, view_size):
@@ -38,7 +38,7 @@ class Tester(Runner):
 			scenarios.append(pwl.get_next(random_choice=False))
 		return scenarios
 
-	def run_on_exp(self, exp_path, testset_worlds_path):
+	def run_exp(self, exp_path, testset_worlds_path):
 		self.set_seed()
 		# getting agent-config paths, saved models of agents path and world-config-path
 		agent_config_paths = []
@@ -104,6 +104,12 @@ class Tester(Runner):
 	def _replace_agent_logger(self, file_path):
 		replace_in_file(file_path, self.AGENT_LOGGER_NAME, self.AGENT_TESTER_LOGGER_NAME)
 
+	"""
+	def _replace_agent_logger(self, file_path, tester_path, model_epoch):
+		search = "AgentLogger(__name__)"
+		replace = "AgentTesterLogger(__name__, " + tester_path + ", " + model_epoch + ")"
+		replace_in_file(file_path, search, replace)
+	"""
 
 	# TODO: load state from file, predict Q, print Q, create plot
 	# values and symbols for reading the by us created state input file
