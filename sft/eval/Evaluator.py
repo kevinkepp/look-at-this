@@ -175,7 +175,7 @@ class Evaluator(object):
 			plot_path = os.path.join(path, agent_dir)
 			self._create_folder(plot_path)  # create path plot folder for each agent
 			actionss = self._get_actions(agent_log_path)
-			for epoch in actionss.keys():
+			for epoch in reversed(actionss.keys()):
 				if epoch % PLOT_EVERY_KTH_EPOCH < NUM_PLOT_PATHS_IN_ROW:
 					qs_of_epoch = qs_dict[epoch]
 					w, h = self.view_size.w, self.view_size.h
@@ -332,7 +332,7 @@ class Evaluator(object):
 	def _visualize_qs_for_one_epoch(self, qs, text_every_kth):
 		# q-plot every action dot
 		plt.figure(figsize=(24, 4))
-		gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1], width_ratios=[1, 1])
+		gs = gridspec.GridSpec(3, 1, height_ratios=[2, 1, 0.5], width_ratios=[1, 1, 1])
 		plt.subplot(gs[0])
 		q_colors = ["r", "g", "b", "k"]
 		for i_ac in range(len(Actions.all)):
@@ -358,6 +358,21 @@ class Evaluator(object):
 		plt.gca().xaxis.set_major_locator(xticks_major)
 		plt.gca().xaxis.set_minor_locator(xticks_minor)
 		plt.gca().xaxis.set_major_formatter(NullFormatter())
+		# plot the sorted q-action values
+		plt.subplot(gs[2])
+		q_colors = ["r", "g", "b", "k"]
+		for i_ac in range(len(Actions.all)):
+			qs_argsort = np.argsort(qs, axis=1)
+			plt.plot(qs_argsort[:, i_ac], q_colors[i_ac] + ".", label=Actions.name_dict[i_ac])
+			plt.xlim([-1, len(qs)])
+		plt.gca().xaxis.grid(b=True, which='major', linestyle='--', alpha=0.6)
+		plt.gca().xaxis.grid(b=True, which='minor', linestyle='--', alpha=0.3)
+		xticks_major = MultipleLocator(text_every_kth)
+		xticks_minor = MultipleLocator(2)
+		plt.gca().xaxis.set_major_locator(xticks_major)
+		plt.gca().xaxis.set_minor_locator(xticks_minor)
+		plt.yticks([])
+		plt.ylim(-1, 4)
 		# formating
 		plt.tight_layout()
 
