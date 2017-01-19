@@ -41,7 +41,7 @@ class AgentTesterLogger(AgentLogger):
 		if not os.path.exists(param_path):
 			os.makedirs(param_path)
 
-	def log_model(self, model):
+	def log_model(self, model, name=None):
 		"""stores model if it was not already copied to path"""
 		file_path = self.log_dir + "/" + self.name_file_model + str(self.model_epoch) + self.file_suffix_model
 		if not os.path.isfile(file_path):

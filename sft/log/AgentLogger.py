@@ -9,7 +9,7 @@ class AgentLogger(BaseLogger):
 	""" used to log data (like parameters, configuration, ...) in order to enable proper experimentation """
 	LOG_AGENT_PREFIX = "agent"
 	NAME_MODELS_FOLDER = "models"
-	NAME_MODEL_PREFIX = "model_"
+	NAME_MODEL_PREFIX = "model"
 	FILE_SUFFIX_MODEL = ".h5"
 
 	def __init__(self, agent_module_name):

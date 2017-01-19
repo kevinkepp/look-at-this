@@ -72,7 +72,7 @@ class Runner(object):
 			logger.log_results(hist, success)
 			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(hist)))
 			if n % self.PERSIST_MODEL_EVERY == 0:
-				logger.log_model(config.model, "epoch" + str(n))
+				logger.log_model(config.model, str(n))
 			logger.next_epoch()
 			config.agent.new_episode()
 		time_diff = time.time() - time_start

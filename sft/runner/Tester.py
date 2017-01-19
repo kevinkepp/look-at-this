@@ -52,7 +52,7 @@ class Tester(Runner):
 				model_src_paths = {}
 				for fm in os.listdir(mdl_path):
 					if AgentLogger.NAME_MODEL_PREFIX in fm:
-						ep = int(fm.split(AgentLogger.FILE_SUFFIX_MODEL)[0].lstrip(AgentLogger.NAME_MODEL_PREFIX))
+						ep = int(fm.split(AgentLogger.FILE_SUFFIX_MODEL)[0][len(AgentLogger.NAME_MODEL_PREFIX) + 1:])  # + 1 for the underscore
 						model_src_paths[ep] = mdl_path + "/" + fm
 				agent_models_src_paths.append(model_src_paths)
 		world_config_folder_path = exp_path + "/" + WorldLogger.NAME_FOLDER_WORLD + "/" + WorldLogger.NAME_FOLDER_WORLD + BaseLogger.FILE_SUFFIX_CFG
@@ -80,7 +80,7 @@ class Tester(Runner):
 
 	def _copy_config_file(self, agent_config_path, ep):
 		self._delete_old_agent_config_files()
-		agent_name = agent_config_path.split("/")[-2].lstrip(AgentLogger.LOG_AGENT_PREFIX + "_") + "_"+str(ep)+".py"
+		agent_name = agent_config_path.split("/")[-2][len(AgentLogger.LOG_AGENT_PREFIX) + 1:] + "_" + str(ep) + ".py"
 		shutil.copy(agent_config_path, self.TEST_AGENT_PATH + "/" + agent_name)
 		self._replace_loggers("/".join(self.TEST_WORLD_PATH.split("/")[:-1]))
 		return agent_name
@@ -129,7 +129,6 @@ class Tester(Runner):
 	00200
 	down, down, up, left
 	"""
-
 
 	def _create_state_from_file(self, state_file_path):
 		pass
