@@ -1,7 +1,11 @@
 import os, shutil
 import pkgutil
 from importlib import import_module
+import numpy as np
+import theano
+from sft.State import State
 
+from sft.Actions import Actions
 from sft import replace_in_file
 from sft.sim.PathWorldLoader import PathWorldLoader
 
@@ -21,6 +25,7 @@ class Tester(Runner):
 	TEST_AGENT_PATH = "sft/config_test/agents"
 	AGENT_LOGGER_NAME = "AgentLogger"
 	AGENT_TESTER_LOGGER_NAME = "AgentTesterLogger"
+	AGENT_DUMMY_LOGGER_NAME ="DummyLogger"
 	WORLD_LOGGER_INIT = "WorldLogger(__name__)"
 	TEST_MODULE_NAME = "config_test"
 	TESTER_OUTPUT_FOLDER_NAME = "tester"
@@ -37,6 +42,11 @@ class Tester(Runner):
 		for i in range(amt_worlds):
 			scenarios.append(pwl.get_next(random_choice=False))
 		return scenarios
+
+	def _copy_world_config(self, world_config_folder_path):
+		if os.path.isfile(self.TEST_WORLD_PATH):
+			os.remove(self.TEST_WORLD_PATH)
+		shutil.copy(world_config_folder_path, self.TEST_WORLD_PATH)
 
 	def run_exp(self, exp_path, testset_worlds_path):
 		self.set_seed()
@@ -57,17 +67,14 @@ class Tester(Runner):
 						model_src_paths[ep] = mdl_path + "/" + fm
 				agent_models_src_paths.append(model_src_paths)
 		world_config_folder_path = exp_path + "/" + WorldLogger.NAME_FOLDER_WORLD + "/" + WorldLogger.NAME_FOLDER_WORLD + BaseLogger.FILE_SUFFIX_CFG
-		if os.path.isfile(self.TEST_WORLD_PATH):
-			os.remove(self.TEST_WORLD_PATH)
-		shutil.copy(world_config_folder_path, self.TEST_WORLD_PATH)
+		self._copy_world_config(world_config_folder_path)
 		scenarios = None
 		# run the stuff
 		for i_a in range(len(agent_config_paths)):
 			for ep in agent_models_src_paths[i_a].keys():
 				# replace the input to AgentTesterLogger in agent config files
-				agent_name = self._copy_config_file(agent_config_paths[i_a], ep)
-				file_path = self.TEST_AGENT_PATH + "/" + agent_name
-				replace_in_file(file_path, self.AGENT_TESTER_LOGGER_NAME + "(__name__)",
+				agent_tmp_path = self._copy_agent_config_file(agent_config_paths[i_a], ep)
+				replace_in_file(agent_tmp_path, self.AGENT_TESTER_LOGGER_NAME + "(__name__)",
 								self.AGENT_TESTER_LOGGER_NAME + "(__name__, '" + exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "', " + str(ep) + ")")
 				exp = import_module("." + self.TEST_MODULE_NAME, "sft")
 				world_config, agent_config = self.get_configs(exp)
@@ -79,12 +86,13 @@ class Tester(Runner):
 				self.run_agent(agent_config[0], scenarios)
 		shutil.copytree(testset_worlds_path, exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "/worlds")
 
-	def _copy_config_file(self, agent_config_path, ep):
+	def _copy_agent_config_file(self, agent_config_path, ep, agent_logger_replacement_name):
 		self._delete_old_agent_config_files()
 		agent_name = agent_config_path.split("/")[-2][len(AgentLogger.LOG_AGENT_PREFIX) + 1:] + "_" + str(ep) + ".py"
 		shutil.copy(agent_config_path, self.TEST_AGENT_PATH + "/" + agent_name)
-		self._replace_loggers("/".join(self.TEST_WORLD_PATH.split("/")[:-1]))
-		return agent_name
+		self._replace_loggers("/".join(self.TEST_WORLD_PATH.split("/")[:-1]), agent_logger_replacement_name)
+		file_path = self.TEST_AGENT_PATH + "/" + agent_name
+		return file_path
 
 	def _delete_old_agent_config_files(self):
 		for f in os.listdir(self.TEST_AGENT_PATH):
@@ -94,16 +102,16 @@ class Tester(Runner):
 	def _get_eps(self, config, epoch):
 		return self.EPSILON
 
-	def _replace_loggers(self, exp_path):
+	def _replace_loggers(self, exp_path, agent_logger_replacement_name):
 		self._replace_world_logger(exp_path + "/world.py")
 		for agent_file in os.listdir(exp_path + "/agents"):
-			self._replace_agent_logger(exp_path + "/agents/" + agent_file)
+			self._replace_agent_logger(exp_path + "/agents/" + agent_file, agent_logger_replacement_name)
 
 	def _replace_world_logger(self, file_path):
 		replace_in_file(file_path, self.WORLD_LOGGER_INIT, "None")
 
-	def _replace_agent_logger(self, file_path):
-		replace_in_file(file_path, self.AGENT_LOGGER_NAME, self.AGENT_TESTER_LOGGER_NAME)
+	def _replace_agent_logger(self, file_path, logger_replacement_name):
+		replace_in_file(file_path, self.AGENT_LOGGER_NAME, logger_replacement_name)
 
 	"""
 	def _replace_agent_logger(self, file_path, tester_path, model_epoch):
@@ -114,25 +122,59 @@ class Tester(Runner):
 
 	# TODO: load state from file, predict Q, print Q, create plot
 	# values and symbols for reading the by us created state input file
-	PATH_VALUE = 0.588235294118
-	TARGET_VALUE = 1
-	SYMBOL_PATH = 1
-	SYMBOL_TARGET = 2
-	SYMBOL_EMPTY = 0
-	""" vorgeschlagenes Format einer Textdatei fuer 5x5 view input und 4 action history. Eine solche Datei muesste nur
-	eingelesen werden, uebersetzt werden in ein View [mit den Werten oben] und eine Actionshistory (dazu ist die Action
-	Klasse auch schon erweitert .names usw) und dann nur noch aehnlich wie oben laden des Agenten+Modells und draufschieben des Inputs,
-	Q Werte erstmal einfach ausgeben oder halt gleich als Bild mit dem Input speichern.
+	state_file_transfer_dict = {
+		0: 0,
+		1: 0.588235294118,  # path value
+		2: 1  # target value
+	}
+	"""
 	00100
 	00100
 	00200
 	02220
 	00200
-	down, down, up, left
+	down <- newest
+	down
+	up
+	left
 	"""
 
 	def _create_state_from_file(self, state_file_path):
-		pass
+		state_file = open(state_file_path, 'r')
+		w = 0
+		h = 0
+		view_lines = []
+		ah = []
+		for line in state_file:
+			if any(char.isdigit() for char in line):
+				if w == 0:
+					w = len(line) - 1
+				view_lines.append(line.rstrip("\n"))
+			else:
+				ah.append(Actions.get_by_name(line.strip("\n")))
+		# create view
+		v = []
+		for line in view_lines:
+			l = []
+			for s in line:
+				l.append(self.state_file_transfer_dict[int(s)])
+			v.append(l)
+		state_view = np.array(v, dtype=theano.config.floatX)
+		# create state
+		return self.get_state(state_view, ah, len(ah))
 
-	def get_q_one_state(self, state_path):
-		pass
+	def get_q_one_state(self, state_path, world_config_path, agent_path, model_path):
+		in_state = self._create_state_from_file(state_path)
+		self._copy_world_config(world_config_path)
+		agent_tmp_path = self._copy_agent_config_file(agent_path, 0, self.AGENT_DUMMY_LOGGER_NAME)
+		replace_in_file(agent_tmp_path, self.AGENT_DUMMY_LOGGER_NAME + "(__name__)",
+						self.AGENT_DUMMY_LOGGER_NAME + "()")
+		exp = import_module("." + self.TEST_MODULE_NAME, "sft")
+		_, agent_config = self.get_configs(exp)
+		# load model
+		agent_config[0].agent.model.load(model_path)
+		# predict q values
+		qs = agent_config[0].agent.model.predict_qs(in_state.view, in_state.actions)
+		print(Actions.names)
+		print(qs)
+		return qs
