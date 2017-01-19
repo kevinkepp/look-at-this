@@ -10,6 +10,10 @@ class Actions(object):
 	all = [UP, DOWN, LEFT, RIGHT]
 
 	@staticmethod
+	def get_by_name(name):
+		return Actions.names.index(name)
+
+	@staticmethod
 	def get_opposite(action):
 		if action == Actions.UP:
 			return Actions.DOWN
