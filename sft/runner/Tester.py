@@ -51,7 +51,8 @@ class Tester(Runner):
 				mdl_path = exp_path + "/" + fa + "/" + AgentLogger.NAME_MODELS_FOLDER
 				model_src_paths = {}
 				for fm in os.listdir(mdl_path):
-					if AgentLogger.NAME_MODEL_PREFIX in fm:
+					if AgentLogger.NAME_MODEL_PREFIX in fm \
+						and AgentLogger.NAME_MODEL_PREFIX + AgentLogger.FILE_SUFFIX_MODEL not in fm:  # exclude "model.h5.npz"
 						ep = int(fm.split(AgentLogger.FILE_SUFFIX_MODEL)[0][len(AgentLogger.NAME_MODEL_PREFIX) + 1:])  # + 1 for the underscore
 						model_src_paths[ep] = mdl_path + "/" + fm
 				agent_models_src_paths.append(model_src_paths)

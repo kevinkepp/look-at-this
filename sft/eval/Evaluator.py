@@ -401,7 +401,7 @@ class Evaluator(object):
 		ax_success.set_ylim((-0.02, 1.02))
 		for name, success, steps in zip(names, successes, stepss):
 			self._plot_res_one_agent(ax_success, ax_steps, success, steps, name, epochs, sliding_window_mean)
-		ax_success.legend(loc='upper right')
+		ax_success.legend(loc='best')
 		filepath = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.RESULTS_PLOT_FILE_NAME)
 		plt.savefig(filepath, bbox_inches='tight')
 		plt.close()

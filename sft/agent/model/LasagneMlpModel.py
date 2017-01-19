@@ -145,7 +145,7 @@ class LasagneMlpModel(object):
 			# see https://github.com/spragunr/deep_q_rl/blob/master/deep_q_rl/q_network.py
 			quadratic_part = T.minimum(abs(diff), self.clip_delta)
 			linear_part = abs(diff) - quadratic_part
-			loss = 0.5 * quadratic_part ** 2 + self.clip_delta * linear_part
+			loss = quadratic_part ** 2 + self.clip_delta * linear_part
 		else:
 			loss = diff ** 2  # TODO error clipping
 		loss = T.mean(loss)  # batch accumulator sum or mean

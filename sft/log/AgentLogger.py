@@ -18,10 +18,10 @@ class AgentLogger(BaseLogger):
 		# check if running from .pyc file and change path to .py
 		if agent_cfg_path.endswith("pyc"):
 			agent_cfg_path = agent_cfg_path[:-1]
-		if not agent_module.world.world_logger is None:
+		super(AgentLogger, self).__init__()
+		if agent_module.world.world_logger is not None:
 			exp_log_folder = agent_module.world.world_logger.get_exp_log_path()
 			self.log_dir = exp_log_folder  # later is replaced with dir of current experiment
-		super(AgentLogger, self).__init__()
 		# default names of the files and folders
 		self.file_suffix_model = self.FILE_SUFFIX_MODEL
 		self.name_folder_models = self.NAME_MODELS_FOLDER
