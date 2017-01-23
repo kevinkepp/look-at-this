@@ -37,7 +37,8 @@ class Tester(Runner):
 	def _load_worlds(self, testset_worlds_path, world_size, view_size):
 		"""load worlds and init states to run agent models on"""
 		scenarios = []
-		pwl = PathWorldLoader(None, testset_worlds_path, view_size, world_size, None, path_init_file=testset_worlds_path + "/" + self.TESTSET_INIT_POS_FILE)
+		pwl = PathWorldLoader(None, testset_worlds_path, view_size, world_size, None,
+							  path_init_file=testset_worlds_path + "/" + self.TESTSET_INIT_POS_FILE)
 		amt_worlds = len(os.listdir(testset_worlds_path)) - 1
 		for i in range(amt_worlds):
 			scenarios.append(pwl.get_next(random_choice=False))

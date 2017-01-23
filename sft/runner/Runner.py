@@ -76,7 +76,7 @@ class Runner(object):
 			logger.next_epoch()
 			config.agent.new_episode()
 		time_diff = time.time() - time_start
-		logger.log_model(config.model)
+		logger.log_model(config.model, str(len(scenarios) - 1))
 		logger.log_message("{0} - Finished training, took {1} seconds".format(config.__name__, time_diff))
 		logger.close_files()
 
@@ -115,17 +115,6 @@ class Runner(object):
 			return 0
 		else:
 			return -1
-
-	def get_configs(self, experiment):
-		world_config = import_module("." + self.WORLD_CONFIG_NAME, experiment.__name__)
-		agent_configs = []
-		experiment_dir = os.path.dirname(experiment.__file__)
-		agents_dir = os.path.join(experiment_dir, self.AGENT_CONFIG_NAME_DIR)
-		for loader, module, is_pkg in pkgutil.iter_modules([agents_dir]):
-			if not is_pkg and module != "__init__":
-				agent_config = import_module("." + module, experiment.__name__ + "." + self.AGENT_CONFIG_NAME_DIR)
-				agent_configs.append(agent_config)
-		return world_config, agent_configs
 
 	def get_state(self, view, all_actions, action_hist_len):
 		action_hist = np.zeros([action_hist_len, len(Actions.all)], dtype=theano.config.floatX)
