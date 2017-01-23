@@ -24,7 +24,7 @@ class AgentTesterLogger(AgentLogger):
 		if not os.path.exists(self.tester_path):
 			os.makedirs(self.tester_path)
 		# create folder for current agent
-		agent_folder_name = "".join((self.name_setup).split("_")[:-1])
+		agent_folder_name = self.LOG_AGENT_PREFIX + "_" + "_".join((self.name_setup).split("_")[:-1])
 		agent_dir_path = self.tester_path + "/" + agent_folder_name
 		if not os.path.exists(agent_dir_path):
 			os.makedirs(agent_dir_path)

@@ -2,6 +2,7 @@ import os, shutil
 import pkgutil
 from importlib import import_module
 import numpy as np
+import matplotlib.pyplot as plt
 import theano
 from sft.State import State
 
@@ -29,6 +30,7 @@ class Tester(Runner):
 	WORLD_LOGGER_INIT = "WorldLogger(__name__)"
 	TEST_MODULE_NAME = "config_test"
 	TESTER_OUTPUT_FOLDER_NAME = "tester"
+	RESULTS_FILE_NAME = "results.png"
 
 	# TODO
 	def run_model(self, model_path, agent_config_path, world_config_path, testset_worlds_path):
@@ -49,7 +51,7 @@ class Tester(Runner):
 			os.remove(self.TEST_WORLD_PATH)
 		shutil.copy(world_config_folder_path, self.TEST_WORLD_PATH)
 
-	def run_exp(self, exp_path, testset_worlds_path):
+	def run_on_exp(self, exp_path, testset_worlds_path):
 		self.set_seed()
 		# getting agent-config paths, saved models of agents path and world-config-path
 		agent_config_paths = []
@@ -74,7 +76,7 @@ class Tester(Runner):
 		for i_a in range(len(agent_config_paths)):
 			for ep in agent_models_src_paths[i_a].keys():
 				# replace the input to AgentTesterLogger in agent config files
-				agent_tmp_path = self._copy_agent_config_file(agent_config_paths[i_a], ep)
+				agent_tmp_path = self._copy_agent_config_file(agent_config_paths[i_a], ep, self.AGENT_TESTER_LOGGER_NAME)
 				replace_in_file(agent_tmp_path, self.AGENT_TESTER_LOGGER_NAME + "(__name__)",
 								self.AGENT_TESTER_LOGGER_NAME + "(__name__, '" + exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "', " + str(ep) + ")")
 				exp = import_module("." + self.TEST_MODULE_NAME, "sft")
@@ -86,6 +88,71 @@ class Tester(Runner):
 				# run
 				self.run_agent(agent_config[0], scenarios)
 		shutil.copytree(testset_worlds_path, exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "/worlds")
+
+	def _extract_results_from_file(self, res_path):
+		f_res = open(res_path, 'r')
+		f_res.readline() # skip headline
+		vals = []
+		for line in f_res:
+			if line is not "":
+				vals.append([int(l) for l in line.split("\t")])
+		f_res.close()
+		vals = np.array(vals)
+		mean_success = np.mean(vals[:,1])
+		mean_steps = np.mean(vals[:,2])
+		return mean_success, mean_steps
+
+	def _get_agents_performance(self, exp_path):
+		tester_path = exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME
+		agents_perf_dict = {}
+		for fa in os.listdir(tester_path):
+			if fa.startswith(AgentLogger.LOG_AGENT_PREFIX):
+				agent_path = tester_path + "/" + fa
+				epochs = []
+				mean_successes = []
+				mean_steps = []
+				for fm in os.listdir(agent_path):
+					if not fm == AgentLogger.LOG_AGENT_PREFIX + BaseLogger.FILE_SUFFIX_CFG:
+						epochs.append(int(fm))
+						res_path = agent_path + "/" + fm + "/" + AgentLogger.FILE_NAME_RESULTS + BaseLogger.FILE_SUFFIX_LOGS
+						m_suc, m_step = self._extract_results_from_file(res_path)
+						mean_successes.append(m_suc)
+						mean_steps.append(m_step)
+				agents_perf_dict[fa[len(AgentLogger.LOG_AGENT_PREFIX)+1:]] = [epochs, mean_successes, mean_steps]
+		return agents_perf_dict
+
+	def plot_results(self, exp_path):
+		"""used to plot the results of .run_on_exp()"""
+		agents_perf_dict = self._get_agents_performance(exp_path)
+		# plot the results
+		fig, ax_success = plt.subplots()
+		ax_steps = ax_success.twinx()
+		title = "Agent model performance over epochs on testset"
+		plt.title(title)
+		ax_steps.set_xlabel("epochs")
+		ax_steps.set_ylabel("# steps taken")
+		ax_success.set_ylabel("success-rate")
+		ax_success.grid(True)
+		ax_steps.grid(True, alpha=0.3)
+		max_epochs = 0
+		for agent_key in agents_perf_dict.keys():
+			res = agents_perf_dict[agent_key]
+			epochs = np.array(res[0])
+			sort_i = np.argsort(epochs)
+			epochs = epochs[sort_i]
+			successes = np.array(res[1])
+			successes = successes[sort_i]
+			steps = np.array(res[2])
+			steps = steps[sort_i]
+			max_epochs = max(epochs)
+			ax_success.plot(epochs, successes, '-', label=agent_key)
+			ax_steps.plot(epochs, steps, ':')
+		ax_success.set_xlim(-1, max_epochs + 1)
+		ax_success.set_ylim((-0.02, 1.02))
+		ax_success.legend(loc='best')
+		filepath = exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "/" + self.RESULTS_FILE_NAME
+		plt.savefig(filepath, bbox_inches='tight')
+		plt.close()
 
 	def _copy_agent_config_file(self, agent_config_path, ep, agent_logger_replacement_name):
 		self._delete_old_agent_config_files()
