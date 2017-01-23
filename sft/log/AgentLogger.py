@@ -11,6 +11,7 @@ class AgentLogger(BaseLogger):
 	NAME_MODELS_FOLDER = "models"
 	NAME_MODEL_PREFIX = "model"
 	FILE_SUFFIX_MODEL = ".h5"
+	FILE_NAME_RESULTS = "results"
 
 	def __init__(self, agent_module_name):
 		agent_module = sys.modules[agent_module_name]
