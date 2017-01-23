@@ -49,19 +49,22 @@ class DeepQAgentGpu(RobotAgent):
 	# start_learn: after how many experiences (buffer size) we start learning based on experiences
 	# learn_steps: every learn_steps steps the model gets updated
 	def __init__(self, logger, actions, batch_size, buffer_size, start_learn, learn_interval, view_size,
-				 action_hist_size, model):
+				 action_hist, model):
 		self.logger = logger
 		self.actions = actions
 		self.batch_size = batch_size
-		buffer_size = max(buffer_size, batch_size)  # buffer has to be at least batch_size
-		self.replay_buffer = ReplayBuffer(buffer_size, view_size, action_hist_size)
+		self.buffer_size = max(buffer_size, batch_size)  # buffer has to be at least batch_size
 		self.start_learn = start_learn
 		self.learn_interval = learn_interval if learn_interval > 0 else 1
-		self.learn_steps = 0
+		self.view_size = view_size
+		self.action_hist = action_hist
 		self.model = model
+		self.replay_buffer = ReplayBuffer(buffer_size, view_size, action_hist.get_size())
+		self.learn_steps = 0
 
 	def choose_action(self, curr_state, eps):
-		qs = self.model.predict_qs(curr_state.view, curr_state.actions)
+		actions = self.action_hist.get_history(curr_state.actions)
+		qs = self.model.predict_qs(curr_state.view, actions)
 		self.logger.log_parameter("q", qs)
 		# store qs for current state because usually we can use them in subsequent call to incorporate_reward
 		if random.random() < eps:
@@ -74,12 +77,16 @@ class DeepQAgentGpu(RobotAgent):
 		""" incorporates reward, states, action into replay list and updates the parameters of model """
 		self.logger.log_parameter("reward", reward)
 		old_view = old_state.view
-		old_action_hist = old_state.actions
+		old_actions = self.action_hist.get_history(old_state.actions)
 		is_terminal = new_state is None
+		if not is_terminal:
+			new_view = new_state.view
+			new_actions = self.action_hist.get_history(new_state.actions)
+		else:
+			new_view = np.zeros(old_view.shape, dtype=theano.config.floatX)
+			new_actions = np.zeros(old_actions.shape, dtype=theano.config.floatX)
 		terminal = 1 if is_terminal else 0
-		new_view = new_state.view if not is_terminal else np.zeros(old_view.shape, dtype=theano.config.floatX)
-		new_action_hist = new_state.actions if not is_terminal else np.zeros(old_action_hist.shape, dtype=theano.config.floatX)
-		exp_new = (old_view, old_action_hist, action, new_view, new_action_hist, reward, terminal)
+		exp_new = (old_view, old_actions, action, new_view, new_actions, reward, terminal)
 		self.replay_buffer.add(*exp_new)
 		if self.replay_buffer.len >= self.start_learn and self.learn_steps % self.learn_interval == 0:
 			minibatch = self.replay_buffer.draw_batch(self.batch_size)

@@ -22,8 +22,9 @@ class Runner(object):
 	PERSIST_MODEL_EVERY = 100
 
 	def run(self, experiment, threaded=False):
-		self.set_seed()
+		seed = self.set_seed()
 		world_config, agent_configs = self.get_configs(experiment)
+		world_config.world_logger.log_message("Using seed %s" % str(seed))
 		scenarios = self.init_scenarios(world_config)
 		if threaded:
 			threads = []
@@ -68,9 +69,9 @@ class Runner(object):
 		time_start = time.time()
 		for n in range(len(scenarios)):
 			scenario = scenarios[n]
-			success, hist = self.run_epoch(config, sim, n, scenario)
-			logger.log_results(hist, success)
-			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(hist)))
+			success, actions = self.run_epoch(config, sim, n, scenario)
+			logger.log_results(actions, success)
+			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(actions)))
 			if n % self.PERSIST_MODEL_EVERY == 0:
 				logger.log_model(config.model, str(n))
 			logger.next_epoch()
@@ -85,21 +86,21 @@ class Runner(object):
 		sim.initialize(scenario.world, scenario.pos)
 		eps = self._get_eps(config, epoch)
 		config.logger.log_parameter("epsilon", eps)
-		hist = []
-		while len(hist) < config.max_steps:
+		actions = []
+		while len(actions) < config.max_steps:
 			# result is 1 for on target, 0 for oob and -1 for non-terminal
-			res = self.run_step(hist, sim, config.action_hist_len, config.agent, config.reward, eps)
+			res = self.run_step(actions, sim, config.agent, config.reward, eps)
 			if res != -1:
-				return res, hist
+				return res, actions
 		# if max steps are exceeded episode was not successful
-		return 0, hist
+		return 0, actions
 
-	def run_step(self, hist, sim, state_action_len, agent, reward, eps):
+	def run_step(self, past_actions, sim, agent, reward, eps):
 		"""Conducts training step and returns 1 for success, 0 for loss and -1 for non-terminal"""
 		view = sim.get_current_view()
-		state = self.get_state(view, hist, state_action_len)
+		state = self.get_state(view, past_actions)
 		action = agent.choose_action(state, eps)
-		hist.append(action)
+		past_actions.append(action)
 		view2 = sim.update_view(action)
 		reward_value = reward.get_reward(view, view2)
 		oob = sim.is_oob()
@@ -107,7 +108,7 @@ class Runner(object):
 		# epoch ends when agent runs out of bounds or hits the target
 		terminal = oob or at_target
 		# if new state is terminal None will be given to agent
-		state2 = self.get_state(view2, hist, state_action_len) if not terminal else None
+		state2 = self.get_state(view2, past_actions) if not terminal else None
 		self._incorp_agent_reward(agent, state, action, state2, reward_value)
 		if at_target:
 			return 1
@@ -116,14 +117,8 @@ class Runner(object):
 		else:
 			return -1
 
-	def get_state(self, view, all_actions, action_hist_len):
-		action_hist = np.zeros([action_hist_len, len(Actions.all)], dtype=theano.config.floatX)
-		# take last n actions, this will be smaller or empty if there are not enough actions
-		last_n_actions = list(reversed(all_actions[-action_hist_len:])) if action_hist_len > 0 else []
-		for i in range(len(last_n_actions)):
-			action = last_n_actions[i]
-			action_hist[i] = Actions.get_one_hot(action)
-		return State(view, action_hist)
+	def get_state(self, view, all_actions):
+		return State(view, all_actions)
 
 	def set_seed(self, seed=None):
 		if seed is None:
@@ -131,6 +126,7 @@ class Runner(object):
 			# while maintain the generation of different paths and agent behaviour for different executions
 			seed = random.randint(0, sys.maxint)
 		random.seed(seed)
+		return seed
 
 	"""later used by Trainer to run epsilon update and by Tester to set epsilon to wished value"""
 	@abstractmethod
