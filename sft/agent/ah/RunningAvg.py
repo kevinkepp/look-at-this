@@ -12,20 +12,19 @@ class RunningAvg(ActionHistory):
 		self.logger = logger
 		self.n = n
 		self.factor = factor
+		self.actions = np.zeros([self.n, self.ACTION_WIDTH], dtype=theano.config.floatX)
 
 	def get_size(self):
 		return Size(self.n, self.ACTION_WIDTH)
 
 	def get_history(self, all_actions):
-		actions = np.zeros([self.n, self.ACTION_WIDTH], dtype=theano.config.floatX)
-		# take last n actions, this will be smaller or empty if there are not enough actions
-		for a in all_actions:
-			actions[0, :] = Actions.get_one_hot(a)
-			for i in range(1, self.n):
-				actions[i] = self.normalize(actions[i] + self.factor * actions[i-1])
-		self.logger.log_parameter("actions", str(actions))
-		return actions
+		return self.actions
 
-	def normalize(self, vec):
-		return vec / float(np.max(vec))
+	def new_action(self, a):
+		for i in range(1, self.n):
+			self.actions[i] = (1 - self.factor) * self.actions[i] + self.factor * self.actions[i - 1]
+		self.actions[0, :] = Actions.get_one_hot(a)
+		self.logger.log_parameter("actions", str(self.actions))
 
+	def new_episode(self):
+		self.actions = np.zeros([self.n, self.ACTION_WIDTH], dtype=theano.config.floatX)

@@ -1,8 +1,10 @@
 from __future__ import division
 
 import random
+
 import numpy as np
 import theano
+
 from sft.agent.RobotAgent import RobotAgent
 
 
@@ -71,7 +73,9 @@ class DeepQAgentGpu(RobotAgent):
 			ai = np.random.randint(0, len(self.actions))
 		else:
 			ai = np.argmax(qs)
-		return self.actions[ai]
+		action = self.actions[ai]
+		self.action_hist.new_action(action)
+		return action
 
 	def incorporate_reward(self, old_state, action, new_state, reward):
 		""" incorporates reward, states, action into replay list and updates the parameters of model """
@@ -96,4 +100,4 @@ class DeepQAgentGpu(RobotAgent):
 			self.learn_steps += 1
 
 	def new_episode(self):
-		pass
+		self.action_hist.new_episode()

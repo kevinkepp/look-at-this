@@ -24,3 +24,9 @@ class LastN(ActionHistory):
 			actions[i] = Actions.get_one_hot(action)
 		return actions
 
+	def new_action(self, action):
+		pass
+
+	def new_episode(self):
+		pass
+

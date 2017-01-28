@@ -15,3 +15,11 @@ class ActionHistory(object):
 	@abstractmethod
 	def get_history(self, all_actions):
 		pass
+
+	@abstractmethod
+	def new_action(self, action):
+		pass
+
+	@abstractmethod
+	def new_episode(self):
+		pass
