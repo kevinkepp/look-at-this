@@ -1,6 +1,9 @@
+import os
+
 from sft.runner.Tester import Tester
 
-exp = "tmp/logs/20170119-194855_exp_continous_reward_factor_0_003_rms_vs_sgd"
+log_dir = "tmp/logs/"
+exp = log_dir + sorted(os.listdir(log_dir))[-1]
 testset_path = "tmp/tester/testworlds"
 t = Tester()
 t.run_on_exp(exp, testset_path)
@@ -13,4 +16,4 @@ if False:
 	agent_path = "tmp/logs/20170119-145057_exp/agent_ah10_256/agent.py"
 	model_path = "tmp/logs/20170119-145057_exp/agent_ah10_256/models/model_2900.h5.npz"
 	b = Tester()
-	s = b.get_q_one_state(path, world_path, agent_path, model_path)
+	s = b.get_q_one_state(testset_path, world_path, agent_path, model_path)

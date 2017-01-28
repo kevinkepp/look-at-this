@@ -2,7 +2,7 @@ import sft.eps.Constant
 import sft.agent.KeyboardAgent
 import sft.reward.TargetMiddle
 from sft.log.AgentLogger import AgentLogger
-from .. import world
+from sft import world
 from ..world import *
 
 logger = AgentLogger(__name__)
