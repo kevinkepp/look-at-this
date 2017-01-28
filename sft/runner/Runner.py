@@ -4,14 +4,11 @@ from importlib import import_module
 
 from abc import abstractmethod
 
-import numpy as np
 import threading
 import time
 import random
 import sys
-import theano
 
-from sft.Actions import Actions
 from sft.State import State
 from sft.sim.Simulator import Simulator
 
@@ -19,7 +16,6 @@ from sft.sim.Simulator import Simulator
 class Runner(object):
 	WORLD_CONFIG_NAME = "world"
 	AGENT_CONFIG_NAME_DIR = "agents"
-	PERSIST_MODEL_EVERY = 100
 
 	def run(self, experiment, threaded=False):
 		seed = self.set_seed()
@@ -72,7 +68,7 @@ class Runner(object):
 			success, actions = self.run_epoch(config, sim, n, scenario)
 			logger.log_results(actions, success)
 			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(actions)))
-			if n % self.PERSIST_MODEL_EVERY == 0:
+			if n % config.model_persist_steps == 0:
 				logger.log_model(config.model, str(n))
 			logger.next_epoch()
 			config.agent.new_episode()
