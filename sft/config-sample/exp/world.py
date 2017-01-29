@@ -11,6 +11,7 @@ actions = Actions.all
 nb_actions = len(actions)
 max_steps = 500
 model_persist_steps = 200
+nb_agent_runs = 5
 
 world_logger = WorldLogger(__name__)
 

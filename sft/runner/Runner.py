@@ -17,27 +17,15 @@ class Runner(object):
 	WORLD_CONFIG_NAME = "world"
 	AGENT_CONFIG_NAME_DIR = "agents"
 
-	def run(self, experiment, threaded=False):
-		seed = self.set_seed()
-		world_config, agent_configs = self.get_configs(experiment)
-		world_config.world_logger.log_message("Using seed %s" % str(seed))
-		scenarios = self.init_scenarios(world_config)
-		if threaded:
-			threads = []
-			for agent in agent_configs:
-				thread = threading.Thread(target=self.run_agent, args=(agent, scenarios))
-				thread.daemon = False
-				thread.start()
-				threads.append(thread)
-			for t in threads:
-				t.join()
-		else:
-			for agent in agent_configs:
-				self.run_agent(agent, scenarios)
-		world_config.world_logger.close_files()
-
 	def get_configs(self, experiment):
-		world_config = import_module("." + self.WORLD_CONFIG_NAME, experiment.__name__)
+		world_config = self.get_world_config(experiment)
+		agent_configs = self.get_agent_configs(experiment)
+		return world_config, agent_configs
+
+	def get_world_config(self, experiment):
+		return import_module("." + self.WORLD_CONFIG_NAME, experiment.__name__)
+
+	def get_agent_configs(self, experiment):
 		agent_configs = []
 		experiment_dir = os.path.dirname(experiment.__file__)
 		agents_dir = os.path.join(experiment_dir, self.AGENT_CONFIG_NAME_DIR)
@@ -45,29 +33,21 @@ class Runner(object):
 			if not is_pkg and module != "__init__":
 				agent_config = import_module("." + module, experiment.__name__ + "." + self.AGENT_CONFIG_NAME_DIR)
 				agent_configs.append(agent_config)
-		return world_config, agent_configs
+		return agent_configs
 
-	def init_scenarios(self, config):
-		scenarios = []
-		for n in range(config.epochs):
-			scenario = config.world_gen.get_next()
-			scenarios.append(scenario)
-			config.sampler.next_epoch()
-			config.world_logger.log_init_state_and_world(scenario.world, scenario.pos)
-			config.world_logger.next_epoch()
-			config.sampler.next_epoch()
-		return scenarios
-
-	def run_agent(self, config, scenarios):
+	def run_agent(self, config, scenarios, seed=None):
 		logger = config.logger
-		logger.log_message("{0} - Start training over {1} epochs".format(config.__name__, config.epochs))
+		if seed is not None:
+			self.set_seed(seed)
+			logger.log_message("Using seed %s for running agent" % str(seed))
+		logger.log_message("{0} - Start running {1} episodes".format(config.__name__, config.epochs))
 		sim = Simulator(config.view_size)
 		time_start = time.time()
 		for n in range(len(scenarios)):
 			scenario = scenarios[n]
 			success, actions = self.run_epoch(config, sim, n, scenario)
 			logger.log_results(actions, success)
-			logger.log_message("{0} - Epoch {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(actions)))
+			logger.log_message("{0} - Episode {1} - Success: {2} - Steps: {3}".format(config.__name__, n, success, len(actions)))
 			if n % config.model_persist_steps == 0:
 				logger.log_model(config.model, str(n))
 			logger.next_epoch()
@@ -118,11 +98,15 @@ class Runner(object):
 
 	def set_seed(self, seed=None):
 		if seed is None:
-			# set randomly generated random seed for comparability of agents run in this execution
-			# while maintain the generation of different paths and agent behaviour for different executions
-			seed = random.randint(0, sys.maxint)
+			seed = self.gen_seed()
 		random.seed(seed)
 		return seed
+
+	def gen_seed(self):
+		return random.randint(0, sys.maxint)
+
+	def gen_seeds(self, nb_seeds):
+		return [self.gen_seed() for i in range(nb_seeds)]
 
 	"""later used by Trainer to run epsilon update and by Tester to set epsilon to wished value"""
 	@abstractmethod

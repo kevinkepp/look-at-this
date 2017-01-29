@@ -80,7 +80,8 @@ class Tester(Runner):
 				replace_in_file(agent_tmp_path, self.AGENT_TESTER_LOGGER_NAME + "(__name__)",
 								self.AGENT_TESTER_LOGGER_NAME + "(__name__, '" + exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "', " + str(ep) + ")")
 				exp = import_module("." + self.TEST_MODULE_NAME, "sft")
-				world_config, agent_config = self.get_configs(exp)
+				world_config = self.get_world_config(exp)
+				agent_config = self.get_agent_configs(exp)
 				if scenarios is None:
 					scenarios = self._load_worlds(testset_worlds_path, world_config.world_size, world_config.view_size)
 				# load model
@@ -238,7 +239,7 @@ class Tester(Runner):
 		replace_in_file(agent_tmp_path, self.AGENT_DUMMY_LOGGER_NAME + "(__name__)",
 						self.AGENT_DUMMY_LOGGER_NAME + "()")
 		exp = import_module("." + self.TEST_MODULE_NAME, "sft")
-		_, agent_config = self.get_configs(exp)
+		agent_config = self.get_agent_configs(exp)
 		# load model
 		agent_config[0].agent.model.load(model_path)
 		# predict q values
