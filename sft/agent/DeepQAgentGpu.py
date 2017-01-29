@@ -37,7 +37,7 @@ class ReplayBuffer(object):
 			self.top = 0
 
 	def draw_batch(self, batch_size):
-		indices = np.random.randint(0, self.size, batch_size)
+		indices = np.random.randint(0, self.len, batch_size)
 		return self.v[indices], self.ah[indices], self.a[indices], self.v2[indices], self.ah2[indices], \
 			   self.r[indices], self.t[indices]
 
