@@ -181,7 +181,7 @@ class Tester(Runner):
 				last_agent = curr_agent
 			else:
 				ax_success.plot(epochs, successes, 'o-', label=agent_key)
-				ax_steps.plot(epochs, steps, 'o:')
+				ax_steps.plot(epochs, steps, 'x:')
 
 		if one_agent_multiple_times:
 			agent_mean_success = np.mean(np.array(agent_success), axis=0)
