@@ -24,7 +24,7 @@ class RunningAvg(ActionHistory):
 		for i in range(1, self.n)[::-1]:
 			self.actions[i] = (1 - self.factor) * self.actions[i] + self.factor * self.actions[i - 1]
 		self.actions[0, :] = Actions.get_one_hot(a)
-		self.logger.log_parameter("actions", str(self.actions))
+		# self.logger.log_parameter("actions", str(self.actions))
 
 	def new_episode(self):
 		self.actions = np.zeros([self.n, self.ACTION_WIDTH], dtype=theano.config.floatX)

@@ -178,7 +178,7 @@ class LasagneMlpModel(object):
 			self._clone()
 			self.steps_clone = 0
 		# self.log_weights_diffs()
-		self.log_weights()
+		# self.log_weights()
 		return loss
 
 	def save(self, file_path):
