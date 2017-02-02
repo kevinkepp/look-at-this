@@ -21,7 +21,7 @@ class RunningAvg(ActionHistory):
 		return self.actions
 
 	def new_action(self, a):
-		for i in range(1, self.n):
+		for i in range(1, self.n)[::-1]:
 			self.actions[i] = (1 - self.factor) * self.actions[i] + self.factor * self.actions[i - 1]
 		self.actions[0, :] = Actions.get_one_hot(a)
 		self.logger.log_parameter("actions", str(self.actions))
