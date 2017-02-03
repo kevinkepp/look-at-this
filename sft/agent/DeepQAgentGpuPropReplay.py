@@ -84,7 +84,7 @@ class DeepQAgentGpuPropReplay(DeepQAgentGpu):
 	# buffer size: size of experience pool from which minibatches are randomly sampled
 	# start_learn: after how many experiences (buffer size) we start learning based on experiences
 	# learn_steps: every learn_steps steps the model gets updated
-	DEF_POS_PORTION = 0.7
+	DEF_POS_PORTION = 0.5
 	def __init__(self, logger, actions, batch_size, buffer_size, start_learn, learn_interval, view_size,
 				 action_hist, model, pos_portion=DEF_POS_PORTION):
 		self.prop_rpl_buffer = PropReplayBuffer(buffer_size, view_size, action_hist.get_size(), pos_portion)
