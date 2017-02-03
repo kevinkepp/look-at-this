@@ -122,19 +122,20 @@ class Tester(Runner):
 				agents_perf_dict[fa[len(AgentLogger.LOG_AGENT_PREFIX)+1:]] = [epochs, mean_successes, mean_steps]
 		return agents_perf_dict
 
-	def plot_results(self, exp_path, one_agent_multiple_times=False):
+	def plot_results(self, exp_path, one_agent_multiple_times=False, plot_std=True):
 		"""used to plot the results of .run_on_exp()"""
 		agents_perf_dict = self._get_agents_performance(exp_path)
 		# plot the results
 		fig, ax_success = plt.subplots()
-		ax_steps = ax_success.twinx()
-		title = "Agent model performance over epochs on testset"
+		title = "Learning curve for agent performance on testset"
 		plt.title(title)
-		ax_steps.set_xlabel("epochs")
-		ax_steps.set_ylabel("# steps taken")
-		ax_success.set_ylabel("success-rate")
+		ax_success.set_xlabel("episodes")
+		ax_success.set_ylabel("success rate")
 		ax_success.grid(True)
-		ax_steps.grid(True, alpha=0.3)
+		if plot_std:
+			ax_steps = ax_success.twinx()
+			ax_steps.set_ylabel("# steps taken")
+			ax_steps.grid(True, alpha=0.3)
 		max_epochs = 0
 
 		if one_agent_multiple_times:
@@ -165,14 +166,15 @@ class Tester(Runner):
 				else:
 					agent_mean_success = np.mean(np.array(agent_success), axis=0)
 					agent_std_success = np.std(np.array(agent_success), axis=0)
-					agent_mean_steps = np.mean(np.array(agent_steps), axis=0)
-					agent_std_steps = np.std(np.array(agent_steps), axis=0)
 					su = ax_success.plot(epochs, agent_mean_success, 'o-', label=last_agent)
-					st = ax_steps.plot(epochs, agent_mean_steps, 'x:')
 					ax_success.fill_between(epochs, agent_mean_success - agent_std_success,
 											agent_mean_success + agent_std_success, color=su[0].get_color(), alpha=0.2)
-					ax_steps.fill_between(epochs, agent_mean_steps - agent_std_steps,
-										  agent_mean_steps + agent_std_steps, color=st[0].get_color(), alpha=0.1)
+					if plot_std:
+						agent_mean_steps = np.mean(np.array(agent_steps), axis=0)
+						agent_std_steps = np.std(np.array(agent_steps), axis=0)
+						st = ax_steps.plot(epochs, agent_mean_steps, 'x:')
+						ax_steps.fill_between(epochs, agent_mean_steps - agent_std_steps,
+									  agent_mean_steps + agent_std_steps, color=st[0].get_color(), alpha=0.1)
 					agent_success = []
 					agent_steps = []
 					agent_success.append(successes)
@@ -181,23 +183,25 @@ class Tester(Runner):
 				last_agent = curr_agent
 			else:
 				ax_success.plot(epochs, successes, 'o-', label=agent_key)
-				ax_steps.plot(epochs, steps, 'x:')
+				if plot_std:
+					ax_steps.plot(epochs, steps, 'x:')
 
 		if one_agent_multiple_times:
 			agent_mean_success = np.mean(np.array(agent_success), axis=0)
 			agent_std_success = np.std(np.array(agent_success), axis=0)
-			agent_mean_steps = np.mean(np.array(agent_steps), axis=0)
-			agent_std_steps = np.std(np.array(agent_steps), axis=0)
 			su = ax_success.plot(epochs, agent_mean_success, 'o-', label=last_agent)
-			st = ax_steps.plot(epochs, agent_mean_steps, 'x:')
 			ax_success.fill_between(epochs, agent_mean_success - agent_std_success,
 									agent_mean_success + agent_std_success, color=su[0].get_color(), alpha=0.2)
-			ax_steps.fill_between(epochs, agent_mean_steps - agent_std_steps,
+			if plot_std:
+				agent_mean_steps = np.mean(np.array(agent_steps), axis=0)
+				agent_std_steps = np.std(np.array(agent_steps), axis=0)
+				st = ax_steps.plot(epochs, agent_mean_steps, 'x:')
+				ax_steps.fill_between(epochs, agent_mean_steps - agent_std_steps,
 								  agent_mean_steps + agent_std_steps, color=st[0].get_color(), alpha=0.1)
 
 		ax_success.set_xlim(-1, max_epochs + 1)
 		ax_success.set_ylim((-0.02, 1.02))
-		ax_success.legend(loc='best')
+		ax_success.legend(loc='upper left')
 		filepath = exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "/" + self.RESULTS_FILE_NAME
 		plt.savefig(filepath, bbox_inches='tight')
 		plt.close()
