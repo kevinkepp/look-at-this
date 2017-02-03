@@ -8,6 +8,7 @@ import threading
 import time
 import random
 import sys
+import numpy as np
 
 from sft.State import State
 from sft.sim.Simulator import Simulator
@@ -100,6 +101,7 @@ class Runner(object):
 		if seed is None:
 			seed = self.gen_seed()
 		random.seed(seed)
+		np.random.seed(seed)
 		return seed
 
 	def gen_seed(self):
