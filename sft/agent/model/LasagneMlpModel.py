@@ -133,6 +133,7 @@ class LasagneMlpModel(object):
 			next_inputs = {net_in_view: next_views, net_in_action_hist: next_action_hists} \
 				if self.action_hist_size.w > 0 else {net_in_view: next_views}
 			next_q_vals = lasagne.layers.get_output(self.net_out, next_inputs)
+
 		# define loss computation
 		actionmask = T.eq(T.arange(4).reshape((1, -1)), actions.reshape((-1, 1))).astype(theano.config.floatX)
 		terminals_float = terminals.astype(theano.config.floatX)
