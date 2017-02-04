@@ -1,10 +1,12 @@
+import os
+import matplotlib
+if "DISPLAY" not in os.environ:
+	matplotlib.use('Agg')
 import os, shutil
-import pkgutil
 from importlib import import_module
 import numpy as np
 import matplotlib.pyplot as plt
 import theano
-from sft.State import State
 
 from sft.Actions import Actions
 from sft import replace_in_file
@@ -13,7 +15,6 @@ from sft.sim.PathWorldLoader import PathWorldLoader
 from sft.runner.Runner import Runner
 # for getting the correct folder-names of logged files
 from sft.log.AgentLogger import AgentLogger
-from sft.log.AgentTesterLogger import AgentTesterLogger
 from sft.log.WorldLogger import WorldLogger
 from sft.log.Logger import BaseLogger
 
