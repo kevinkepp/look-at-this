@@ -1,10 +1,7 @@
 from sft.reward.Reward import Reward
-from sft.sim.Simulator import Simulator
 
 
-class TargetMiddle(Reward):
-	TARGET_VALUE = Simulator.TARGET_VALUE
-
+class StateReward(Reward):
 	def __init__(self, reward_target, reward_oob, reward_steps_exceeded, reward_else):
 		self.reward_target = reward_target
 		self.reward_oob = reward_oob
