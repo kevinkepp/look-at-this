@@ -105,7 +105,7 @@ class Runner(object):
 		return seed
 
 	def gen_seed(self):
-		return random.randint(0, sys.maxint)
+		return random.randint(0, 4294967295)  # range for numpy random seeds
 
 	def gen_seeds(self, nb_seeds):
 		return [self.gen_seed() for i in range(nb_seeds)]
