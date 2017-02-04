@@ -4,10 +4,12 @@ from sft.runner.Tester import Tester
 
 log_dir = "tmp/logs/"
 exp = log_dir + sorted(os.listdir(log_dir))[-1]
-testset_path = "tmp/tester/testworlds"
+# testset_path = "tmp/tester/testworld_single"
+# testset_path = "tmp/tester/testworld_line"
+testset_path = "tmp/tester/testworlds_corner"
 t = Tester()
 t.run_on_exp(exp, testset_path)
-t.plot_results(exp)
+t.plot_results(exp, True, False)
 
 # used for getting the q values (estimated by a certain model of an agent) for one state
 if False:
