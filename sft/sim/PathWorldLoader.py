@@ -30,7 +30,7 @@ class PathWorldLoader(ScenarioGenerator):
 		if len(self.worlds) == 1:
 			world = self.worlds[0]
 		elif random_choice:
-			self.i_curr_world = random.choice(self.worlds.keys())
+			self.i_curr_world = np.random.choice(self.worlds.keys())
 			world = self.worlds[self.i_curr_world]
 		else:
 			world = self.worlds[self.i_curr_world]

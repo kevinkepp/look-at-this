@@ -69,7 +69,7 @@ class DeepQAgentGpu(RobotAgent):
 		qs = self.model.predict_qs(curr_state.view, actions)
 		self.logger.log_parameter("q", qs)
 		# store qs for current state because usually we can use them in subsequent call to incorporate_reward
-		if random.random() < eps:
+		if np.random.random() < eps:
 			ai = np.random.randint(0, len(self.actions))
 		else:
 			ai = np.argmax(qs)
