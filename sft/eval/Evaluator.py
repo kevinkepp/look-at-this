@@ -25,15 +25,14 @@ class Evaluator(object):
 	RESULTS_PLOT_FILE_NAME = "results.png"
 	PARAMETER_FILE_SUFFIX = ".tsv"
 
-	def __init__(self, exp_path, world_dir_name, agent_dict):
+	def __init__(self, exp_path, world_config_path, worlds_path, agent_dict, testermode = False):
 		if not os.path.exists(exp_path):
 			raise AttributeError("Experiment path %s does not exist" % exp_path)
 		self.agents_dict = agent_dict
 		self.exp_path = exp_path
-		self.world_dir_name = world_dir_name
+		self.worlds_path = worlds_path
 		self._create_folder(os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME))
-
-		world_config_path = os.path.join(self.exp_path, self.world_dir_name, self.WORLD_CONFIG_NAME)
+		self.testermode = testermode
 		self.view_size = self._get_view_size(world_config_path)
 
 		self.worlds, self.init_poses = self._get_all_worlds_and_init_states()
@@ -53,19 +52,22 @@ class Evaluator(object):
 
 	def _get_all_worlds_and_init_states(self):
 		worlds = {}
-		files = os.listdir(os.path.join(self.exp_path, self.world_dir_name, self.WORLD_INIT_LOGS))
+		files = os.listdir(self.worlds_path)
 		for _file in files:
 			if _file.endswith(".png"):
-				world_image_path = os.path.join(self.exp_path, self.world_dir_name, self.WORLD_INIT_LOGS, _file)
+				world_image_path = os.path.join(self.worlds_path, _file)
 				world_image = cv2.imread(world_image_path)
-				epoch = int(_file[len("epoch"):_file.index('_')])
+				if self.testermode:
+					epoch = int(_file.split(".png")[0])
+				else:
+					epoch = int(_file[len("epoch"):_file.index('_')])
 				worlds[epoch] = world_image
 		init_poses = self._get_init_poses()
 		return worlds, init_poses
 
 	def _get_init_poses(self):
 		poses = {}
-		init_pos_path = os.path.join(self.exp_path, self.world_dir_name, self.WORLD_INIT_LOGS, self.INIT_STATES_FILE_NAME)
+		init_pos_path = os.path.join(self.worlds_path, self.INIT_STATES_FILE_NAME)
 		_file = open(init_pos_path)
 		_file.next()  # skip header line
 		for line in _file:
@@ -184,11 +186,12 @@ class Evaluator(object):
 					# save and clear figure
 					plt.savefig(img_save_path + "_path.png", bbox_inches='tight')
 					plt.close()
+					"""
 					self._visualize_qs_for_one_epoch(qs_of_epoch, text_every_kth)
 					# save and clear figure
 					plt.savefig(img_save_path + "_qs.png", bbox_inches='tight')
 					plt.close()
-
+					"""
 	def animate_epoch(self, agent_key, epoch, q_file_name=None):
 		# stuff for the animation
 		FFMpegWriter = manimation.writers['ffmpeg']
@@ -312,7 +315,7 @@ class Evaluator(object):
 
 	def _plot_actions_as_path(self, xx, yy, text_every_kth):
 		col_flag = 0
-		col_list = ['r', 'g', 'y', 'm', 'c']
+		col_list = ['r', 'g']  # , 'y', 'm', 'c']
 		# plot color order for orientation
 		x = 0
 		for c in col_list:
@@ -321,7 +324,7 @@ class Evaluator(object):
 		# plot actions
 		for i in range(len(xx)-1):
 			plt.plot(xx[i:i+2], yy[i:i+2], col_list[col_flag] + '-')
-			if col_flag != 4:
+			if col_flag != len(col_list) - 1:
 				col_flag += 1
 			else:
 				col_flag = 0

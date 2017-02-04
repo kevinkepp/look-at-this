@@ -17,6 +17,7 @@ from sft.runner.Runner import Runner
 from sft.log.AgentLogger import AgentLogger
 from sft.log.WorldLogger import WorldLogger
 from sft.log.Logger import BaseLogger
+from sft.eval.Evaluator import Evaluator
 
 
 class Tester(Runner):
@@ -122,6 +123,22 @@ class Tester(Runner):
 						mean_steps.append(m_step)
 				agents_perf_dict[fa[len(AgentLogger.LOG_AGENT_PREFIX)+1:]] = [epochs, mean_successes, mean_steps]
 		return agents_perf_dict
+
+	def plot_paths(self, path_tester, world_config_path, plot_models_geq_than_epoch):
+		world_path = os.path.join(path_tester, "worlds")
+		agent_dir = {}
+		for fa in os.listdir(path_tester):
+			if fa.startswith(AgentLogger.LOG_AGENT_PREFIX):
+				for fm_dir in os.listdir(os.path.join(path_tester, fa)):
+					if not fm_dir.endswith(".py"):
+						model_epoch = int(fm_dir)
+						if model_epoch >= plot_models_geq_than_epoch:
+							agent_model_path = os.path.join(fa, fm_dir)
+							agent_model_name = fa.split(AgentLogger.LOG_AGENT_PREFIX)[1][1:] + "_" + fm_dir
+							agent_dir[agent_model_name] = agent_model_path
+		ev = Evaluator(path_tester, world_config_path, world_path, agent_dir, testermode=True)
+		ev.plot_paths(1, 1, "q.tsv", 10)
+
 
 	def plot_results(self, exp_path, one_agent_multiple_times=False, plot_std=True):
 		"""used to plot the results of .run_on_exp()"""
