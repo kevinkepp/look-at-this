@@ -18,7 +18,7 @@ class SumViewReward(Reward):
 		middle_value = middle_point.at_matrix(view)
 		return middle_value == self.TARGET_VALUE
 
-	def get_reward(self, view, view2):
+	def get_reward(self, view, view2, at_target, oob, steps_exceeded):
 		if view2 is not None:
 			if self.is_at_target(view2):
 				return self.r_yes
@@ -47,7 +47,7 @@ class OnPathReward(Reward):
 		else:
 			return self.r_no
 
-	def get_reward(self, view, view2):
+	def get_reward(self, view, view2, at_target, oob, steps_exceeded):
 		# check if the state represents the agent being on the target
 		if view2 is not None:
 			if self.is_at_target(view2):

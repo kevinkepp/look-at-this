@@ -65,27 +65,29 @@ class Runner(object):
 		config.logger.log_parameter("epsilon", eps)
 		actions = []
 		while len(actions) < config.max_steps:
+			is_last_step = len(actions) == config.max_steps - 1
 			# result is 1 for on target, 0 for oob and -1 for non-terminal
-			res = self.run_step(actions, sim, config.agent, config.reward, eps)
+			res = self.run_step(actions, sim, config.agent, config.reward, eps, is_last_step)
 			if res != -1:
 				return res, actions
 		# if max steps are exceeded episode was not successful
 		return 0, actions
 
-	def run_step(self, past_actions, sim, agent, reward, eps):
+	def run_step(self, past_actions, sim, agent, reward, eps, is_last_step=False):
 		"""Conducts training step and returns 1 for success, 0 for loss and -1 for non-terminal"""
 		view = sim.get_current_view()
 		state = self.get_state(view, past_actions)
 		action = agent.choose_action(state, eps)
 		past_actions.append(action)
 		view2 = sim.update_view(action)
-		reward_value = reward.get_reward(view, view2)
 		oob = sim.is_oob()
 		at_target = sim.is_at_target()
 		# epoch ends when agent runs out of bounds or hits the target
-		terminal = oob or at_target
+		is_terminal = oob or at_target
+		steps_exceeded = is_last_step and not is_terminal
+		reward_value = reward.get_reward(view, view2, at_target, oob, steps_exceeded)
 		# if new state is terminal None will be given to agent
-		state2 = self.get_state(view2, past_actions) if not terminal else None
+		state2 = self.get_state(view2, past_actions) if not is_terminal else None
 		self._incorp_agent_reward(agent, state, action, state2, reward_value)
 		if at_target:
 			return 1
