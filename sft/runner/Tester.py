@@ -22,7 +22,7 @@ from sft.eval.Evaluator import Evaluator
 
 class Tester(Runner):
 
-	EPSILON = 0
+	EPSILON = 0.1
 	TESTSET_INIT_POS_FILE = "init_states.tsv"
 	TEST_WORLD_PATH = "sft/config_test/world.py"
 	TEST_AGENT_PATH = "sft/config_test/agents"
@@ -140,7 +140,7 @@ class Tester(Runner):
 		ev.plot_paths(1, 1, "q.tsv", 10)
 
 
-	def plot_results(self, exp_path, one_agent_multiple_times=False, plot_std=True):
+	def plot_results(self, exp_path, one_agent_multiple_times=False, plot_steps=True):
 		"""used to plot the results of .run_on_exp()"""
 		agents_perf_dict = self._get_agents_performance(exp_path)
 		# plot the results
@@ -150,7 +150,7 @@ class Tester(Runner):
 		ax_success.set_xlabel("episodes")
 		ax_success.set_ylabel("success rate")
 		ax_success.grid(True)
-		if plot_std:
+		if plot_steps:
 			ax_steps = ax_success.twinx()
 			ax_steps.set_ylabel("# steps taken")
 			ax_steps.grid(True, alpha=0.3)
@@ -187,7 +187,7 @@ class Tester(Runner):
 					su = ax_success.plot(epochs, agent_mean_success, 'o-', label=last_agent)
 					ax_success.fill_between(epochs, agent_mean_success - agent_std_success,
 											agent_mean_success + agent_std_success, color=su[0].get_color(), alpha=0.2)
-					if plot_std:
+					if plot_steps:
 						agent_mean_steps = np.mean(np.array(agent_steps), axis=0)
 						agent_std_steps = np.std(np.array(agent_steps), axis=0)
 						st = ax_steps.plot(epochs, agent_mean_steps, 'x:')
@@ -201,7 +201,7 @@ class Tester(Runner):
 				last_agent = curr_agent
 			else:
 				ax_success.plot(epochs, successes, 'o-', label=agent_key)
-				if plot_std:
+				if plot_steps:
 					ax_steps.plot(epochs, steps, 'x:')
 
 		if one_agent_multiple_times:
@@ -210,7 +210,7 @@ class Tester(Runner):
 			su = ax_success.plot(epochs, agent_mean_success, 'o-', label=last_agent)
 			ax_success.fill_between(epochs, agent_mean_success - agent_std_success,
 									agent_mean_success + agent_std_success, color=su[0].get_color(), alpha=0.2)
-			if plot_std:
+			if plot_steps:
 				agent_mean_steps = np.mean(np.array(agent_steps), axis=0)
 				agent_std_steps = np.std(np.array(agent_steps), axis=0)
 				st = ax_steps.plot(epochs, agent_mean_steps, 'x:')
