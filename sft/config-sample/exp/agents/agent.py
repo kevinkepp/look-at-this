@@ -35,7 +35,8 @@ def build_network(net_in_views, net_in_actions):
 	# net_hid = DenseLayer(net_concat, num_units=64, nonlinearity=rectify)
 	net_hid = DenseLayer(net_views_out, num_units=64, nonlinearity=rectify)
 	net_out = DenseLayer(net_hid, num_units=4, nonlinearity=linear)
-	return net_out
+	layers = [net_hid, net_out]
+	return net_out, layers
 
 def optimizer(loss, params):
 	# use sgd optimization

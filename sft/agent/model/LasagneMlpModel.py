@@ -5,6 +5,7 @@ import theano.tensor as T
 import lasagne
 import lasagne.layers
 
+from lasagne.regularization import regularize_layer_params, l2
 
 class SharedBatch(object):
 	def __init__(self, size, view_size, action_hist_size):
@@ -78,7 +79,7 @@ class LasagneMlpModel(object):
 	"""clone_interval: 0 or negative disables cloning"""
 
 	def __init__(self, logger, batch_size, discount, actions, view_size, action_hist_size,
-				 network_builder, optimizer, clone_interval=0, clip_delta=0):
+				 network_builder, optimizer, clone_interval=0, clip_delta=0, regularization=1e-4):
 		self.logger = logger
 		self.batch_size = batch_size
 		self.discount = discount
@@ -95,16 +96,18 @@ class LasagneMlpModel(object):
 		self.net_out_next = None
 		self.train_fn = None
 		self.predict_fn = None
+		self.regularization = regularization
 		self.build_model()
 		self.steps_clone = 0
+		self.all_layers = None
 
 	def build_network(self, network_builder, view_size, action_hist_size):
 		net_in_views = lasagne.layers.InputLayer(name='views', shape=(None, 1, view_size.w, view_size.h))
 		net_in_actions = lasagne.layers.InputLayer(name='action_hists',
 												   shape=(None, 1, action_hist_size.w, action_hist_size.h)) \
 			if action_hist_size.w > 0 else None
-		net_out = network_builder(net_in_views, net_in_actions)
-		return net_in_views, net_in_actions, net_out
+		net_out, layers = network_builder(net_in_views, net_in_actions)
+		return net_in_views, net_in_actions, net_out, layers
 
 	def build_model(self):
 		views = T.tensor4('views')
@@ -116,13 +119,13 @@ class LasagneMlpModel(object):
 		terminals = T.icol('terminals')
 
 		# initialize network(s) for computing q-values
-		net_in_view, net_in_action_hist, self.net_out = self.build_network(self.network_builder, self.view_size,
+		net_in_view, net_in_action_hist, self.net_out, self.all_layers = self.build_network(self.network_builder, self.view_size,
 																		   self.action_hist_size)
 		inputs = {net_in_view: views, net_in_action_hist: action_hists} if self.action_hist_size.w > 0 else {
 			net_in_view: views}
 		q_vals = lasagne.layers.get_output(self.net_out, inputs)
 		if self.clone_interval > 0:
-			net_in_view_next, net_in_action_hist_next, self.net_out_next = self.build_network(self.network_builder,
+			net_in_view_next, net_in_action_hist_next, self.net_out_next, _ = self.build_network(self.network_builder,
 																							  self.view_size,
 																							  self.action_hist_size)
 			next_inputs = {net_in_view_next: next_views, net_in_action_hist_next: next_action_hists} \
@@ -149,7 +152,13 @@ class LasagneMlpModel(object):
 			loss = quadratic_part ** 2 + self.clip_delta * linear_part
 		else:
 			loss = diff ** 2  # TODO error clipping
-		loss = T.mean(loss)  # batch accumulator sum or mean
+
+		# regularization
+		l2reg = 0
+		for lll in self.all_layers:
+			l2reg += regularize_layer_params(lll, l2) * self.regularization
+
+		loss = T.mean(loss) + l2reg  # batch accumulator sum or mean
 
 		# define network update for training
 		params = lasagne.layers.helper.get_all_params(self.net_out)
@@ -178,8 +187,8 @@ class LasagneMlpModel(object):
 		if self.steps_clone == self.clone_interval:
 			self._clone()
 			self.steps_clone = 0
-		# self.log_weights_diffs()
-		# self.log_weights()
+		self.log_weights_diff()
+		self.log_weights()
 		return loss
 
 	def save(self, file_path):
@@ -211,7 +220,7 @@ class LasagneMlpModel(object):
 			weights = layers[layer]
 			self.logger.log_parameter("weights",
 									  [layer, weights.shape, np.min(weights), np.max(weights), np.mean(weights), np.std(weights)],
-									  headers=["shape", "layer", "min", "max", "mean", "std"])
+									  headers=["layer", "shape", "min", "max", "mean", "std"])
 
 
 def deepmind_rmsprop(loss_or_grads, params, learning_rate, rho, epsilon):
