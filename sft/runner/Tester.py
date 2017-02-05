@@ -165,6 +165,8 @@ class Tester(Runner):
 		sorted_key_list = sorted(agents_perf_dict.keys())
 
 		for agent_key in sorted_key_list:
+			# if not (agent_key.startswith("prop_replay_ah_")):  # and int(agent_key[len("prop_replay_ah_"):]) < 10):
+			#	continue
 			res = agents_perf_dict[agent_key]
 			epochs = np.array(res[0])
 			sort_i = np.argsort(epochs)
@@ -219,7 +221,9 @@ class Tester(Runner):
 
 		ax_success.set_xlim(-1, max_epochs + 1)
 		ax_success.set_ylim((-0.02, 1.02))
-		ax_success.legend(loc='upper left')
+		box = ax_success.get_position()
+		ax_success.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+		ax_success.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=4)
 		filepath = exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "/" + self.RESULTS_FILE_NAME
 		plt.savefig(filepath, bbox_inches='tight')
 		plt.close()
