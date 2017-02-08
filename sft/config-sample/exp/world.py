@@ -1,24 +1,25 @@
-import sft.sampler.SinglePoint
+import sft.sampler.Simple
 import sft.sim.PathWorldLoader
+import sft.sim.PathWorldGenerator
 from sft import Size, Point
 from sft.Actions import Actions
 from sft.log.WorldLogger import WorldLogger
 
-epochs = 2000
+epochs = 1000
 world_size = Size(70, 70)
 view_size = Size(7, 7)
 actions = Actions.all
 nb_actions = len(actions)
 max_steps = 500
-model_persist_steps = 200
-nb_agent_runs = 5
+model_persist_steps = 50
+nb_agent_runs = 20
 
 world_logger = WorldLogger(__name__)
 
 # use fixed coordinates as starting point
-sampler = sft.sampler.SinglePoint.SinglePoint(Point(32, 19))
+"""sampler = sft.sampler.SinglePoint.SinglePoint(Point(32, 19))"""
 # use freely sampled point
-"""sampler = sft.sampler.Simple.Simple()"""
+sampler = sft.sampler.Simple.Simple()
 # use expansive sampling of starting positions
 """sampler = sft.sampler.Expansive.Expansive(
 	logger=world_logger,
@@ -29,7 +30,7 @@ sampler = sft.sampler.SinglePoint.SinglePoint(Point(32, 19))
 # use given world images which are loaded from disk
 world_gen = sft.sim.PathWorldLoader.PathWorldLoader(
 	logger=world_logger,
-	world_path="tmp/line-worldstates",
+	world_path="tmp/line-worldstates/one-corner",
 	view_size=view_size,
 	world_size=world_size,
 	sampler=sampler,

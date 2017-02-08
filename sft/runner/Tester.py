@@ -22,7 +22,6 @@ from sft.eval.Evaluator import Evaluator
 
 class Tester(Runner):
 
-	EPSILON = 0.1
 	TESTSET_INIT_POS_FILE = "init_states.tsv"
 	TEST_WORLD_PATH = "sft/config_test/world.py"
 	TEST_AGENT_PATH = "sft/config_test/agents"
@@ -32,7 +31,10 @@ class Tester(Runner):
 	WORLD_LOGGER_INIT = "WorldLogger(__name__)"
 	TEST_MODULE_NAME = "config_test"
 	TESTER_OUTPUT_FOLDER_NAME = "tester"
-	RESULTS_FILE_NAME = "results"
+	RESULTS_FILE_NAME = "results.png"
+
+	def __init__(self, epsilon):
+		self.epsilon = epsilon
 
 	# TODO
 	def run_model(self, model_path, agent_config_path, world_config_path, testset_worlds_path):
@@ -145,7 +147,7 @@ class Tester(Runner):
 		agents_perf_dict = self._get_agents_performance(exp_path)
 		# plot the results
 		fig_suc, ax_success = plt.subplots()
-		title = "Learning curve for agent performance on testset"
+		title = "Learning curve for agent performance on test set"
 		plt.title(title)
 		ax_success.set_xlabel("episodes")
 		ax_success.set_ylabel("success rate")
@@ -251,7 +253,7 @@ class Tester(Runner):
 				os.remove(self.TEST_AGENT_PATH + "/" + f)
 
 	def _get_eps(self, config, epoch):
-		return self.EPSILON
+		return self.epsilon
 
 	def _replace_loggers(self, exp_path, agent_logger_replacement_name):
 		self._replace_world_logger(exp_path + "/world.py")
