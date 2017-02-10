@@ -129,9 +129,11 @@ class LasagneMlpModel(object):
 			self.build_network(self.network_builder, self.view_size, self.action_hist_size)
 		net_online_in_curr = {net_online_in_view: views_curr, net_online_in_action_hist: action_hists_curr} \
 			if self.action_hist_size.w > 0 else {net_online_in_view: views_curr}
-		q_vals_online_curr = lasagne.layers.get_output(self.net_online_out, net_online_in_curr)
+		q_vals_online_curr_train = lasagne.layers.get_output(self.net_online_out, net_online_in_curr, deterministic=False)
+		q_vals_online_curr_test = lasagne.layers.get_output(self.net_online_out, net_online_in_curr, deterministic=True)
 		# for predictions we always use the q-values estimated by the online network on the current state
-		q_vals_pred = q_vals_online_curr
+		q_vals_pred_train = q_vals_online_curr_train
+		q_vals_pred_test = q_vals_online_curr_test
 		if self.clone_interval > 0:
 			net_target_in_view, net_target_in_action_hist, self.net_target_out, _ = \
 				self.build_network(self.network_builder, self.view_size, self.action_hist_size)
@@ -162,7 +164,7 @@ class LasagneMlpModel(object):
 		target = rewards + \
 				 (T.ones_like(terminals_float) - terminals_float) * \
 				 self.discount * q_vals_target
-		output = (q_vals_pred * actionmask).sum(axis=1).reshape((-1, 1))
+		output = (q_vals_pred_train * actionmask).sum(axis=1).reshape((-1, 1))
 		diff = target - output
 		if self.clip_delta > 0:
 			# see https://github.com/spragunr/deep_q_rl/blob/master/deep_q_rl/q_network.py
@@ -182,7 +184,7 @@ class LasagneMlpModel(object):
 			loss = T.mean(loss)
 
 		# define network update for training
-		params = lasagne.layers.helper.get_all_params(self.net_online_out)
+		params = lasagne.layers.helper.get_all_params(self.net_online_out, trainable=True)
 		updates = self.optimizer(loss, params)
 		train_givens = self.shared_batch.givens(views_curr, action_hists_curr, actions, views_next, action_hists_next, rewards,
 												terminals)
@@ -190,7 +192,7 @@ class LasagneMlpModel(object):
 
 		# define output prediction
 		predict_givens = self.shared_state.givens(views_curr, action_hists_curr)
-		self.predict_fn = theano.function([], q_vals_pred[0], givens=predict_givens)
+		self.predict_fn = theano.function([], q_vals_pred_test[0], givens=predict_givens)
 
 	def _clone(self):
 		param_values = lasagne.layers.get_all_param_values(self.net_online_out)
