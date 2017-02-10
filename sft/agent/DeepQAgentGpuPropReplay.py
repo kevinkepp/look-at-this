@@ -132,4 +132,4 @@ class DeepQAgentGpuPropReplay(DeepQAgentGpu):
 					exp = self.last_exps[i]
 					self.prop_rpl_buffer.add_to_oth(*exp)
 			self.last_exps = []
-			self.action_hist.new_episode()
+		self.action_hist.new_episode()

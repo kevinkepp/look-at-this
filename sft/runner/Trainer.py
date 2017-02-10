@@ -78,7 +78,6 @@ class Trainer(Runner):
 			world_config.sampler.next_epoch()
 			world_config.world_logger.log_init_state_and_world(scenario.world, scenario.pos)
 			world_config.world_logger.next_epoch()
-			world_config.sampler.next_epoch()
 		return scenarios
 
 	def _get_eps(self, config, epoch):
