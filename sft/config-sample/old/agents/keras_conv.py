@@ -1,9 +1,9 @@
 import keras.optimizers
-from keras.layers import Dense, Activation
+from keras.layers import Dense, Flatten, Convolution2D
 
 import sft.eps.Linear
 import sft.agent.DeepQAgentReplayCloning
-import sft.agent.model.KerasMlpModel
+import sft.agent.model.KerasConvModel
 import sft.reward.TargetMiddle
 from sft.log.AgentLogger import AgentLogger
 from .. import world
@@ -22,13 +22,14 @@ optimizer = keras.optimizers.RMSprop(
 )
 
 _model_input_size = view_size.w * view_size.h + action_hist_len * nb_actions
-model = sft.agent.model.KerasMlpModel.KerasMlpModel(
+model = sft.agent.model.KerasConvModel.KerasConvModel(
 	logger=logger,
 	layers=[
-		Dense(input_shape=(_model_input_size,), output_dim=16, init='lecun_uniform'),
-		Activation('relu'),
-		Dense(output_dim=nb_actions, init='lecun_uniform'),
-		Activation('linear')
+		# ignore action history for now
+		Convolution2D(16, 3, 3, activation='relu', border_mode='same', input_shape=(1, view_size.w, view_size.h)),
+		Flatten(),
+		Dense(32, activation='relu'),
+		Dense(nb_actions, activation='linear')
 	],
 	loss='mse',
 	optimizer=optimizer
@@ -40,9 +41,10 @@ agent = sft.agent.DeepQAgentReplayCloning.DeepQAgentReplayCloning(
 	model=model,
 	discount=0.9,
 	batch_size=16,
-	buffer_size=10000,
-	start_learn=50,
-	steps_clone=25
+	buffer_size=100000,
+	start_learn=500,
+	steps_clone=250,
+	learn_steps=4
 )
 
 reward = sft.reward.TargetMiddle.TargetMiddle(

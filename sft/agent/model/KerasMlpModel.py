@@ -1,6 +1,8 @@
 from keras.models import Sequential
 from keras.models import load_model
 
+import numpy as np
+
 from sft.State import State
 from sft.agent.model.DeepQModel import DeepQModel
 
@@ -9,6 +11,9 @@ class KerasMlpModel(DeepQModel):
 	def __init__(self, logger, layers, loss, optimizer):
 		self.logger = logger
 		self.layers = layers
+		self.layers = layers
+		self.loss = loss
+		self.optimizer = optimizer
 		self._build_model(layers, loss, optimizer)
 
 	def _build_model(self, layers, loss, optimizer):
@@ -41,3 +46,11 @@ class KerasMlpModel(DeepQModel):
 	def copy_from(self, other):
 		assert isinstance(other, KerasMlpModel)
 		self._model.set_weights(other._model.get_weights())
+
+	def clone(self):
+		# rebuild model
+		model_cloned = type(self)(self.logger, self.layers, self.loss, self.optimizer)
+		# copy weights
+		model_cloned.copy_from(self)
+		return model_cloned
+

@@ -20,7 +20,7 @@ class BaseLogger(object):
 		self.file_messages = None  # file for log the general messages
 
 	def open_file(self, path):
-		_file = open(path, 'w')
+		_file = open(path, 'w', buffering=1024*1024)
 		self.open_files[path] = _file
 		return _file
 
@@ -38,14 +38,19 @@ class BaseLogger(object):
 		""" makes a copy of the configfiles to the log folder """
 		copyfile(cfg_file_path, self.log_dir + "/" + file_name)
 
-	def log_parameter(self, para_name, para_val):
+	def log_parameter(self, para_name, para_val, headers=None):
 		""" logs a parameter value to a file """
 		if para_name not in self.files_params:
 			path = self.log_dir + "/" + self.NAME_FOLDER_PARAMETERS + "/" + para_name + self.FILE_SUFFIX_LOGS
 			self.files_params[para_name] = self.open_file(path)
 			self.log_message("created parameter logfile for '{}'".format(para_name))
-			self.files_params[para_name].write("epoch\tparameter-value\n")
-		self.files_params[para_name].write("{}\t{}\n".format(self.epoch, para_val))
+			headers = "\t".join(headers) if headers is not None else "parameter-value"
+			self.files_params[para_name].write("epoch\t" + headers + "\n")
+		if not isinstance(para_val, list):
+			para_val = [para_val]
+		s = "{}" + ("\t{}" * len(para_val)) + "\n"
+		para_val.insert(0, self.epoch)
+		self.files_params[para_name].write(s.format(*para_val))
 
 	def log_message(self, message):
 		""" logs a message (e.g. cloned network) to a general logfile """
@@ -65,6 +70,7 @@ class BaseLogger(object):
 			_file.flush()
 
 	def close_files(self):
+		self.flush_files()
 		for _, _file in self.open_files.items():
 			_file.close()
 		self.open_files.clear()

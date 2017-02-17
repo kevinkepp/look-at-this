@@ -23,3 +23,7 @@ class DeepQModel(object):
 	@abstractmethod
 	def copy_from(self, file_path):
 		pass
+
+	@abstractmethod
+	def clone(self):
+		pass

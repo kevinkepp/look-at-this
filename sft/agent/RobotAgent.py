@@ -17,3 +17,8 @@ class RobotAgent(object):
 	@abstractmethod
 	def incorporate_reward(self, old_state, action, new_state, value):
 		pass
+
+	# signals the agent, that one training episode is over and the next starts
+	@abstractmethod
+	def new_episode(self):
+		pass

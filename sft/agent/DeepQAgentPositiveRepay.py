@@ -42,7 +42,7 @@ class DeepQAgentPositiveReplay(DeepQAgentReplay):
 				np_pos_rpl = np.array(self.replay_pos)
 				# calculate probabilities from rewards such that high reward results in low probability
 				# this means high reward experiences are less likely to be overwritten later
-				p = np.float64(1. / np_pos_rpl[:, 3])
+				p = np.float(1. / np_pos_rpl[:, 3])
 				p = p / p.sum()
 				# print(p.sum())
 			# choose replay from experience with probabilities p

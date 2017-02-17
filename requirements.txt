@@ -1,3 +1,4 @@
+lasagne
 numpy
 matplotlib
 h5py

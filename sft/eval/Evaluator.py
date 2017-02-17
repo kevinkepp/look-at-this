@@ -1,10 +1,15 @@
 from __future__ import division
 import os, time, cv2, ast, imp
-from matplotlib import pyplot as plt
 import numpy as np
 from sft.Actions import Actions
 from sft import Point, Size
 
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.animation as manimation
+from matplotlib import gridspec
+from matplotlib.ticker import MultipleLocator, NullFormatter
+from matplotlib import pyplot as plt
 
 class Evaluator(object):
 	"""visualizes the results, paths and parameters"""
@@ -20,16 +25,17 @@ class Evaluator(object):
 	RESULTS_PLOT_FILE_NAME = "results.png"
 	PARAMETER_FILE_SUFFIX = ".tsv"
 
-	def __init__(self, exp_path, world_dir_name, agent_dict):
+	def __init__(self, exp_path, world_config_path, worlds_path, agent_dict, testermode = False):
 		if not os.path.exists(exp_path):
 			raise AttributeError("Experiment path %s does not exist" % exp_path)
 		self.agents_dict = agent_dict
 		self.exp_path = exp_path
-		self.world_dir_name = world_dir_name
+		self.worlds_path = worlds_path
 		self._create_folder(os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME))
-
-		world_config_path = os.path.join(self.exp_path, self.world_dir_name, self.WORLD_CONFIG_NAME)
+		self.testermode = testermode
 		self.view_size = self._get_view_size(world_config_path)
+
+		self.worlds, self.init_poses = self._get_all_worlds_and_init_states()
 
 	def _get_view_size(self, path):
 		# hacky way to access the view size from the python config file
@@ -46,19 +52,22 @@ class Evaluator(object):
 
 	def _get_all_worlds_and_init_states(self):
 		worlds = {}
-		files = os.listdir(os.path.join(self.exp_path, self.world_dir_name, self.WORLD_INIT_LOGS))
+		files = os.listdir(self.worlds_path)
 		for _file in files:
 			if _file.endswith(".png"):
-				world_image_path = os.path.join(self.exp_path, self.world_dir_name, self.WORLD_INIT_LOGS, _file)
+				world_image_path = os.path.join(self.worlds_path, _file)
 				world_image = cv2.imread(world_image_path)
-				epoch = int(_file[len("epoch"):_file.index('_')])
+				if self.testermode:
+					epoch = int(_file.split(".png")[0])
+				else:
+					epoch = int(_file[len("epoch"):_file.index('_')])
 				worlds[epoch] = world_image
 		init_poses = self._get_init_poses()
 		return worlds, init_poses
 
 	def _get_init_poses(self):
 		poses = {}
-		init_pos_path = os.path.join(self.exp_path, self.world_dir_name, self.WORLD_INIT_LOGS, self.INIT_STATES_FILE_NAME)
+		init_pos_path = os.path.join(self.worlds_path, self.INIT_STATES_FILE_NAME)
 		_file = open(init_pos_path)
 		_file.next()  # skip header line
 		for line in _file:
@@ -87,17 +96,35 @@ class Evaluator(object):
 				vals.append(line.split("\t"))
 		return headline, vals
 
+	def _get_q_values(self, path):
+		_, vals = self._load_tsv_file_with_headline(path)
+		qs = self._extract_qs_from_tsv_format(vals)
+		epochs = np.array(vals)[:, 0]
+		cur_epoch = 0
+		i_last_epoch = 0
+		q_dict = {}
+		for i in range(len(epochs)):
+			if epochs[i] != cur_epoch or i == len(epochs) - 1 :
+				q_dict[int(cur_epoch)] = qs[i_last_epoch:i, :]
+				cur_epoch = epochs[i]
+				i_last_epoch = i
+		return q_dict
+
+	def _extract_qs_from_tsv_format(self, vals):
+		qs = np.zeros([len(vals), 4])
+		for i in range(len(vals)):
+			v = vals[i][1]
+			v = v.strip("[[").strip("]]\n").split(" ")
+			v = filter(None, v)  # deletes empty strings, which are in there due to split
+			for j in range(4):
+				qs[i, j] = float(v[j])
+		return qs
+
 	def plot_qs(self, agent_keys, q_file):
 		for agent_key in agent_keys:
 			agent_qs_path = os.path.join(self.exp_path, self.agents_dict[agent_key], self.PARAMETER_LOG_FOLDER, q_file)
 			_, vals = self._load_tsv_file_with_headline(agent_qs_path)
-			qs = np.zeros([len(vals), 4])
-			for i in range(len(vals)):
-				v = vals[i][1]
-				v = v.strip("[[").strip("]]\n").split(" ")
-				v = filter(None, v)  # deletes empty strings, which are in there due to split
-				for j in range(4):
-					qs[i, j] = float(v[j])
+			qs = self._extract_qs_from_tsv_format(vals)
 			# plot
 			qs_max = np.max(qs, axis=1)
 			qs_min = np.min(qs, axis=1)
@@ -133,25 +160,65 @@ class Evaluator(object):
 			plt.close()
 
 
-	def plot_paths(self, PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW):
+	def plot_paths(self, PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW, q_file_name, text_every_kth):
 		path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.PATHS_OUTPUT_DIR_NAME)
 		self._create_folder(path)  # create overall path-plot-folder
-		worlds, init_poses = self._get_all_worlds_and_init_states()
 		agent_keys = self.agents_dict.keys()
 		for agent_key in agent_keys:
 			agent_dir = self.agents_dict[agent_key]
+			agent_log_path = os.path.join(self.exp_path, agent_dir)
+			if not os.path.exists(agent_log_path):
+				print("Agent directory {0} not found".format(agent_dir))
+				continue
+			# get corresponding q-values
+			if q_file_name is not None:
+				q_file_path = os.path.join(agent_log_path, self.PARAMETER_LOG_FOLDER, q_file_name)
+				qs_dict = self._get_q_values(q_file_path)
+			# plotting
 			plot_path = os.path.join(path, agent_dir)
 			self._create_folder(plot_path)  # create path plot folder for each agent
-			action_path = os.path.join(self.exp_path, agent_dir)
-			actionss = self._get_actions(action_path)
-			for epoch in actionss.keys():
+			actionss = self._get_actions(agent_log_path)
+			for epoch in reversed(actionss.keys()):
 				if epoch % PLOT_EVERY_KTH_EPOCH < NUM_PLOT_PATHS_IN_ROW:
+					if q_file_name is not None:
+						qs_of_epoch = qs_dict[epoch]
 					w, h = self.view_size.w, self.view_size.h
-					img_save_path = os.path.join(plot_path, str(epoch).zfill(5) + ".png")
-					self._visualize_course_of_action(worlds[epoch], init_poses[epoch], w, h, actionss[epoch], img_save_path)
+					img_save_path = os.path.join(plot_path, str(epoch).zfill(5))
+					self._visualize_course_of_action(self.worlds[epoch], self.init_poses[epoch], w, h, actionss[epoch],  text_every_kth)
+					# save and clear figure
+					plt.savefig(img_save_path + "_path.png", bbox_inches='tight')
+					plt.close()
+					if q_file_name is not None:
+						self._visualize_qs_for_one_epoch(qs_of_epoch, text_every_kth)
+						# save and clear figure
+						plt.savefig(img_save_path + "_qs.png", bbox_inches='tight')
+						plt.close()
 
+	def animate_epoch(self, agent_key, epoch, q_file_name=None):
+		# stuff for the animation
+		FFMpegWriter = manimation.writers['ffmpeg']
+		metadata = dict(title='epoch'+str(epoch), artist='DQ-Agent',
+						comment='gogogo you can make it!')
+		writer = FFMpegWriter(fps=2, metadata=metadata)
+		# load world and init, actions, qs
+		agent_dir = self.agents_dict[agent_key]
+		agent_log_path = os.path.join(self.exp_path, agent_dir)
+		actionss = self._get_actions(agent_log_path)
+		actions = actionss[epoch]
+		# get corresponding q-values
+		q_file_path = os.path.join(agent_log_path, self.PARAMETER_LOG_FOLDER, q_file_name)
+		qs_dict = self._get_q_values(q_file_path)
+		qs = qs_dict[epoch]
+		path = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.PATHS_OUTPUT_DIR_NAME, agent_dir)
+		movie_path = os.path.join(path, str(epoch).zfill(5) + "_" + agent_key + ".mp4")
+		fig = plt.figure(figsize=(48, 48))
+		with writer.saving(fig, movie_path, len(actions)):
+			# here the frame is create with matplotlib
+			w, h = self.view_size.w, self.view_size.h
+			self._visualize_course_of_action(self.worlds[epoch], self.init_poses[epoch], w, h, actions, movie_writer=writer, q_for_movie=qs)
+		plt.close()
 
-	def _visualize_course_of_action(self, world_state, init_pos, width, height, actions, image_save_path):
+	def _visualize_course_of_action(self, world_state, init_pos, width, height, actions, text_every_kth=10, movie_writer=None, q_for_movie=None):
 		""" plots a course of actions beginning from a certain first state """
 		x = init_pos.x
 		y = init_pos.y
@@ -164,24 +231,160 @@ class Evaluator(object):
 			(x, y) = self._get_new_xy(x, y, ac)
 			xx = np.append(xx, x)
 			yy = np.append(yy, y)
-		plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
-		# plotting starting view window
-		first_win_x = np.array([xx[0] - mid_m, xx[0] - mid_m, xx[0] + mid_m, xx[0] + mid_m, xx[0] - mid_m])
-		first_win_y = np.array([yy[0] - mid_n, yy[0] + mid_n, yy[0] + mid_n, yy[0] - mid_n, yy[0] - mid_n])
-		plt.plot(first_win_x, first_win_y, 'r:')
-		# plotting final view window
-		final_win_x = np.array([xx[-1] - mid_m, xx[-1] - mid_m, xx[-1] + mid_m, xx[-1] + mid_m, xx[-1] - mid_m])
-		final_win_y = np.array([yy[-1] - mid_n, yy[-1] + mid_n, yy[-1] + mid_n, yy[-1] - mid_n, yy[-1] - mid_n])
-		plt.plot(final_win_x, final_win_y, 'r:')
-		# plot world-frame
-		plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
-		# remove x & y axis ticks
-		plt.xticks([])
+		# path plot
+		if movie_writer is None:
+			# ration for plots
+			#plt.figure(figsize=(12, 12))
+			self._plot_actions_as_path(xx, yy, text_every_kth)
+			# plot start and end point
+			plt.plot(xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')  # plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
+			# plotting starting view window
+			first_win_x = np.array([xx[0] - mid_m, xx[0] - mid_m, xx[0] + mid_m, xx[0] + mid_m, xx[0] - mid_m])
+			first_win_y = np.array([yy[0] - mid_n, yy[0] + mid_n, yy[0] + mid_n, yy[0] - mid_n, yy[0] - mid_n])
+			plt.plot(first_win_x, first_win_y, 'r:')
+			# plotting final view window
+			final_win_x = np.array([xx[-1] - mid_m, xx[-1] - mid_m, xx[-1] + mid_m, xx[-1] + mid_m, xx[-1] - mid_m])
+			final_win_y = np.array([yy[-1] - mid_n, yy[-1] + mid_n, yy[-1] + mid_n, yy[-1] - mid_n, yy[-1] - mid_n])
+			plt.plot(final_win_x, final_win_y, 'r:')
+			# plot world-frame
+			plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
+			# remove x & y axis ticks
+			plt.xticks([])
+			plt.yticks([])
+		else:
+			#gs = gridspec.GridSpec(2, 1, height_ratios=[3, 12], width_ratios=[1, 1])
+			# path
+			#plt.subplot(gs[1])
+			plt.plot(xx, yy, 'b-', linewidth=20)  # entire path
+			p_d, = plt.plot(xx[:2], yy[:2], 'r-', linewidth=20)  # direction
+			p_a, = plt.plot(xx[0], yy[0], 'go', markeredgecolor='green', mew=25, ms=25)  # agent
+			win_x = np.array([xx[0] - mid_m, xx[0] - mid_m, xx[0] + mid_m, xx[0] + mid_m, xx[0] - mid_m])
+			win_y = np.array([yy[0] - mid_n, yy[0] + mid_n, yy[0] + mid_n, yy[0] - mid_n, yy[0] - mid_n])
+			p_v, = plt.plot(win_x, win_y, 'g-', linewidth=20)  # view
+			# plot world-frame
+			plt.imshow(world_state, cmap="gray", alpha=0.8, interpolation='none')
+			# remove x & y axis ticks
+			plt.xticks([])
+			plt.yticks([])
+			# epoch count
+			ep_txt = plt.text(0, 1, "epoch = {}".format(0), color="white", size=60)
+			# qs
+			qs = np.round(q_for_movie[0, :], 3)
+			ac_names = Actions.names
+			q_str = "{1: .3f} {0}\n{3: .3f} {2}\n{5: .3f} {4}\n{7: .3f} {6}".format(ac_names[0], qs[0], ac_names[1], qs[1], ac_names[2], qs[2], ac_names[3], qs[3])
+			q_txt = plt.text(0, 9, q_str, color="white", size=60)
+			#plt.subplot(gs[0])
+			#p_q = self._animate_q_plotting(q_for_movie, 0)
+			#plt.tight_layout()
+			movie_writer.grab_frame()
+			for i_ac in range(1,len(actions)):
+				p_d.set_data(xx[i_ac:i_ac + 2], yy[i_ac:i_ac + 2])  # direction
+				p_a.set_data(xx[i_ac], yy[i_ac])  # agent
+				win_x = np.array(
+					[xx[i_ac] - mid_m, xx[i_ac] - mid_m, xx[i_ac] + mid_m, xx[i_ac] + mid_m, xx[i_ac] - mid_m])
+				win_y = np.array(
+					[yy[i_ac] - mid_n, yy[i_ac] + mid_n, yy[i_ac] + mid_n, yy[i_ac] - mid_n, yy[i_ac] - mid_n])
+				p_v.set_data(win_x, win_y)  # view
+				ep_txt.set_text("epoch = {}".format(i_ac))
+				qs = np.round(q_for_movie[i_ac, :], 3)
+				q_str = "{1: .3f} {0}\n{3: .3f} {2}\n{5: .3f} {4}\n{7: .3f} {6}".format(ac_names[0], qs[0], ac_names[1], qs[1], ac_names[2],
+															   qs[2], ac_names[3], qs[3])
+				q_txt.set_text(q_str)
+				#self._animate_q_plotting(q_for_movie, i_ac, p_q)
+				movie_writer.grab_frame()
+
+	def _animate_q_plotting(self, qs, step, p_q=None):
+		if p_q is None:
+			p_q = []
+			x = Actions.all
+			for i_x in x:
+				q = qs[step, i_x]
+				p, = plt.plot([i_x,i_x], [q, q], 'b-', linewidth=5)
+				p_q.append(p)
+			q_sorted = np.sort(qs[step, :])
+			d = q_sorted[-1] - q_sorted[-2]
+			l = len(Actions.all)
+			p, = plt.plot([l,l], [d, d], 'r-', linewidth=5)
+			p_q.append(p)
+			labels = Actions.names + ["diff_1.-2."]
+			x += [l]
+			plt.xticks(x, labels)
+			plt.ylim(np.min(qs), np.max(qs))
+			plt.margins(0.2)
+			return p_q
+		else:
+			pass
+
+	def _plot_actions_as_path(self, xx, yy, text_every_kth):
+		col_flag = 0
+		col_list = ['r', 'g']  # , 'y', 'm', 'c']
+		# plot color order for orientation
+		x = 0
+		for c in col_list:
+			plt.plot([x, x+1], [0, 0], c + '-')
+			x += 1
+		# plot actions
+		for i in range(len(xx)-1):
+			plt.plot(xx[i:i+2], yy[i:i+2], col_list[col_flag] + '-')
+			if col_flag != len(col_list) - 1:
+				col_flag += 1
+			else:
+				col_flag = 0
+			# text
+			if i % text_every_kth == 0:
+				plt.text(xx[i], yy[i], str(i), color="white")
+
+	def _visualize_qs_for_one_epoch(self, qs, text_every_kth):
+		# q-plot every action dot
+		plt.figure(figsize=(24, 4))
+		#gs = gridspec.GridSpec(3, 1, height_ratios=[2, 1, 0.5], width_ratios=[1, 1, 1])
+		gs = gridspec.GridSpec(2, 1, height_ratios=[2, 0.5], width_ratios=[1, 1])
+		plt.subplot(gs[0])
+		q_colors = ["b", "g", "r", "k"]
+		for i_ac in range(len(Actions.all)):
+			plt.plot(qs[:, i_ac], q_colors[i_ac] + ".", label=Actions.name_dict[i_ac])
+			plt.xlim([-1, len(qs)])
+		plt.gca().xaxis.grid(b=True, which='major', linestyle='--', alpha=0.6)
+		plt.gca().xaxis.grid(b=True, which='minor', linestyle='--', alpha=0.3)
+		xticks_major = MultipleLocator(text_every_kth)
+		xticks_minor = MultipleLocator(2)
+		plt.gca().xaxis.set_major_locator(xticks_major)
+		plt.gca().xaxis.set_minor_locator(xticks_minor)
+		plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='center', ncol=len(Actions.all))
+		"""
+		# plot difference max q to second highest
+		plt.subplot(gs[1])
+		qs_sorted = np.sort(qs, axis=1)
+		q_diff = qs_sorted[:, -1] - qs_sorted[:, -2]
+		plt.plot(q_diff, 'b-')
+		plt.xlim([-1, len(qs)])
+		plt.gca().xaxis.grid(b=True, which='major', linestyle='--', alpha=0.6)
+		plt.gca().xaxis.grid(b=True, which='minor', linestyle='--', alpha=0.3)
+		xticks_major = MultipleLocator(text_every_kth)
+		xticks_minor = MultipleLocator(2)
+		plt.gca().xaxis.set_major_locator(xticks_major)
+		plt.gca().xaxis.set_minor_locator(xticks_minor)
+		plt.gca().xaxis.set_major_formatter(NullFormatter())
+		"""
+		# plot the sorted q-action values
+		#plt.subplot(gs[2])
+		plt.subplot(gs[1])
+		q_colors = ["b", "g", "r", "k"]
+		qs_argsort = np.argsort(np.argsort(qs, axis=1), axis=1)
+		for i_ac in range(len(Actions.all)):
+			plt.plot(qs_argsort[:, i_ac], q_colors[i_ac] + ".", label=Actions.name_dict[i_ac])
+			plt.xlim([-1, len(qs)])
+		plt.gca().xaxis.grid(b=True, which='major', linestyle='--', alpha=0.6)
+		plt.gca().xaxis.grid(b=True, which='minor', linestyle='--', alpha=0.3)
+		xticks_major = MultipleLocator(text_every_kth)
+		xticks_minor = MultipleLocator(2)
+		plt.gca().xaxis.set_major_locator(xticks_major)
+		plt.gca().xaxis.set_minor_locator(xticks_minor)
 		plt.yticks([])
-		# save and clear figure
-		plt.savefig(image_save_path, bbox_inches='tight')
-		# plt.clf()
-		plt.close()
+		plt.ylim(-1, 4)
+
+		# formating
+		plt.tight_layout()
 
 	def _get_new_xy(self, x, y, ac):
 		""" calculates the new position of the goal after a action """
@@ -223,7 +426,7 @@ class Evaluator(object):
 		ax_success.set_ylim((-0.02, 1.02))
 		for name, success, steps in zip(names, successes, stepss):
 			self._plot_res_one_agent(ax_success, ax_steps, success, steps, name, epochs, sliding_window_mean)
-		ax_success.legend(loc='upper right')
+		ax_success.legend(loc='best')
 		filepath = os.path.join(self.exp_path, self.EVAL_OUTPUT_DIR_NAME, self.RESULTS_PLOT_FILE_NAME)
 		plt.savefig(filepath, bbox_inches='tight')
 		plt.close()

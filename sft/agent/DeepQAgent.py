@@ -49,3 +49,7 @@ class DeepQAgent(RobotAgent):
 		ai = self.actions.index(action)
 		target_qs[ai] = update
 		self.model.update_qs(old_state, target_qs)
+
+	def new_episode(self):
+		# nothing needs to happen when a new episode starts in here
+		pass

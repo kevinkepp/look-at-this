@@ -29,3 +29,7 @@ class KerasMlpModelNew(KerasMlpModel):
 			X[i] = np.array(v)
 		# [ (n, 1, 5, 5), (n, 1, 4, 4) ]
 		self._model.fit(X, targets, batch_size=n_samples, nb_epoch=1, verbose=0)
+		# weights = self._model.get_weights()
+		# means = [np.mean(np.abs(w)) for w in weights]
+		# maxs = [np.max(np.abs(w)) for w in weights]
+		# print "weights - maxs: %s, means: %s" % (str(maxs), str(means))
