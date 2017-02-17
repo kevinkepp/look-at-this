@@ -2,8 +2,8 @@ from sft.eval.Evaluator import Evaluator
 import os
 from sft.log.AgentLogger import AgentLogger
 
-LOG_PATH = "tmp/logs"
-EXPERIMENT = "20170201-162649_exp_rmsprop_proprpl"  # sorted(os.listdir(LOG_PATH))[-1]  # use newest directory by alphanumerical ordering
+LOG_PATH = "tmp/logs/"
+EXPERIMENT = "NAME_OF_EXPERIMENT_TO_EVALUATE"  # sorted(os.listdir(LOG_PATH))[-1]  # use newest directory by alphanumerical ordering
 EXPERIMENT_PATH = os.path.join(LOG_PATH, EXPERIMENT)
 
 if True:
@@ -46,8 +46,8 @@ else:
 	print("Evaluate q-values")
 	evaluator.plot_qs(AGENTS_DICT.keys(), "q.tsv")
 	print("Evaluate epsilon-values")
-	# evaluator.plot_one_value_parameter(AGENTS_DICT.keys(), "epsilon.tsv")
+	evaluator.plot_one_value_parameter(AGENTS_DICT.keys(), "epsilon.tsv")
 	#evaluator.plot_expansive_spl_radius()
 	print("Evaluate paths")
 	# plot results, paths, qs
-	# evaluator.plot_paths(PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW, "q.tsv", text_every_kth=10)
+	evaluator.plot_paths(PLOT_EVERY_KTH_EPOCH, NUM_PLOT_PATHS_IN_ROW, "q.tsv", text_every_kth=10)
