@@ -1,11 +1,10 @@
 import sft.sampler.Simple
-import sft.sim.PathWorldLoader
 import sft.sim.PathWorldGenerator
 from sft import Size, Point
 from sft.Actions import Actions
 from sft.log.WorldLogger import WorldLogger
 
-epochs = 1000
+epochs = 2000
 world_size = Size(70, 70)
 view_size = Size(7, 7)
 actions = Actions.all
@@ -28,16 +27,23 @@ sampler = sft.sampler.Simple.Simple()
 )"""
 
 # use given world images which are loaded from disk
-world_gen = sft.sim.PathWorldLoader.PathWorldLoader(
+"""world_gen = sft.sim.PathWorldLoader.PathWorldLoader(
 	logger=world_logger,
-	world_path="tmp/line-worldstates/one-corner",
+	world_path="tmp/line-worldstates",
+	view_size=view_size,
+	world_size=world_size,
+	sampler=sampler,
+	path_in_init_view=True,  # True: enforce path in initial view
+	target_not_in_init_view=True  # True: enforce target not in initial view
+)"""
+# use worlds with simple generated paths, i.e. paths consisting of just a straight line
+"""world_gen = sft.sim.SimplePathWorldGenerator.SimplePathWorldGenerator(...)"""
+# use worlds with generated paths that range from straight lines to paths with multiple corners
+world_gen = sft.sim.PathWorldGenerator.PathWorldGenerator(
+	logger=world_logger,
 	view_size=view_size,
 	world_size=world_size,
 	sampler=sampler,
 	path_in_init_view=True,  # True: enforce path in initial view
 	target_not_in_init_view=True  # True: enforce target not in initial view
 )
-# use worlds with simple generated paths, i.e. paths consisting of just a straight line
-"""world_gen = sft.sim.SimplePathWorldGenerator.SimplePathWorldGenerator(...)"""
-# use worlds with generated paths that range from straight lines to paths with multiple corners
-"""world_gen = sft.sim.PathWorldGenerator.PathWorldGenerator(...)"""
