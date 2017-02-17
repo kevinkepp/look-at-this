@@ -171,27 +171,29 @@ class Evaluator(object):
 				print("Agent directory {0} not found".format(agent_dir))
 				continue
 			# get corresponding q-values
-			q_file_path = os.path.join(agent_log_path, self.PARAMETER_LOG_FOLDER, q_file_name)
-			qs_dict = self._get_q_values(q_file_path)
+			if q_file_name is not None:
+				q_file_path = os.path.join(agent_log_path, self.PARAMETER_LOG_FOLDER, q_file_name)
+				qs_dict = self._get_q_values(q_file_path)
 			# plotting
 			plot_path = os.path.join(path, agent_dir)
 			self._create_folder(plot_path)  # create path plot folder for each agent
 			actionss = self._get_actions(agent_log_path)
 			for epoch in reversed(actionss.keys()):
 				if epoch % PLOT_EVERY_KTH_EPOCH < NUM_PLOT_PATHS_IN_ROW:
-					qs_of_epoch = qs_dict[epoch]
+					if q_file_name is not None:
+						qs_of_epoch = qs_dict[epoch]
 					w, h = self.view_size.w, self.view_size.h
 					img_save_path = os.path.join(plot_path, str(epoch).zfill(5))
 					self._visualize_course_of_action(self.worlds[epoch], self.init_poses[epoch], w, h, actionss[epoch],  text_every_kth)
 					# save and clear figure
 					plt.savefig(img_save_path + "_path.png", bbox_inches='tight')
 					plt.close()
-					"""
-					self._visualize_qs_for_one_epoch(qs_of_epoch, text_every_kth)
-					# save and clear figure
-					plt.savefig(img_save_path + "_qs.png", bbox_inches='tight')
-					plt.close()
-					"""
+					if q_file_name is not None:
+						self._visualize_qs_for_one_epoch(qs_of_epoch, text_every_kth)
+						# save and clear figure
+						plt.savefig(img_save_path + "_qs.png", bbox_inches='tight')
+						plt.close()
+
 	def animate_epoch(self, agent_key, epoch, q_file_name=None):
 		# stuff for the animation
 		FFMpegWriter = manimation.writers['ffmpeg']
@@ -232,7 +234,7 @@ class Evaluator(object):
 		# path plot
 		if movie_writer is None:
 			# ration for plots
-			plt.figure(figsize=(12, 12))
+			#plt.figure(figsize=(12, 12))
 			self._plot_actions_as_path(xx, yy, text_every_kth)
 			# plot start and end point
 			plt.plot(xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')  # plt.plot(xx, yy, 'b-', xx[-1], yy[-1], 'ro', xx[0], yy[0], 'go')
@@ -335,9 +337,10 @@ class Evaluator(object):
 	def _visualize_qs_for_one_epoch(self, qs, text_every_kth):
 		# q-plot every action dot
 		plt.figure(figsize=(24, 4))
-		gs = gridspec.GridSpec(3, 1, height_ratios=[2, 1, 0.5], width_ratios=[1, 1, 1])
+		#gs = gridspec.GridSpec(3, 1, height_ratios=[2, 1, 0.5], width_ratios=[1, 1, 1])
+		gs = gridspec.GridSpec(2, 1, height_ratios=[2, 0.5], width_ratios=[1, 1])
 		plt.subplot(gs[0])
-		q_colors = ["r", "g", "b", "k"]
+		q_colors = ["b", "g", "r", "k"]
 		for i_ac in range(len(Actions.all)):
 			plt.plot(qs[:, i_ac], q_colors[i_ac] + ".", label=Actions.name_dict[i_ac])
 			plt.xlim([-1, len(qs)])
@@ -348,6 +351,7 @@ class Evaluator(object):
 		plt.gca().xaxis.set_major_locator(xticks_major)
 		plt.gca().xaxis.set_minor_locator(xticks_minor)
 		plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='center', ncol=len(Actions.all))
+		"""
 		# plot difference max q to second highest
 		plt.subplot(gs[1])
 		qs_sorted = np.sort(qs, axis=1)
@@ -361,11 +365,13 @@ class Evaluator(object):
 		plt.gca().xaxis.set_major_locator(xticks_major)
 		plt.gca().xaxis.set_minor_locator(xticks_minor)
 		plt.gca().xaxis.set_major_formatter(NullFormatter())
+		"""
 		# plot the sorted q-action values
-		plt.subplot(gs[2])
-		q_colors = ["r", "g", "b", "k"]
+		#plt.subplot(gs[2])
+		plt.subplot(gs[1])
+		q_colors = ["b", "g", "r", "k"]
+		qs_argsort = np.argsort(np.argsort(qs, axis=1), axis=1)
 		for i_ac in range(len(Actions.all)):
-			qs_argsort = np.argsort(qs, axis=1)
 			plt.plot(qs_argsort[:, i_ac], q_colors[i_ac] + ".", label=Actions.name_dict[i_ac])
 			plt.xlim([-1, len(qs)])
 		plt.gca().xaxis.grid(b=True, which='major', linestyle='--', alpha=0.6)
@@ -376,6 +382,7 @@ class Evaluator(object):
 		plt.gca().xaxis.set_minor_locator(xticks_minor)
 		plt.yticks([])
 		plt.ylim(-1, 4)
+
 		# formating
 		plt.tight_layout()
 

@@ -33,8 +33,8 @@ def _process_w_diff(val):
 	return np.array(o)
 
 
-exp_path = "tmp/logs/20170205-230039_exp_expansive"
-agent = "agent_propreplay_runah_reg6_1" # agent_propreplay_runah_reg6_1
+exp_path = "tmp/logs/important_exps/20170206-005735_exp_prop"
+agent = "agent_prop05_5" # agent_propreplay_runah_reg6_1
 param_logs = "parameter_logs"
 w_file = "weights.tsv"
 w_diff_file = "weights_diff.tsv"
@@ -68,25 +68,37 @@ print(y.shape)
 
 x = np.arange(y.shape[0])
 
-layer = [1,3]
+layer = [0,2]
 lbl = ["w_in", "b_in", "w_out", "b_out"]
 clr = ["r", "g", "b", "y"]
 
+# weights
 plt.title(agent)
-
-for i in layer:
+for i in [0,2]:
 	y = w[w[:,1] == i]
 	x = np.arange(y.shape[0])
 	plt.fill_between(x, y[:,2], y[:,3], label=lbl[i], color=clr[i], alpha=0.2)
-
-# plt.plot(w[w[:,1] == 0][:,3], label="w_in")
-# plt.plot(w[w[:,1] == 2][:,3], label="w_out")
-# plt.plot(w[w[:,1] == 1][:,3], label="b_in")
-# plt.plot(w[w[:,1] == 3][:,3], label="b_out")
-
+	plt.plot(x, y[:,4], '-', color=clr[i])
+	#plt.fill_between(x, y[:,4] - y[:,5], y[:,4] + y[:,5], color=clr[i], alpha=0.2)
 
 plt.legend(loc="upper left")
-#plt.plot(wd[:,1])
+save_path = os.path.join(exp_path, agent.split("agent_")[1] + "_weight_plot.png")
+plt.savefig(save_path)
+plt.close()
 
-plt.show()
+# biases
+plt.hold(True)
+plt.title(agent)
+for i in [1,3]:
+	y = w[w[:,1] == i]
+	x = np.arange(y.shape[0])
+	plt.fill_between(x, y[:,2], y[:,3], label=lbl[i], color=clr[i], alpha=0.2)
+	plt.plot(x, y[:,4], '-', color=clr[i])
+	#plt.fill_between(x, y[:,4] - y[:,5], y[:,4] + y[:,5], color=clr[i], alpha=0.2)
+plt.legend(loc="upper left")
+save_path = os.path.join(exp_path, agent.split("agent_")[1] + "_biases_plot.png")
+plt.savefig(save_path)
+plt.close()
+
+#plt.show()
 

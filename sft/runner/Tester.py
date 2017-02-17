@@ -7,6 +7,7 @@ from importlib import import_module
 import numpy as np
 import matplotlib.pyplot as plt
 import theano
+#import pickle
 
 from sft.Actions import Actions
 from sft import replace_in_file
@@ -123,10 +124,19 @@ class Tester(Runner):
 						m_suc, m_step = self._extract_results_from_file(res_path)
 						mean_successes.append(m_suc)
 						mean_steps.append(m_step)
+				epochs = np.array(epochs)
+				mean_successes = np.array(mean_successes)
+				mean_steps = np.array(mean_steps)
+				sort_arg = np.argsort(epochs)
+				epochs = epochs[sort_arg]
+				mean_successes = mean_successes[sort_arg]
+				mean_steps = mean_steps[sort_arg]
 				agents_perf_dict[fa[len(AgentLogger.LOG_AGENT_PREFIX)+1:]] = [epochs, mean_successes, mean_steps]
+		#f_out = open("tmp/report_results/perf_dict.pkl", 'wb')
+		#pickle.dump(agents_perf_dict, f_out, pickle.HIGHEST_PROTOCOL)
 		return agents_perf_dict
 
-	def plot_paths(self, path_tester, world_config_path, plot_models_geq_than_epoch):
+	def plot_paths(self, path_tester, world_config_path, plot_models_geq_than_epoch, q_file_name=None):
 		world_path = os.path.join(path_tester, "worlds")
 		agent_dir = {}
 		for fa in os.listdir(path_tester):
@@ -139,27 +149,33 @@ class Tester(Runner):
 							agent_model_name = fa.split(AgentLogger.LOG_AGENT_PREFIX)[1][1:] + "_" + fm_dir
 							agent_dir[agent_model_name] = agent_model_path
 		ev = Evaluator(path_tester, world_config_path, world_path, agent_dir, testermode=True)
-		ev.plot_paths(1, 1, "q.tsv", 10)
+		ev.plot_paths(1, 1, q_file_name, 10)
 
 
-	def plot_results(self, exp_path, one_agent_multiple_times=False, plot_steps=True):
+	def plot_results(self, exp_path, one_agent_multiple_times=False, plot_steps=True, steps_twin_x=False, custom_title=None):
 		"""used to plot the results of .run_on_exp()"""
 		agents_perf_dict = self._get_agents_performance(exp_path)
 		# plot the results
 		fig_suc, ax_success = plt.subplots()
-		title = "Learning curve for agent performance on test set"
+		if custom_title is None:
+			title = "Learning curve for agent performance on test set"
+		else:
+			title = custom_title
 		plt.title(title)
 		ax_success.set_xlabel("episodes")
-		ax_success.set_ylabel("success rate")
+		ax_success.set_ylabel("success-rate")
+		#ax_success.set_ylabel("average reward")
 		ax_success.grid(True)
 		if plot_steps:
-			# ax_steps = ax_success.twinx()
+			if steps_twin_x:
+				ax_steps = ax_success.twinx()
+				ax_steps.grid(True, alpha=0.3)
 			# plot steps
-			fig_stp, ax_steps = plt.subplots()
-			plt.title(title)
-			ax_steps.grid(True)
+			else:
+				fig_stp, ax_steps = plt.subplots()
+				plt.title(title)
+				ax_steps.grid(True)
 			ax_steps.set_ylabel("# steps taken")
-			# ax_steps.grid(True, alpha=0.3)
 		max_epochs = 0
 
 		if one_agent_multiple_times:
@@ -215,24 +231,35 @@ class Tester(Runner):
 		if one_agent_multiple_times:
 			agent_mean_success = np.mean(np.array(agent_success), axis=0)
 			agent_std_success = np.std(np.array(agent_success), axis=0)
-			su = ax_success.plot(epochs, agent_mean_success, 'o-', label=last_agent)
+			if steps_twin_x:
+				label = "average reward"
+			else:
+				label = last_agent
+			su = ax_success.plot(epochs, agent_mean_success, 'o-', label=label)
 			ax_success.fill_between(epochs, agent_mean_success - agent_std_success,
 									agent_mean_success + agent_std_success, color=su[0].get_color(), alpha=0.2)
 			if plot_steps:
 				agent_mean_steps = np.mean(np.array(agent_steps), axis=0)
 				agent_std_steps = np.std(np.array(agent_steps), axis=0)
-				st = ax_steps.plot(epochs, agent_mean_steps, 'x:', label=last_agent)
+				if steps_twin_x:
+					label = "# steps"
+				st = ax_steps.plot(epochs, agent_mean_steps, 'x:', label=label)
 				ax_steps.fill_between(epochs, agent_mean_steps - agent_std_steps,
-								  agent_mean_steps + agent_std_steps, color=st[0].get_color(), alpha=0.1)
+									  agent_mean_steps + agent_std_steps, color=st[0].get_color(), alpha=0.1)
 
 		ax_success.set_xlim(-1, max_epochs + 1)
 		ax_success.set_ylim((-0.02, 1.02))
-		box = ax_success.get_position()
-		ax_success.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-		ax_success.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=4)
+		if steps_twin_x:
+			ln = ax_success.get_lines() + ax_steps.get_lines()
+			lbls = [l.get_label() for l in ln]
+			plt.legend(ln, lbls, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=4)
+		else:
+			box = ax_success.get_position()
+			ax_success.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+			plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=4)
 		filepath = exp_path + "/" + self.TESTER_OUTPUT_FOLDER_NAME + "/" + self.RESULTS_FILE_NAME
 		fig_suc.savefig(filepath + "_success.png", bbox_inches='tight')
-		if plot_steps:
+		if plot_steps and not steps_twin_x:
 			box = ax_steps.get_position()
 			ax_steps.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
 			ax_steps.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=4)
