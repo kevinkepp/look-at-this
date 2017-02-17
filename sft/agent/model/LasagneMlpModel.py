@@ -79,7 +79,7 @@ class LasagneMlpModel(object):
 	"""clone_interval: 0 or negative disables cloning"""
 
 	def __init__(self, logger, batch_size, discount, actions, view_size, action_hist_size,
-				 network_builder, optimizer, clone_interval=0, clip_delta=0, regularization=1e-4):
+				 network_builder, optimizer, clone_interval=0, clip_delta=0, regularization=1e-4, double_q=False):
 		self.logger = logger
 		self.batch_size = batch_size
 		self.discount = discount
@@ -92,11 +92,12 @@ class LasagneMlpModel(object):
 		self.clip_delta = clip_delta
 		self.shared_batch = SharedBatch(batch_size, view_size, action_hist_size)
 		self.shared_state = SharedState(view_size, action_hist_size)
-		self.net_out = None
-		self.net_out_next = None
+		self.net_online_out = None
+		self.net_target_out = None
 		self.train_fn = None
 		self.predict_fn = None
 		self.regularization = regularization
+		self.double_q = double_q
 		self.build_model()
 		self.steps_clone = 0
 		self.all_layers = None
@@ -106,44 +107,64 @@ class LasagneMlpModel(object):
 		net_in_actions = lasagne.layers.InputLayer(name='action_hists',
 												   shape=(None, 1, action_hist_size.w, action_hist_size.h)) \
 			if action_hist_size.w > 0 else None
-		net_out, layers = network_builder(net_in_views, net_in_actions)
+		net_out_and_layers = network_builder(net_in_views, net_in_actions)
+		if isinstance(net_out_and_layers, tuple):
+			net_out, layers = net_out_and_layers
+		else:
+			net_out = net_out_and_layers
+			layers = None
 		return net_in_views, net_in_actions, net_out, layers
 
 	def build_model(self):
-		views = T.tensor4('views')
-		action_hists = T.tensor4('action_hists')
+		views_curr = T.tensor4('views')
+		action_hists_curr = T.tensor4('action_hists')
 		actions = T.icol('actions')
-		next_views = T.tensor4('next_views')
-		next_action_hists = T.tensor4('next_action_hists')
+		views_next = T.tensor4('next_views')
+		action_hists_next = T.tensor4('next_action_hists')
 		rewards = T.col('rewards')
 		terminals = T.icol('terminals')
 
 		# initialize network(s) for computing q-values
-		net_in_view, net_in_action_hist, self.net_out, self.all_layers = self.build_network(self.network_builder, self.view_size,
-																		   self.action_hist_size)
-		inputs = {net_in_view: views, net_in_action_hist: action_hists} if self.action_hist_size.w > 0 else {
-			net_in_view: views}
-		q_vals = lasagne.layers.get_output(self.net_out, inputs)
+		net_online_in_view, net_online_in_action_hist, self.net_online_out, self.all_layers = \
+			self.build_network(self.network_builder, self.view_size, self.action_hist_size)
+		net_online_in_curr = {net_online_in_view: views_curr, net_online_in_action_hist: action_hists_curr} \
+			if self.action_hist_size.w > 0 else {net_online_in_view: views_curr}
+		q_vals_online_curr_train = lasagne.layers.get_output(self.net_online_out, net_online_in_curr, deterministic=False)
+		q_vals_online_curr_test = lasagne.layers.get_output(self.net_online_out, net_online_in_curr, deterministic=True)
+		# for predictions we always use the q-values estimated by the online network on the current state
+		q_vals_pred_train = q_vals_online_curr_train
+		q_vals_pred_test = q_vals_online_curr_test
 		if self.clone_interval > 0:
-			net_in_view_next, net_in_action_hist_next, self.net_out_next, _ = self.build_network(self.network_builder,
-																							  self.view_size,
-																							  self.action_hist_size)
-			next_inputs = {net_in_view_next: next_views, net_in_action_hist_next: next_action_hists} \
-				if self.action_hist_size.w > 0 else {net_in_view_next: next_views}
-			next_q_vals = lasagne.layers.get_output(self.net_out_next, next_inputs)
+			net_target_in_view, net_target_in_action_hist, self.net_target_out, _ = \
+				self.build_network(self.network_builder, self.view_size, self.action_hist_size)
 			self._clone()
+			net_target_in_next = {net_target_in_view: views_next, net_target_in_action_hist: action_hists_next} \
+				if self.action_hist_size.w > 0 else {net_target_in_view: views_next}
+			# predict q-values for next state with target network
+			q_vals_target_next = lasagne.layers.get_output(self.net_target_out, net_target_in_next)
+			if self.double_q:
+				# Double Q-Learning:
+				# use online network to choose best action on next state (q_vals_target_argmax)...
+				net_online_in_next = {net_online_in_view: views_next, net_online_in_action_hist: action_hists_next} \
+					if self.action_hist_size.w > 0 else {net_online_in_view: views_next}
+				q_vals_online_next = lasagne.layers.get_output(self.net_online_out, net_online_in_next)
+				q_vals_target_argmax = T.argmax(q_vals_online_next, axis=1, keepdims=False)
+				# ...but use target network to estimate q-values for these actions
+				q_vals_target = T.diagonal(T.take(q_vals_target_next, q_vals_target_argmax, axis=1)).reshape((-1, 1))
+			else:
+				q_vals_target = T.max(q_vals_target_next, axis=1, keepdims=True)
 		else:
-			next_inputs = {net_in_view: next_views, net_in_action_hist: next_action_hists} \
-				if self.action_hist_size.w > 0 else {net_in_view: next_views}
-			next_q_vals = lasagne.layers.get_output(self.net_out, next_inputs)
-
+			net_target_in_next = {net_online_in_view: views_next, net_online_in_action_hist: action_hists_next} \
+				if self.action_hist_size.w > 0 else {net_online_in_view: views_next}
+			q_vals_online_next = lasagne.layers.get_output(self.net_online_out, net_target_in_next)
+			q_vals_target = T.max(q_vals_online_next, axis=1, keepdims=True)
 		# define loss computation
-		actionmask = T.eq(T.arange(4).reshape((1, -1)), actions.reshape((-1, 1))).astype(theano.config.floatX)
+		actionmask = T.eq(T.arange(len(self.actions)).reshape((1, -1)), actions.reshape((-1, 1))).astype(theano.config.floatX)
 		terminals_float = terminals.astype(theano.config.floatX)
 		target = rewards + \
 				 (T.ones_like(terminals_float) - terminals_float) * \
-				 self.discount * T.max(next_q_vals, axis=1, keepdims=True)
-		output = (q_vals * actionmask).sum(axis=1).reshape((-1, 1))
+				 self.discount * q_vals_target
+		output = (q_vals_pred_train * actionmask).sum(axis=1).reshape((-1, 1))
 		diff = target - output
 		if self.clip_delta > 0:
 			# see https://github.com/spragunr/deep_q_rl/blob/master/deep_q_rl/q_network.py
@@ -151,29 +172,31 @@ class LasagneMlpModel(object):
 			linear_part = abs(diff) - quadratic_part
 			loss = quadratic_part ** 2 + self.clip_delta * linear_part
 		else:
-			loss = diff ** 2  # TODO error clipping
+			loss = diff ** 2
 
 		# regularization
-		l2reg = 0
-		for lll in self.all_layers:
-			l2reg += regularize_layer_params(lll, l2) * self.regularization
-
-		loss = T.mean(loss) + l2reg  # batch accumulator sum or mean
+		if self.all_layers is not None and self.regularization > 0:
+			l2reg = 0
+			for lll in self.all_layers:
+				l2reg += regularize_layer_params(lll, l2) * self.regularization
+			loss = T.mean(loss) + l2reg  # batch accumulator sum or mean
+		else:
+			loss = T.mean(loss)
 
 		# define network update for training
-		params = lasagne.layers.helper.get_all_params(self.net_out)
+		params = lasagne.layers.helper.get_all_params(self.net_online_out, trainable=True)
 		updates = self.optimizer(loss, params)
-		train_givens = self.shared_batch.givens(views, action_hists, actions, next_views, next_action_hists, rewards,
+		train_givens = self.shared_batch.givens(views_curr, action_hists_curr, actions, views_next, action_hists_next, rewards,
 												terminals)
 		self.train_fn = theano.function([], [loss], updates=updates, givens=train_givens)
 
 		# define output prediction
-		predict_givens = self.shared_state.givens(views, action_hists)
-		self.predict_fn = theano.function([], q_vals[0], givens=predict_givens)
+		predict_givens = self.shared_state.givens(views_curr, action_hists_curr)
+		self.predict_fn = theano.function([], q_vals_pred_test[0], givens=predict_givens)
 
 	def _clone(self):
-		param_values = lasagne.layers.get_all_param_values(self.net_out)
-		lasagne.layers.set_all_param_values(self.net_out_next, param_values)
+		param_values = lasagne.layers.get_all_param_values(self.net_online_out)
+		lasagne.layers.set_all_param_values(self.net_target_out, param_values)
 
 	def predict_qs(self, view, action_hist):
 		self.shared_state.set(view, action_hist)
@@ -193,19 +216,19 @@ class LasagneMlpModel(object):
 
 	def save(self, file_path):
 		self.logger.log_message("Save model to {0}".format(file_path))
-		np.savez(file_path, *lasagne.layers.get_all_param_values(self.net_out))
+		np.savez(file_path, *lasagne.layers.get_all_param_values(self.net_online_out))
 
 	def load(self, file_path):
 		self.logger.log_message("Load model from {0}".format(file_path))
 		with np.load(file_path) as f:
 			param_values = [f['arr_%d' % i] for i in range(len(f.files))]
-		lasagne.layers.set_all_param_values(self.net_out, param_values)
+		lasagne.layers.set_all_param_values(self.net_online_out, param_values)
 
 	def log_weights_diff(self):
 		""" check if weights of model and model_cloned are actually different one step before cloning"""
 		if self.steps_clone == self.clone_interval - 1:
-			param_values_next = lasagne.layers.get_all_param_values(self.net_out_next)
-			param_values_org = lasagne.layers.get_all_param_values(self.net_out)
+			param_values_next = lasagne.layers.get_all_param_values(self.net_target_out)
+			param_values_org = lasagne.layers.get_all_param_values(self.net_online_out)
 			diffs = np.zeros(len(param_values_org), dtype=theano.config.floatX)
 			for i in range(len(param_values_org)):
 				diffs[i] = np.sum(param_values_next[i] - param_values_org[i])
@@ -214,7 +237,7 @@ class LasagneMlpModel(object):
 			assert diff != 0
 
 	def log_weights(self):
-		layers = lasagne.layers.get_all_param_values(self.net_out)
+		layers = lasagne.layers.get_all_param_values(self.net_online_out)
 		# calculate min, max, mean, std per layer
 		for layer in range(len(layers)):
 			weights = layers[layer]
